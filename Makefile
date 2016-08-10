@@ -1,8 +1,23 @@
+#
+#	Copyright (C) 2012 Nexell Co., All Rights Reserved
+#	Nexell Co. Proprietary & Confidential
+#
+#	NEXELL INFORMS THAT THIS CODE AND INFORMATION IS PROVIDED "AS IS" BASE
+#	AND WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING
+#	BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR
+#	FITNESS FOR A PARTICULAR PURPOSE.
+#
+#	Moudle		: bl0
+#	File		: Makefile
+#	Description	:
+#	Author		: Firware Team
+#	History		: 2016.08.10 hans first draft
+#
 
 include config.mak
 
 
-LDFLAGS		=	-Bstatic					\
+LDFLAGS		= -Bstatic						\
 		-Wl,-Map=$(DIR_TARGETOUTPUT)/$(PROJECT_NAME).map,--cref	\
 		-T$(LDS_NAME)						\
 		-Wl,--start-group					\
@@ -10,7 +25,7 @@ LDFLAGS		=	-Bstatic					\
 		-Wl,--end-group						\
 		-nostdlib
 
-SYS_OBJS	 = 	startup_$(OPMODE).o iROMBOOT.o CRC32.o CRYPTO.o GPIO.o
+SYS_OBJS	 = 	startup_$(OPMODE).o iROMBOOT.o CRYPTO.o GPIO.o
 SYS_OBJS	+= 	iSDHCBOOT.o
 SYS_OBJS	+= 	iUSBBOOT.o
 SYS_OBJS	+= 	iSPIBOOT.o
@@ -18,7 +33,7 @@ SYS_OBJS	+= 	iNANDBOOTEC.o
 SYS_OBJS	+= 	iSDHCFSBOOT.o fatfs.o diskio.o
 SYS_OBJS	+= 	cpuif_regmap_framework.o
 SYS_OBJS	+= 	nx_chip_sfr.o
-SYS_OBJS	+= 	libarm.o
+SYS_OBJS	+= 	libarm.o lib_$(OPMODE).o
 
 SYS_OBJS_LIST	= 	$(addprefix $(DIR_OBJOUTPUT)/,$(SYS_OBJS))
 
