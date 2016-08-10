@@ -1,0 +1,388 @@
+
+#ifndef __NX_CHIP_TZPC_H__
+#define __NX_CHIP_TZPC_H__
+
+#ifdef	__cplusplus
+extern "C"
+{
+#endif
+
+#include <nx_type.h>
+
+#define TZ_NOT_YET
+
+#define TZPCINDEX_SLVNUMBER( NAME )              TZPCINDEX_OF_ ## NAME ## _SLV_MODULE
+
+#define PROT_SECURE     (0)
+#define PROT_NONSECURE  (1)
+
+#define SONICS_SECURE     (1)
+#define SONICS_NONSECURE  (3)
+
+#define TZ_TYPE_TZPC      (0)
+#define TZ_TYPE_SONICS    (1)
+
+#define TZ_SYS0_CFG			(0x21f00400)
+#define TZ_SYS1_CFG			(0x21f00800)
+#define TZ_SYS2_CFG			(0x21f00c00)
+#define TZ_SYS3_CFG			(0x21f01000)
+#define TZ_DREX0_CFG			(0x21f01400)
+#define TZ_CODA_CFG			(0x21f01c00)
+#define TZ_SYS6_CFG			(0x21f02000)
+#define TZ_PKA_CFG			(0x21f02400)
+#define TZ_TBUS_CFG			(0x21f02800)
+#define TZ_NX2HDMI_CFG			(0x21f02c00)
+#define TZ_HDMI_PHY_ASYNC			(0x21f03000)
+#define TZ_HDMI_LINK			(0x21f03400)
+#define TZ_GPU_CFG			(0x21f03800)
+#define TZ_ISP_APB_CFG			(0x21f03c00)
+#define TZ_AXIM0_CFG			(0x21f04000)
+#define TZ_MMC0_CFG			(0x21f04400)
+#define TZ_MMC1_CFG			(0x21f04800)
+#define TZ_MMC2_CFG			(0x21f04c00)
+#define TZ_LBUS_CFG			(0x21f05000)
+#define TZ_WAVE412_CFG			(0x21f05400)
+#define TZ_BBUS1_CFG			(0x21f05800)
+#define TZ_BBUS0_CFG			(0x21f05c00)
+#define TZ_WAVE420_CFG			(0x21f06000)
+#define TZ_GIC400_SLV			(0x21f06800)
+#define TZ_USB_CFG			(0x21f06c00)
+#define TZ_ISP_CFG			(0x21f07000)
+#define TZ_MCUSTOP			(0x21f07400)
+#define TZ_DISP_CFG			(0x21f07800)
+#define TZ_DMA_CFG			(0x21f08800)
+#define TZ_axisram_top			(0x22005400)
+#define TZ_SYSTEM_RT1			(0x21f08000)
+#define TZ_CFG_DISP_0_AXI			(0x20e80c00)
+#define TZ_CFG_LVDS_0_VCLK			(0x20e81000)
+#define TZ_CFG_MIPI_0_X2			(0x20e81400)
+#define TZ_DISP_RT			(0x20e81c00)
+#define TZ_CFG_DPC_0_X2			(0x20e82000)
+#define TZ_CFG_DPC_1_X2			(0x20e82400)
+#define TZ_CFG_DISP_0_APB			(0x20e82800)
+#define TZ_CFG_AXIM_0			(0x20e83000)
+#define TZ_CFG_MAPCONV_0_AXI			(0x20e83400)
+#define TZ_CFG_AXIM_1			(0x20e83800)
+#define TZ_CFG_LVDS_1_VCLK			(0x20e83c00)
+#define TZ_TZPC0			(0x20300000)
+
+#define SONICS_REQ_INFO0			(0x048)
+#define SONICS_REQ_INFO1			(0x068)
+#define SONICS_REQ_INFO2			(0x088)
+#define SONICS_REQ_INFO3			(0x0a8)
+#define SONICS_REQ_INFO4			(0x0c8)
+#define SONICS_REQ_INFO5			(0x0e8)
+#define SONICS_REQ_INFO6			(0x108)
+#define SONICS_REQ_INFO7			(0x128)
+#define SONICS_REQ_INFO8			(0x148)
+#define SONICS_REQ_INFO9			(0x168)
+#define SONICS_REQ_INFO10			(0x188)
+#define SONICS_REQ_INFO11			(0x1a8)
+#define SONICS_REQ_INFO12			(0x1c8)
+#define SONICS_REQ_INFO13			(0x1e8)
+#define SONICS_REQ_INFO14			(0x208)
+#define SONICS_REQ_INFO15			(0x228)
+#define TZPCDECPROT0			(0x800)
+#define TZPCDECPROT1			(0x80C)
+#define TZPCDECPROT2			(0x818)
+#define TZPCDECPROT3			(0x824)
+#define TZPCDECPROT4			(0x1800)
+#define TZPCDECPROT5			(0x180c)
+#define TZPCDECPROT6			(0x1818)
+#define TZPCDECPROT7			(0x1824)
+#define TZPCR0SIZE			(0x0)
+#define TZMA_MAX			(0x2A)
+#define TZMA_STEPSIZE			(0x1000)
+#define TZMA_DATASIZE			(0x4)
+#define TZASC_SECURE			(0x0)
+#define TZASC_NONSECURE			(0x1)
+#define TZASC_NONSECURE_ONLY			(0x2)
+#define SONICS_BANDWIDTH_LOW0			(0x100)
+#define SONICS_BANDWIDTH_HIGH0			(0x104)
+#define SONICS_BANDWIDTH_LOW1			(0x108)
+#define SONICS_BANDWIDTH_HIGH1			(0x10c)
+#define SONICS_BANDWIDTH_LOW2			(0x110)
+#define SONICS_BANDWIDTH_HIGH2			(0x114)
+#define SONICS_BANDWIDTH_LOW3			(0x118)
+#define SONICS_BANDWIDTH_HIGH3			(0x11c)
+#define SONICS_ALLOC_LIMIT_LOW0			(0x200)
+#define SONICS_ALLOC_LIMIT_HIGH0			(0x204)
+#define SONICS_ALLOC_LIMIT_LOW1			(0x208)
+#define SONICS_ALLOC_LIMIT_HIGH1			(0x20c)
+#define SONICS_ALLOC_LIMIT_LOW2			(0x210)
+#define SONICS_ALLOC_LIMIT_HIGH2			(0x214)
+#define SONICS_ALLOC_LIMIT_LOW3			(0x218)
+#define SONICS_ALLOC_LIMIT_HIGH3			(0x21c)
+
+
+// address sort
+enum {
+	TZPCINDEX_OF_CHIPID_SLV_MODULE                         = 0,
+	TZPCINDEX_OF_SYSCTRLTOP_SLV_MODULE                     = 1,
+	TZPCINDEX_OF_PPMU_SYS_SLV_MODULE                       = 2,
+	TZPCINDEX_OF_HPM_SLV_MODULE                            = 3,
+	TZPCINDEX_OF_Q_ENHANCER_SLV_MODULE                     = 4,
+	TZPCINDEX_OF_TIEOFF_SYS_SLV_MODULE                     = 5,
+	TZPCINDEX_OF_CORESIGHT_SLV_MODULE                      = 6,
+	TZPCINDEX_OF_CPU_REGBASE_SLV_MODULE                    = 7,
+	TZPCINDEX_OF_CMU_SYS_SLV_MODULE                        = 8,
+	TZPCINDEX_OF_CMU_TBUS_SLV_MODULE                       = 9,
+	TZPCINDEX_OF_CMU_LBUS_SLV_MODULE                       = 10,
+	TZPCINDEX_OF_CMU_BBUS_SLV_MODULE                       = 11,
+	TZPCINDEX_OF_CMU_ISP_SLV_MODULE                        = 12,
+	TZPCINDEX_OF_CMU_CODA_SLV_MODULE                       = 13,
+	TZPCINDEX_OF_CMU_DISP_SLV_MODULE                       = 14,
+	TZPCINDEX_OF_CMU_USB_SLV_MODULE                        = 15,
+	TZPCINDEX_OF_CMU_HDMI_SLV_MODULE                       = 16,
+	TZPCINDEX_OF_CMU_GPU_SLV_MODULE                        = 17,
+	TZPCINDEX_OF_CMU_WAVE_SLV_MODULE                       = 18,
+	TZPCINDEX_OF_CMU_DREX0_SLV_MODULE                      = 19,
+	TZPCINDEX_OF_CMU_WAVE420_SLV_MODULE                    = 20,
+	TZPCINDEX_OF_CMU_PERICLK_SLV_MODULE                    = 21,
+	TZPCINDEX_OF_TZPC_SLV_MODULE                           = 22,
+	TZPCINDEX_OF_ECID_SLV_MODULE                           = 23,
+	TZPCINDEX_OF_ECID_SECU_SLV_MODULE                      = 24,
+	TZPCINDEX_OF_TIEOFF_DREX0_SLV_MODULE                   = 25,
+	TZPCINDEX_OF_DDRPHY0_SLV_MODULE                        = 26,
+	TZPCINDEX_OF_DREXTZASC0_SLV_MODULE                     = 27,
+	TZPCINDEX_OF_DREX0_CFG_SLV_MODULE                      = 28,
+	TZPCINDEX_OF_TIEOFF_CODA_SLV_MODULE                    = 29,
+	TZPCINDEX_OF_JPEG_SLV_MODULE                           = 30,
+	TZPCINDEX_OF_AXIM_JPEG_SLV_MODULE                      = 31,
+	TZPCINDEX_OF_CRYPTO_SLV_MODULE                         = 32,
+	TZPCINDEX_OF_PPM_SLV_MODULE                            = 33,
+	TZPCINDEX_OF_TIMER_SLV_MODULE                          = 34,
+	TZPCINDEX_OF_TIMER_SECU_SLV_MODULE                     = 35,
+	TZPCINDEX_OF_PWM0_SLV_MODULE                           = 36,
+	TZPCINDEX_OF_PWM1_SLV_MODULE                           = 37,
+	TZPCINDEX_OF_PWM2_SLV_MODULE                           = 38,
+	TZPCINDEX_OF_PWM3_SLV_MODULE                           = 39,
+	TZPCINDEX_OF_WDT_SLV_MODULE                            = 40,
+	TZPCINDEX_OF_WDT_SECU_SLV_MODULE                       = 41,
+	TZPCINDEX_OF_MCUSTOP_SLV_MODULE                        = 42,
+	TZPCINDEX_OF_AUDIO_IO_CTRL_SLV_MODULE                  = 43,
+	TZPCINDEX_OF_PKA_SLV_MODULE                            = 44,
+	TZPCINDEX_OF_DMAC0_SLV_MODULE                          = 45,
+	TZPCINDEX_OF_DMAC1_SLV_MODULE                          = 46,
+	TZPCINDEX_OF_SEC_DMA0_SLV_MODULE                       = 47,
+	TZPCINDEX_OF_SEC_DMA1_SLV_MODULE                       = 48,
+	TZPCINDEX_OF_MDMAC0_SLV_MODULE                         = 49,
+	TZPCINDEX_OF_TIEOFF_TBUS_SLV_MODULE                    = 50,
+	TZPCINDEX_OF_I2S0_SLV_MODULE                           = 51,
+	TZPCINDEX_OF_I2S1_SLV_MODULE                           = 52,
+	TZPCINDEX_OF_I2S2_SLV_MODULE                           = 53,
+	TZPCINDEX_OF_I2S3_SLV_MODULE                           = 54,
+	TZPCINDEX_OF_I2C0_SLV_MODULE                           = 55,
+	TZPCINDEX_OF_I2C1_SLV_MODULE                           = 56,
+	TZPCINDEX_OF_ISP_CPUIF_SLV_MODULE                      = 57,
+	TZPCINDEX_OF_ISP_SLV_MODULE                            = 58,
+	TZPCINDEX_OF_GPU_SLV_MODULE                            = 59,
+	TZPCINDEX_OF_AXIM_GPU_SLV_MODULE                       = 60,
+	TZPCINDEX_OF_TIEOFF_GPU_SLV_MODULE                     = 61,
+	TZPCINDEX_OF_VIP_VIP_SLV_MODULE                        = 62,
+	TZPCINDEX_OF_VIP_PRES_SLV_MODULE                       = 63,
+	TZPCINDEX_OF_SECURE_VIP_VIP_SLV_MODULE                 = 64,
+	TZPCINDEX_OF_SECURE_VIP_PRES_SLV_MODULE                = 65,
+	TZPCINDEX_OF_DPC_0_I80_SLV_MODULE                      = 66,
+	TZPCINDEX_OF_DPC_1_NTSC_SLV_MODULE                     = 67,
+	TZPCINDEX_OF_LVDS_SLV_MODULE                           = 68,
+	TZPCINDEX_OF_DISP_TIEOFF_SLV_MODULE                    = 69,
+	TZPCINDEX_OF_DEINTERLACE_SLV_MODULE                    = 70,
+	TZPCINDEX_OF_MIPI_CSIS_SLV_MODULE                      = 71,
+	TZPCINDEX_OF_DISP_TZPC0_SLV_MODULE                     = 72,
+	TZPCINDEX_OF_DISP_TZPC1_SLV_MODULE                     = 73,
+	TZPCINDEX_OF_MIPI_DSIM_SLV_MODULE                      = 74,
+	TZPCINDEX_OF_DISP_BUS_CON_SLV_MODULE                   = 75,
+	TZPCINDEX_OF_NXS_TO_MIPIDSI_SLV_MODULE                 = 76,
+	TZPCINDEX_OF_NXS_TO_HDMI_SLV_MODULE                    = 77,
+	TZPCINDEX_OF_HDMI_PHY_SLV_MODULE                       = 78,
+	TZPCINDEX_OF_HDMI_LINK_SLV_MODULE                      = 79,
+	TZPCINDEX_OF_TIEOFF_LBUS_SLV_MODULE                    = 80,
+	TZPCINDEX_OF_MPEGTSI_SLV_MODULE                        = 81,
+	TZPCINDEX_OF_GPIO0_SLV_MODULE                          = 82,
+	TZPCINDEX_OF_GPIO1_SLV_MODULE                          = 83,
+	TZPCINDEX_OF_GMAC_SLV_MODULE                           = 84,
+	TZPCINDEX_OF_I2C2_SLV_MODULE                           = 85,
+	TZPCINDEX_OF_I2C3_SLV_MODULE                           = 86,
+	TZPCINDEX_OF_I2C4_SLV_MODULE                           = 87,
+	TZPCINDEX_OF_SDMMC0_SLV_MODULE                         = 88,
+	TZPCINDEX_OF_SDMMC1_SLV_MODULE                         = 89,
+	TZPCINDEX_OF_SDMMC2_SLV_MODULE                         = 90,
+	TZPCINDEX_OF_TIEOFF_OTG_SLV_MODULE                     = 91,
+	TZPCINDEX_OF_TIEOFF_HOST_SLV_MODULE                    = 92,
+//	TZPCINDEX_OF_USB_OTG_LINK_A_SLV_MODULE                 = *E: TZPC configuration
+//	TZPCINDEX_OF_USB_OTG_LINK_B_SLV_MODULE                 = *E: TZPC configuration
+//	TZPCINDEX_OF_USB_HOST_EHCI_LINK_SLV_MODULE             = *E: TZPC configuration
+//	TZPCINDEX_OF_USB_HOST_OHCI_LINK_SLV_MODULE             = *E: TZPC configuration
+	TZPCINDEX_OF_TIEOFF_BBUS_SLV_MODULE                    = 93,
+	TZPCINDEX_OF_TMU_BBUS_SLV_MODULE                       = 94,
+	TZPCINDEX_OF_ADC_SLV_MODULE                            = 95,
+	TZPCINDEX_OF_UART0_SLV_MODULE                          = 96,
+	TZPCINDEX_OF_UART1_SLV_MODULE                          = 97,
+	TZPCINDEX_OF_UART2_SLV_MODULE                          = 98,
+	TZPCINDEX_OF_UART3_SLV_MODULE                          = 99,
+	TZPCINDEX_OF_UART4_SLV_MODULE                          = 100,
+	TZPCINDEX_OF_UART5_SLV_MODULE                          = 101,
+	TZPCINDEX_OF_SPI0_SLV_MODULE                           = 102,
+	TZPCINDEX_OF_SPI1_SLV_MODULE                           = 103,
+	TZPCINDEX_OF_SPI2_SLV_MODULE                           = 104,
+	TZPCINDEX_OF_SPDIFTX_SLV_MODULE                        = 105,
+	TZPCINDEX_OF_SPDIFRX_SLV_MODULE                        = 106,
+	TZPCINDEX_OF_UART6_SLV_MODULE                          = 107,
+	TZPCINDEX_OF_UART7_SLV_MODULE                          = 108,
+	TZPCINDEX_OF_UART8_SLV_MODULE                          = 109,
+	TZPCINDEX_OF_TIEOFF_WAVE_SLV_MODULE                    = 110,
+	TZPCINDEX_OF_SONICS_BUS_SLV_MODULE                     = 111,
+//	TZPCINDEX_OF_AXISRAM_SLV_MODULE                        = *E: TZPC configuration
+	TZPCINDEX_OF_MAX_SLV_MODULE                            = 112
+};
+
+
+struct NX_TZPC_LIST {
+	U32 index;
+	U32 offset;
+	U32 bit;
+};
+
+static struct NX_TZPC_LIST nx_tzpc_slave_list[] = {
+	{ TZ_SYS0_CFG, SONICS_REQ_INFO0, 0 }, //0 CHIPID
+	{ TZ_SYS0_CFG, SONICS_REQ_INFO1, 0 }, //1 SYSCTRLTOP
+	{ TZ_SYS0_CFG, SONICS_REQ_INFO3, 0 }, //2 PPMU_SYS
+	{ TZ_SYS0_CFG, SONICS_REQ_INFO4, 0 }, //3 HPM
+	{ TZ_SYS0_CFG, SONICS_REQ_INFO5, 0 }, //4 Q_ENHANCER
+	{ TZ_SYS0_CFG, SONICS_REQ_INFO6, 0 }, //5 TIEOFF_SYS
+	{ TZ_SYS0_CFG, SONICS_REQ_INFO7, 0 }, //6 CORESIGHT
+	{ TZ_SYS0_CFG, SONICS_REQ_INFO8, 0 }, //7 CPU_REGBASE
+	{ TZ_SYS1_CFG, SONICS_REQ_INFO0, 0 }, //8 CMU_SYS
+	{ TZ_SYS1_CFG, SONICS_REQ_INFO1, 0 }, //9 CMU_TBUS
+	{ TZ_SYS1_CFG, SONICS_REQ_INFO2, 0 }, //10 CMU_LBUS
+	{ TZ_SYS1_CFG, SONICS_REQ_INFO3, 0 }, //11 CMU_BBUS
+	{ TZ_SYS2_CFG, SONICS_REQ_INFO0, 0 }, //12 CMU_ISP
+	{ TZ_SYS2_CFG, SONICS_REQ_INFO0, 0 }, //13 CMU_CODA
+	{ TZ_SYS2_CFG, SONICS_REQ_INFO0, 0 }, //14 CMU_DISP
+	{ TZ_SYS2_CFG, SONICS_REQ_INFO0, 0 }, //15 CMU_USB
+	{ TZ_SYS2_CFG, SONICS_REQ_INFO0, 0 }, //16 CMU_HDMI
+	{ TZ_SYS2_CFG, SONICS_REQ_INFO0, 0 }, //17 CMU_GPU
+	{ TZ_SYS2_CFG, SONICS_REQ_INFO0, 0 }, //18 CMU_WAVE
+	{ TZ_SYS2_CFG, SONICS_REQ_INFO0, 0 }, //19 CMU_DREX0
+	{ TZ_SYS2_CFG, SONICS_REQ_INFO0, 0 }, //20 CMU_WAVE420
+	{ TZ_SYS2_CFG, SONICS_REQ_INFO0, 0 }, //21 CMU_PERICLK
+	{ TZ_SYS3_CFG, SONICS_REQ_INFO0, 0 }, //22 TZPC
+	{ TZ_SYS3_CFG, SONICS_REQ_INFO1, 0 }, //23 ECID
+	{ TZ_SYS3_CFG, SONICS_REQ_INFO2, 0 }, //24 ECID_SECU
+	{ TZ_DREX0_CFG, SONICS_REQ_INFO0, 0 }, //25 TIEOFF_DREX0
+	{ TZ_DREX0_CFG, SONICS_REQ_INFO1, 0 }, //26 DDRPHY0
+	{ TZ_DREX0_CFG, SONICS_REQ_INFO2, 0 }, //27 DREXTZASC0
+	{ TZ_DREX0_CFG, SONICS_REQ_INFO3, 0 }, //28 DREX0_CFG
+	{ TZ_CODA_CFG, SONICS_REQ_INFO0, 0 }, //29 TIEOFF_CODA
+	{ TZ_CODA_CFG, SONICS_REQ_INFO2, 0 }, //30 JPEG
+	{ TZ_CODA_CFG, SONICS_REQ_INFO5, 0 }, //31 AXIM_JPEG
+	{ TZ_SYS6_CFG, SONICS_REQ_INFO0, 0 }, //32 CRYPTO
+	{ TZ_SYS6_CFG, SONICS_REQ_INFO1, 0 }, //33 PPM
+	{ TZ_SYS6_CFG, SONICS_REQ_INFO2, 0 }, //34 TIMER
+	{ TZ_SYS6_CFG, SONICS_REQ_INFO3, 0 }, //35 TIMER_SECU
+	{ TZ_SYS6_CFG, SONICS_REQ_INFO4, 0 }, //36 PWM0
+	{ TZ_SYS6_CFG, SONICS_REQ_INFO5, 0 }, //37 PWM1
+	{ TZ_SYS6_CFG, SONICS_REQ_INFO6, 0 }, //38 PWM2
+	{ TZ_SYS6_CFG, SONICS_REQ_INFO7, 0 }, //39 PWM3
+	{ TZ_SYS6_CFG, SONICS_REQ_INFO8, 0 }, //40 WDT
+	{ TZ_SYS6_CFG, SONICS_REQ_INFO9, 0 }, //41 WDT_SECU
+	{ TZ_SYS6_CFG, SONICS_REQ_INFO14, 0 }, //42 MCUSTOP
+	{ TZ_SYS6_CFG, SONICS_REQ_INFO15, 0 }, //43 AUDIO_IO_CTRL
+	{ TZ_PKA_CFG, SONICS_REQ_INFO0, 0 }, //44 PKA
+	{ TZ_DMA_CFG, SONICS_REQ_INFO0, 0 }, //45 DMAC0
+	{ TZ_DMA_CFG, SONICS_REQ_INFO1, 0 }, //46 DMAC1
+	{ TZ_DMA_CFG, SONICS_REQ_INFO2, 0 }, //47 SEC_DMA0
+	{ TZ_DMA_CFG, SONICS_REQ_INFO3, 0 }, //48 SEC_DMA1
+	{ TZ_DMA_CFG, SONICS_REQ_INFO4, 0 }, //49 MDMAC0
+	{ TZ_TBUS_CFG, SONICS_REQ_INFO0, 0 }, //50 TIEOFF_TBUS
+	{ TZ_TBUS_CFG, SONICS_REQ_INFO3, 0 }, //51 I2S0
+	{ TZ_TBUS_CFG, SONICS_REQ_INFO4, 0 }, //52 I2S1
+	{ TZ_TBUS_CFG, SONICS_REQ_INFO5, 0 }, //53 I2S2
+	{ TZ_TBUS_CFG, SONICS_REQ_INFO6, 0 }, //54 I2S3
+	{ TZ_TBUS_CFG, SONICS_REQ_INFO7, 0 }, //55 I2C0
+	{ TZ_TBUS_CFG, SONICS_REQ_INFO8, 0 }, //56 I2C1
+	{ TZ_ISP_APB_CFG, SONICS_REQ_INFO0, 0 }, //57 ISP_CPUIF
+	{ TZ_ISP_CFG, SONICS_REQ_INFO0, 0 }, //58 ISP
+	{ TZ_GPU_CFG, SONICS_REQ_INFO0, 0 }, //59 GPU
+	{ TZ_GPU_CFG, SONICS_REQ_INFO1, 0 }, //60 AXIM_GPU
+	{ TZ_GPU_CFG, SONICS_REQ_INFO2, 0 }, //61 TIEOFF_GPU
+	{ TZ_CFG_DISP_0_AXI, SONICS_REQ_INFO4, 0 }, //62 VIP_VIP
+	{ TZ_CFG_DISP_0_AXI, SONICS_REQ_INFO5, 0 }, //63 VIP_PRES
+	{ TZ_CFG_DISP_0_AXI, SONICS_REQ_INFO6, 0 }, //64 SECURE_VIP_VIP
+	{ TZ_CFG_DISP_0_AXI, SONICS_REQ_INFO7, 0 }, //65 SECURE_VIP_PRES
+	{ TZ_CFG_DPC_0_X2, SONICS_REQ_INFO1, 0 }, //66 DPC_0_I80
+	{ TZ_CFG_DPC_1_X2, SONICS_REQ_INFO1, 0 }, //67 DPC_1_NTSC
+	{ TZ_CFG_LVDS_0_VCLK, SONICS_REQ_INFO0, 0 }, //68 LVDS
+	{ TZ_CFG_DISP_0_APB, SONICS_REQ_INFO0, 0 }, //69 DISP_TIEOFF
+	{ TZ_CFG_DISP_0_APB, SONICS_REQ_INFO1, 0 }, //70 DEINTERLACE
+	{ TZ_CFG_DISP_0_APB, SONICS_REQ_INFO2, 0 }, //71 MIPI_CSIS
+	{ TZ_CFG_DISP_0_APB, SONICS_REQ_INFO3, 0 }, //72 DISP_TZPC0
+	{ TZ_CFG_DISP_0_APB, SONICS_REQ_INFO4, 0 }, //73 DISP_TZPC1
+	{ TZ_CFG_DISP_0_APB, SONICS_REQ_INFO5, 0 }, //74 MIPI_DSIM
+	{ TZ_DISP_RT, SONICS_REQ_INFO0, 0 }, //75 DISP_BUS_CON
+	{ TZ_CFG_MIPI_0_X2, SONICS_REQ_INFO0, 0 }, //76 NXS_TO_MIPIDSI
+	{ TZ_NX2HDMI_CFG, SONICS_REQ_INFO0, 0 }, //77 NXS_TO_HDMI
+	{ TZ_HDMI_PHY_ASYNC, SONICS_REQ_INFO0, 0 }, //78 HDMI_PHY
+	{ TZ_HDMI_LINK, SONICS_REQ_INFO0, 0 }, //79 HDMI_LINK
+	{ TZ_LBUS_CFG, SONICS_REQ_INFO0, 0 }, //80 TIEOFF_LBUS
+	{ TZ_LBUS_CFG, SONICS_REQ_INFO2, 0 }, //81 MPEGTSI
+	{ TZ_LBUS_CFG, SONICS_REQ_INFO3, 0 }, //82 GPIO0
+	{ TZ_LBUS_CFG, SONICS_REQ_INFO4, 0 }, //83 GPIO1
+	{ TZ_LBUS_CFG, SONICS_REQ_INFO5, 0 }, //84 GMAC
+	{ TZ_LBUS_CFG, SONICS_REQ_INFO6, 0 }, //85 I2C2
+	{ TZ_LBUS_CFG, SONICS_REQ_INFO7, 0 }, //86 I2C3
+	{ TZ_LBUS_CFG, SONICS_REQ_INFO8, 0 }, //87 I2C4
+	{ TZ_MMC0_CFG, SONICS_REQ_INFO0, 0 }, //88 SDMMC0
+	{ TZ_MMC1_CFG, SONICS_REQ_INFO0, 0 }, //89 SDMMC1
+	{ TZ_MMC2_CFG, SONICS_REQ_INFO0, 0 }, //90 SDMMC2
+	{ TZ_USB_CFG, SONICS_REQ_INFO0, 0 }, //91 TIEOFF_OTG
+	{ TZ_USB_CFG, SONICS_REQ_INFO0, 0 }, //92 TIEOFF_HOST
+//	{                        }, //  USB_OTG_LINK_A *E: TZPC configuration
+//	{                        }, //  USB_OTG_LINK_B *E: TZPC configuration
+//	{                        }, //  USB_HOST_EHCI_LINK *E: TZPC configuration
+//	{                        }, //  USB_HOST_OHCI_LINK *E: TZPC configuration
+	{ TZ_BBUS0_CFG, SONICS_REQ_INFO0, 0 }, //93 TIEOFF_BBUS
+	{ TZ_BBUS0_CFG, SONICS_REQ_INFO1, 0 }, //94 TMU_BBUS
+	{ TZ_BBUS0_CFG, SONICS_REQ_INFO2, 0 }, //95 ADC
+	{ TZ_BBUS0_CFG, SONICS_REQ_INFO6, 0 }, //96 UART0
+	{ TZ_BBUS0_CFG, SONICS_REQ_INFO7, 0 }, //97 UART1
+	{ TZ_BBUS0_CFG, SONICS_REQ_INFO8, 0 }, //98 UART2
+	{ TZ_BBUS0_CFG, SONICS_REQ_INFO9, 0 }, //99 UART3
+	{ TZ_BBUS0_CFG, SONICS_REQ_INFO10, 0 }, //100 UART4
+	{ TZ_BBUS0_CFG, SONICS_REQ_INFO11, 0 }, //101 UART5
+	{ TZ_BBUS1_CFG, SONICS_REQ_INFO0, 0 }, //102 SPI0
+	{ TZ_BBUS1_CFG, SONICS_REQ_INFO1, 0 }, //103 SPI1
+	{ TZ_BBUS1_CFG, SONICS_REQ_INFO2, 0 }, //104 SPI2
+	{ TZ_BBUS1_CFG, SONICS_REQ_INFO3, 0 }, //105 SPDIFTX
+	{ TZ_BBUS1_CFG, SONICS_REQ_INFO4, 0 }, //106 SPDIFRX
+	{ TZ_BBUS1_CFG, SONICS_REQ_INFO5, 0 }, //107 UART6
+	{ TZ_BBUS1_CFG, SONICS_REQ_INFO6, 0 }, //108 UART7
+	{ TZ_BBUS1_CFG, SONICS_REQ_INFO7, 0 }, //109 UART8
+	{ TZ_WAVE412_CFG, SONICS_REQ_INFO0, 0 }, //110 TIEOFF_WAVE
+	{ TZ_SYSTEM_RT1, SONICS_REQ_INFO0, 0 }, //111 SONICS_BUS
+//	{                        }, //  AXISRAM *E: TZPC configuration
+};
+
+
+//------------------------
+// Function
+//------------------------
+
+void NX_CHIP_SetCPUSecureMode( U32 PROT );
+
+void NX_CHIP_SetSecureBaseaddr( U32 index );
+void NX_CHIP_SetNonSecureBaseaddr( U32 index );
+
+void NX_CHIP_WriteSecureAccess( U32 addr, U32 data );
+U32  NX_CHIP_ReadSecureAccess( U32 addr );
+void NX_CHIP_WriteNonSecureAccess( U32 addr, U32 data );
+U32  NX_CHIP_ReadNonSecureAccess( U32 addr );
+
+void NX_DREX_SetTZASC( U32 index, U32 addr, U32 size, U32 type );
+
+#ifdef	__cplusplus
+}
+#endif
+
+#endif
