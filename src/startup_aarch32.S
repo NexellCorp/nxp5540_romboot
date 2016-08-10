@@ -1,3 +1,19 @@
+/*
+ *	Copyright (C) 2012 Nexell Co., All Rights Reserved
+ *	Nexell Co. Proprietary & Confidential
+ *
+ *	NEXELL INFORMS THAT THIS CODE AND INFORMATION IS PROVIDED "AS IS" BASE
+ *	AND WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING
+ *	BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR
+ *	FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ *	Module          : bl0
+ *	File            : startup_aarch32.S
+ *	Description     : 
+ *	Author          : Hans
+ *	History         : 2016.08.10	Hans first draft
+ */
+
 //;==================================================================
 //; cortex A57 V7 compatable
 //;==================================================================
