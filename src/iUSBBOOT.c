@@ -39,7 +39,8 @@
 void ResetCon(U32 devicenum, CBOOL en);
 void Decrypt(U32 *SrcAddr, U32 *DestAddr, U32 Size);
 
-//static struct NX_TIEOFF_RegisterSet * const pTieoffreg = (struct NX_TIEOFF_RegisterSet *)PHY_BASEADDR_TIEOFF_MODULE;
+//static struct NX_TIEOFF_RegisterSet * const pTieoffreg =
+//	(struct NX_TIEOFF_RegisterSet *)PHY_BASEADDR_TIEOFF_MODULE;
 static struct NX_TIEOFF_USB20OTG_RegisterSet * const pTieoffreg =
 	(struct NX_TIEOFF_USB20OTG_RegisterSet *)PHY_BASEADDR_TIEOFF_OTG_MODULE;
 static struct NX_USB_OTG_RegisterSet * const pUOReg =

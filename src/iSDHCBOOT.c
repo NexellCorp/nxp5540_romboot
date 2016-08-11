@@ -574,7 +574,7 @@ static CBOOL NX_SDMMC_IdentifyCard(SDXCBOOTSTATUS *pSDXCBootStatus)
 			cmd.flag	= NX_SDXC_CMDFLAG_STARTCMD |
 					NX_SDXC_CMDFLAG_WAITPRVDAT |
 					NX_SDXC_CMDFLAG_SHORTRSP;
-			if (NX_SDMMC_STATUS_NOERROR != 
+			if (NX_SDMMC_STATUS_NOERROR !=
 					NX_SDMMC_SendCommand(pSDXCBootStatus,
 								&cmd)) {
 				return CFALSE;
@@ -814,7 +814,7 @@ CBOOL NX_SDMMC_Init(SDXCBOOTSTATUS *pSDXCBootStatus)
 //                          | (SDXC_CLKSRC<<2)				// set clock source
 //                          | (0UL<<1);						// set clock invert
 // 	pSDClkGenReg->CLKENB |= 0x1UL<<2;			// clock generation enable
-// 
+//
 // 	ResetCon(SDResetNum[pSDXCBootStatus->SDPort], CTRUE);	// reset on
 // 	ResetCon(SDResetNum[pSDXCBootStatus->SDPort], CFALSE);	// reset negate
 
@@ -828,7 +828,7 @@ CBOOL NX_SDMMC_Init(SDXCBOOTSTATUS *pSDXCBootStatus)
         U32 regval;
         nx_cpuif_reg_write_one(CMU_INFO_DEF__SDMMC_0___CORE__group_clock_source, SDXC_CLKSRC);                    // sdmmc core clock source select
         nx_cpuif_reg_write_one(CMU_INFO_DEF__SDMMC_0___CORE__dynamic_divider_value, (SDXC_CLKDIV_LOW - 1));         // sdmmc core clock divider value
- 	    while (1 == nx_cpuif_reg_read_one(CMU_INFO_DEF__SDMMC_0___CORE__dynamic_divider_busy_status, &regval));
+	    while (1 == nx_cpuif_reg_read_one(CMU_INFO_DEF__SDMMC_0___CORE__dynamic_divider_busy_status, &regval));
         nx_cpuif_reg_write_one(CMU_INFO_DEF__SDMMC_0___CORE__clock_enable, 1);                                    // sdmmc core clock enable
 
         nx_cpuif_reg_write_one(CMU_INFO_DEF__SDMMC_0___AXI__clock_enable, 1);                                     // sdmmc bus clock enable
@@ -838,7 +838,7 @@ CBOOL NX_SDMMC_Init(SDXCBOOTSTATUS *pSDXCBootStatus)
         U32 regval;
         nx_cpuif_reg_write_one(CMU_INFO_DEF__SDMMC_1___CORE__group_clock_source, SDXC_CLKSRC);                    // sdmmc core clock source select
         nx_cpuif_reg_write_one(CMU_INFO_DEF__SDMMC_1___CORE__dynamic_divider_value, (SDXC_CLKDIV_LOW - 1));         // sdmmc core clock divider value
- 	    while (1 == nx_cpuif_reg_read_one( CMU_INFO_DEF__SDMMC_1___CORE__dynamic_divider_busy_status, &regval));
+	    while (1 == nx_cpuif_reg_read_one( CMU_INFO_DEF__SDMMC_1___CORE__dynamic_divider_busy_status, &regval));
         nx_cpuif_reg_write_one(CMU_INFO_DEF__SDMMC_1___CORE__clock_enable, 1);                                    // sdmmc core clock enable
 
         nx_cpuif_reg_write_one(CMU_INFO_DEF__SDMMC_1___AXI__clock_enable, 1);             // sdmmc bus clock enable
@@ -848,7 +848,7 @@ CBOOL NX_SDMMC_Init(SDXCBOOTSTATUS *pSDXCBootStatus)
         U32 regval;
         nx_cpuif_reg_write_one(CMU_INFO_DEF__SDMMC_2___CORE__group_clock_source, SDXC_CLKSRC);                    // sdmmc core clock source select
         nx_cpuif_reg_write_one(CMU_INFO_DEF__SDMMC_2___CORE__dynamic_divider_value, (SDXC_CLKDIV_LOW - 1));         // sdmmc core clock divider value
- 	    while (1 == nx_cpuif_reg_read_one(CMU_INFO_DEF__SDMMC_2___CORE__dynamic_divider_busy_status, &regval));
+	    while (1 == nx_cpuif_reg_read_one(CMU_INFO_DEF__SDMMC_2___CORE__dynamic_divider_busy_status, &regval));
         nx_cpuif_reg_write_one(CMU_INFO_DEF__SDMMC_2___CORE__clock_enable, 1);                                    // sdmmc core clock enable
 
         nx_cpuif_reg_write_one(CMU_INFO_DEF__SDMMC_2___AXI__clock_enable, 1);             // sdmmc bus clock enable
@@ -867,7 +867,7 @@ CBOOL NX_SDMMC_Init(SDXCBOOTSTATUS *pSDXCBootStatus)
 
 	pSDXCReg->CLKSRC = 0;	// prescaler 0
 	pSDXCReg->CLKDIV = SDCLK_DIVIDER >> 1;	//	2*n divider (0 : bypass)
-	
+
 	// fifo mode, not read wait(only use sdio mode)
 	pSDXCReg->CTRL &= ~(NX_SDXC_CTRL_DMAMODE_EN | NX_SDXC_CTRL_READWAIT);
 	// Reset the controller & DMA interface & FIFO
@@ -1212,7 +1212,7 @@ static CBOOL eMMCBoot(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 
 	if (NX_SDMMC_STATUS_NOERROR ==
 			NX_SDMMC_SendCommandInternal(pSDXCBootStatus, &cmd)) {
-		struct NX_SecondBootInfo *pSBI = 
+		struct NX_SecondBootInfo *pSBI =
 			(struct NX_SecondBootInfo *)BASEADDR_SRAM;
 		// read dummy 512 bytes
 		if (NX_SDMMC_ReadSectorData( pSDXCBootStatus, 1, (U32 *)pSBI)) {

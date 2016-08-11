@@ -9,7 +9,7 @@
  *
  *	Module          : bl0
  *	File            : startup_aarch32.S
- *	Description     : 
+ *	Description     :
  *	Author          : Hans
  *	History         : 2016.08.10	Hans first draft
  */

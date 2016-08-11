@@ -10,9 +10,10 @@
 #else
 	#define __NX_CPUIF_REG_FUNC_BODY__
 
-void nx_cpuif_reg_write_one_notread( __nx_cpuif_symbol__ symbol, unsigned int  regval) {
-
-
+void nx_cpuif_reg_write_one_notread(
+		__nx_cpuif_symbol__ symbol,
+		unsigned int  regval)
+{
 	unsigned int * reg_addr;
 	unsigned int reg_val;
 	volatile unsigned int * reg;
@@ -33,9 +34,11 @@ void nx_cpuif_reg_write_one_notread( __nx_cpuif_symbol__ symbol, unsigned int  r
 
 	reg_val = 0;
 
-	reg_mask = reg_bitwidth < 32 ? ((1<<(reg_bitwidth))-1) << reg_startbit : ~0;
+	reg_mask = reg_bitwidth < 32 ?
+		((1 << reg_bitwidth) - 1) << reg_startbit : ~0;
 
-	masked_writeval = (reg_bitwidth < 32) ? regval & ((1<<(reg_bitwidth))-1) : regval ;
+	masked_writeval = (reg_bitwidth < 32) ?
+		regval & ((1 << reg_bitwidth) - 1) : regval ;
 	reg_writeval = masked_writeval << reg_startbit;
 
 #ifdef CPUIF_REGMAP_DEBUG
@@ -54,7 +57,7 @@ void nx_cpuif_reg_write_one_notread( __nx_cpuif_symbol__ symbol, unsigned int  r
 
 	WriteIODW(reg, reg_val);
 #ifdef CPUIF_REGMAP_DEBUG
-	nx_cpuif_debug_print("\n[DEBUG] reg_val = 0x%x(%d)", reg_val, reg_val );
+	nx_cpuif_debug_print("\n[DEBUG] reg_val = 0x%x(%d)", reg_val, reg_val);
 	nx_cpuif_debug_print("\n[DEBUG] ===============================================");
 	nx_cpuif_debug_print("\n");
 #endif

@@ -50,7 +50,7 @@ endif
 # Top Names
 ###########################################################################
 PROJECT_NAME		= etacarinae
-LDS_NAME		= $(PROJECT_NAME).lds
+LDS_NAME		= $(PROJECT_NAME)_$(EMUL_CPU)_$(OPMODE).lds
 
 
 ###########################################################################
@@ -87,17 +87,17 @@ endif
 # MISC tools for MS-DOS
 ###########################################################################
 ifeq ($(OS),Windows_NT)
-MKDIR			= mkdir
+KDIR			= mkdir
 RM			= del /q /f
-MV			= move
+V			= move
 CD			= cd
 CP			= copy
 ECHO			= echo
 RMDIR			= rmdir /s /q
 else
-MKDIR			= mkdir -p
+KDIR			= mkdir -p
 RM			= rm -f
-MV			= mv
+V			= mv
 CD			= cd
 CP			= cp
 ECHO			= echo
@@ -113,15 +113,15 @@ ARLIBFLAGS		= -v -s
 ASFLAG			= -D__ASSEMBLY__ -D$(OPMODE)
 
 
-CFLAGS			+= -g -Wall						\
-			-Wextra -ffreestanding -fno-builtin			\
-		 	-mlittle-endian						\
-		 	-mcpu=$(CPU)						\
-			$(CODE_MAIN_INCLUDE)					\
-			-D__arm	-D$(OPMODE) -D$(EMUL_CPU)			\
+CFLAGS			+= -g -Wall					\
+			-Wextra -ffreestanding -fno-builtin		\
+			-mlittle-endian					\
+			-mcpu=$(CPU)					\
+			$(CODE_MAIN_INCLUDE)				\
+			-D__arm	-D$(OPMODE) -D$(EMUL_CPU)		\
 
 ifeq ($(OPMODE) , aarch32)
-CFLAGS			+= -msoft-float				\
+CFLAGS			+= -msoft-float					\
 			-mstructure-size-boundary=32
 endif
 

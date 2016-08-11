@@ -326,12 +326,12 @@ static CBOOL NANDFlash_SetAddr(NANDBOOTECSTATUS *pBootStatus)
 		pNandAccess->NAND_CMD = NAND_CMD_READ_1ST;
 
 		// +------------------------+-------+-------+
-		// |		NFTYPE			| COL	| ROW	|
+		// |		NFTYPE      | COL   | ROW   |
 		// +------------------------+-------+-------+
-		// | 2'b00 : Small 3 addr	|	1	|	2	|
-		// | 2'b01 : Small 4 addr	|	1	|	3	|
-		// | 2'b10 : Large 4 addr	|	2	|	2	|
-		// | 2'b11 : Large 5 addr	|	2	|	3	|
+		// | 2'b00 : Small 3 addr   |	1   |	2   |
+		// | 2'b01 : Small 4 addr   |	1   |	3   |
+		// | 2'b10 : Large 4 addr   |	2   |	2   |
+		// | 2'b11 : Large 5 addr   |	2   |	3   |
 		// +------------------------+-------+-------+
 			pNandAccess->NAND_ADDR = 0;			// COL 1st
 		if (nftype & 0x2)
@@ -406,7 +406,7 @@ static CBOOL NANDFlash_ReadSector(NANDBOOTECSTATUS *pBootStatus, U32 *pData)
 	// Reset H/W BCH decoder.
 	temp = pNandControl->NFCONTROL;
 	temp &= ~ (NX_NFCTRL_EXSEL_W);
-	temp |= (((temp & NX_NFCTRL_EXSEL_R)>>1) | NX_NFCTRL_ECCRST);
+	temp |= (((temp & NX_NFCTRL_EXSEL_R) >> 1) | NX_NFCTRL_ECCRST);
 	temp &= ~ (NX_NFCTRL_HWBOOT_W);
 	pNandControl->NFCONTROL = temp;
 
@@ -450,7 +450,7 @@ static CBOOL NANDFlash_ReadSector(NANDBOOTECSTATUS *pBootStatus, U32 *pData)
 		NX_DEBUG_MSG(" sector : ");
 
 		// load elp
-		pNandControl->NFECCCTRL = 
+		pNandControl->NFECCCTRL =
 			0 << NX_NFECCCTRL_RUNECC_W |
 			1 << NX_NFECCCTRL_ELPLOAD |	   // load elp
 			NX_NF_DECODE << NX_NFECCCTRL_DECMODE_W |
@@ -503,7 +503,7 @@ CBOOL iNANDBOOTEC(U32 option)
 	pNandControl->NFTOCH = regtemp;
 	pNandControl->NFTCAH = regtemp;
 
-    
+
 	pGPIOReg[GPIO_GROUP_C]->GPIOx_ALTFN[0] =
 		(pGPIOReg[GPIO_GROUP_C]->GPIOx_ALTFN[0] & ~0x00000300) |
 		0x00000300;		        // C  4     ALT3

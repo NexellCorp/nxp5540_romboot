@@ -182,32 +182,32 @@ static CBOOL SDMMCFSBOOT(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 //------------------------------------------------------------------------------
 U32 iSDXCFSBOOT(U32 option)
 {
- 	CBOOL	result = CFALSE;
- 	SDXCBOOTSTATUS SDXCBootStatus, *pSDXCBootStatus, **pgSDXCBootStatus;
- 
- 	pgSDXCBootStatus = (SDXCBOOTSTATUS**)(BASEADDR_SRAM + INTERNAL_SRAM_SIZE - sizeof(U32));
- 	*pgSDXCBootStatus = pSDXCBootStatus = &SDXCBootStatus;
- 
- 	pSDXCBootStatus->SDPort = ((option >> SELSDPORT) & 0x1);
- 	if (option & 1UL << SELSDPORT1)
- 		pSDXCBootStatus->SDPort += 2;
- 
- 	if (pSDXCBootStatus->SDPort >= 3) {
- 		pSDXCBootStatus->SDPort = 2;
- 		pSDXCBootStatus->bHighSpeed = CTRUE;
- 	} else
- 		pSDXCBootStatus->bHighSpeed = CFALSE;
- 
- 	NX_SDPADSetALT(pSDXCBootStatus->SDPort);
- 
- 	/*--------------------------------------------------------------------*/
- 	/* Normal SD(eSD)/MMC ver 4.2 boot */
- 
- 	NX_SDMMC_Init(pSDXCBootStatus);
- 	result = SDMMCFSBOOT(pSDXCBootStatus, option);
- 	NX_SDMMC_Terminate(pSDXCBootStatus);
- 
- 	NX_SDPADSetGPIO(pSDXCBootStatus->SDPort);
- 
- 	return result;
+	CBOOL	result = CFALSE;
+	SDXCBOOTSTATUS SDXCBootStatus, *pSDXCBootStatus, **pgSDXCBootStatus;
+
+	pgSDXCBootStatus = (SDXCBOOTSTATUS**)(BASEADDR_SRAM + INTERNAL_SRAM_SIZE - sizeof(U32));
+	*pgSDXCBootStatus = pSDXCBootStatus = &SDXCBootStatus;
+
+	pSDXCBootStatus->SDPort = ((option >> SELSDPORT) & 0x1);
+	if (option & 1UL << SELSDPORT1)
+		pSDXCBootStatus->SDPort += 2;
+
+	if (pSDXCBootStatus->SDPort >= 3) {
+		pSDXCBootStatus->SDPort = 2;
+		pSDXCBootStatus->bHighSpeed = CTRUE;
+	} else
+		pSDXCBootStatus->bHighSpeed = CFALSE;
+
+	NX_SDPADSetALT(pSDXCBootStatus->SDPort);
+
+	/*--------------------------------------------------------------------*/
+	/* Normal SD(eSD)/MMC ver 4.2 boot */
+
+	NX_SDMMC_Init(pSDXCBootStatus);
+	result = SDMMCFSBOOT(pSDXCBootStatus, option);
+	NX_SDMMC_Terminate(pSDXCBootStatus);
+
+	NX_SDPADSetGPIO(pSDXCBootStatus->SDPort);
+
+	return result;
 }
