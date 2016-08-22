@@ -152,6 +152,7 @@ typedef struct _FATFS {
 	U32	dirbase;	/* Root directory start sector (Cluster# on FAT32) */
 	U32	database;	/* Data start sector */
 	U32	winsect;	/* Current sector appearing in the win[] */
+	U32 *	diskhandle;	/* storage handle */
 	U8	win[_MAX_SS];	/* Disk access window for Directory/FAT */
 } FATFS;
 
@@ -246,11 +247,14 @@ typedef enum {
 /*--------------------------------------------------------------*/
 /* FatFs module application interface                           */
 
-FRESULT f_mount(const char **path, FATFS *rfs, U8 chk_wp);	/* mount filesystem to disk */
-FRESULT f_open(FIL*, const char*, U8, FATFS*);		/* Open or create a file */
-FRESULT f_read(FIL*, void*, U32, U32*);		/* Read data from a file */
-FRESULT f_close(FIL*);					/* Close an open file object */
-
+/* mount filesystem to disk */
+FRESULT f_mount(const char **path, FATFS *rfs, U8 chk_wp);
+/* Open or create a file */
+FRESULT f_open(FIL*, const char*, U8, FATFS*);
+/* Read data from a file */
+FRESULT f_read(FIL*, void*, U32, U32*);
+/* Close an open file object */
+FRESULT f_close(FIL*);
 
 /*--------------------------------------------------------------*/
 /* Flags and offset address                                     */

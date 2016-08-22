@@ -41,14 +41,14 @@
 #endif
 #endif
 
-typedef struct __nx_cpuif_symbol_struct__ {
+typedef struct __nx_cpuif_sym_struct__ {
 	unsigned int *baseaddr;
 	unsigned int offset;
 	unsigned int startbit;
 	unsigned int bitwidth;
-} __nx_cpuif_symbol__ ;
+} _nx_cpuif_sym_ ;
 
-#define CPUIF_END (__nx_cpuif_symbol__){0,0,0,0}
+#define CPUIF_END (_nx_cpuif_sym_){0,0,0,0}
 #define nx_cpuif_regmap_MAX_LIST 128
 
 
@@ -61,12 +61,12 @@ extern "C"
 void NX_CONSOLE_Printf(const char *FormatString, ...);
 #endif
 
-void nx_cpuif_reg_write_one_notread(__nx_cpuif_symbol__ symbol, unsigned int  regval);
-void nx_cpuif_reg_write_one(__nx_cpuif_symbol__ symbol, unsigned int   regval);
-unsigned int  nx_cpuif_reg_read_one(__nx_cpuif_symbol__ symbol, unsigned int * regval);
+void nx_cpuif_reg_write_one_notread(_nx_cpuif_sym_ symbol, unsigned int  regval);
+void nx_cpuif_reg_write_one(_nx_cpuif_sym_ symbol, unsigned int   regval);
+unsigned int  nx_cpuif_reg_read_one(_nx_cpuif_sym_ symbol, unsigned int * regval);
 
-void nx_cpuif_reg_write(__nx_cpuif_symbol__ symbol, unsigned int   regval, ...);
-unsigned int  nx_cpuif_reg_read(__nx_cpuif_symbol__ symbol, unsigned int * regval, ...);
+void nx_cpuif_reg_write(_nx_cpuif_sym_ symbol, unsigned int   regval, ...);
+unsigned int  nx_cpuif_reg_read(_nx_cpuif_sym_ symbol, unsigned int * regval, ...);
 #ifdef	__cplusplus
 }
 #endif
@@ -101,5 +101,3 @@ struct g_nx_cpuif_regmap_array
 #endif // #ifdef	__cplusplus
 
 #endif // #ifdef __NX_CPUIF_REG_FUNC_HEADER__
-
-

@@ -28,67 +28,67 @@ extern "C"
 //------------------------------------------------------------------------------
 //@{
 
-    /// @brief ECID Module's Register List
-    struct  NX_ECID_RegisterSet
-    {
-        volatile U32 ECID[4];           ///< 0x00  ~ 0x0C   : 128bit ECID Register
-        volatile U8  CHIPNAME[48];      ///< 0x10  ~ 0x3C   : Chip Name Register
-        volatile U32 RESERVED0;         ///< 0x40           : Reserved Region
-        volatile U32 GUID0;             ///< 0x44           : GUID 0 Register
-        volatile U16 GUID1;             ///< 0x48           : GUID 1 Register
-        volatile U16 GUID2;             ///< 0x4A           : GUID 2 Register
-        volatile U8  GUID3[8];          ///< 0x4C  ~ 0x50   : GUID 3-0 ~ 3-7 Register
-        volatile U32 EC[3];             ///< 0x54  ~ 0x5C   : EC 0 ~ 2 Register
-        volatile U32 BLOWCON;           ///< 0x60           : Blowing Control
-        volatile U32 BLOWCFG0;          ///< 0x64           : CLK, BIT Cycle
-        volatile U32 BLOWCFG1;          ///< 0x68           : FSR, PRW Cycle
-        volatile U32 RESERVED1;         ///< 0x6C           : sense re-start
-        volatile U32 BLOWDATA[4];       ///< 0x70  ~ 0x7C   : 128bit blow data
-        volatile U32 SJTAG[4];          ///< 0x80  ~ 0x8C   : 128bit SJTAG Register
-        volatile U32 BJTAG[4];          ///< 0x90  ~ 0x9C   : 128bit BJTAG Register
-        volatile U32 RSTCFG;            ///< 0xA0           : 32bit Reset Config Register
-        volatile U32 RESERVED3[3];      ///< 0xA4  ~ 0xAC   : Reserved Region
-        volatile U32 SBOOTCFG;          ///< 0xB0           : Secure Key Configuration
-        volatile U32 RESERVED4[3];      ///< 0xB4  ~ 0xBC   : Reserved Region
-        volatile U32 SBOOTKEY[8];       ///< 0xC0  ~ 0xDC   : Compare Secure Key
-        volatile U32 SECCFG[4];         ///< 0xE0  ~ 0xEC   : Secure User Efuse
-        volatile U32 RESERVED5[(0x300-0xF0)/4];     ///< 0xF0  ~ 0x2FC  : Reserved Region
-        volatile U32 CRAESKEY[4];       ///< 0x300 ~ 0x30C  : Cyrpto Aes Key
-    };
+/// @brief ECID Module's Register List
+	struct  NX_ECID_RegisterSet
+	{
+		volatile U32 ECID[4];           ///< 0x00  ~ 0x0C   : 128bit ECID Register
+		volatile U8  CHIPNAME[48];      ///< 0x10  ~ 0x3C   : Chip Name Register
+		volatile U32 RESERVED0;         ///< 0x40           : Reserved Region
+		volatile U32 GUID0;             ///< 0x44           : GUID 0 Register
+		volatile U16 GUID1;             ///< 0x48           : GUID 1 Register
+		volatile U16 GUID2;             ///< 0x4A           : GUID 2 Register
+		volatile U8  GUID3[8];          ///< 0x4C  ~ 0x50   : GUID 3-0 ~ 3-7 Register
+		volatile U32 EC[3];             ///< 0x54  ~ 0x5C   : EC 0 ~ 2 Register
+		volatile U32 BLOWCON;           ///< 0x60           : Blowing Control
+		volatile U32 BLOWCFG0;          ///< 0x64           : CLK, BIT Cycle
+		volatile U32 BLOWCFG1;          ///< 0x68           : FSR, PRW Cycle
+		volatile U32 RESERVED1;         ///< 0x6C           : sense re-start
+		volatile U32 BLOWDATA[4];       ///< 0x70  ~ 0x7C   : 128bit blow data
+		volatile U32 SJTAG[4];          ///< 0x80  ~ 0x8C   : 128bit SJTAG Register
+		volatile U32 BJTAG[4];          ///< 0x90  ~ 0x9C   : 128bit BJTAG Register
+		volatile U32 RSTCFG;            ///< 0xA0           : 32bit Reset Config Register
+		volatile U32 RESERVED3[3];      ///< 0xA4  ~ 0xAC   : Reserved Region
+		volatile U32 SBOOTCFG;          ///< 0xB0           : Secure Key Configuration
+		volatile U32 RESERVED4[3];      ///< 0xB4  ~ 0xBC   : Reserved Region
+		volatile U32 SBOOTKEY[8];       ///< 0xC0  ~ 0xDC   : Compare Secure Key
+		volatile U32 SECCFG[4];         ///< 0xE0  ~ 0xEC   : Secure User Efuse
+		volatile U32 RESERVED5[(0x300-0xF0)/4];     ///< 0xF0  ~ 0x2FC  : Reserved Region
+		volatile U32 CRAESKEY[4];       ///< 0x300 ~ 0x30C  : Cyrpto Aes Key
+	};
 
-    /// @brief ECID Module's GUID Format
-    typedef struct {
-        U32 GUID0;
-        U16 GUID1;
-        U16 GUID2;
-        U8  GUID3[8];
-    } NX_GUID;
+	/// @brief ECID Module's GUID Format
+	typedef struct {
+		U32 GUID0;
+		U16 GUID1;
+		U16 GUID2;
+		U8  GUID3[8];
+	} NX_GUID;
 
-    //--------------------------------------------------------------------------
-    enum CS {
-        CS_DISABLE = 0,
-        CS_ENABLE  = 1
-    };
+	//--------------------------------------------------------------------------
+	enum CS {
+		CS_DISABLE = 0,
+		CS_ENABLE  = 1
+	};
 
-    enum SIGDEV {
-        SIGDEV_DISABLE = 0,
-        SIGDEV_ENABLE  = 1
-    };
+	enum SIGDEV {
+		SIGDEV_DISABLE = 0,
+		SIGDEV_ENABLE  = 1
+	};
 
-    enum FSET {
-        FSET_DISABLE = 0,
-        FSET_ENABLE  = 1
-    };
+	enum FSET {
+		FSET_DISABLE = 0,
+		FSET_ENABLE  = 1
+	};
 
-    enum PRCHG {
-        PRCHG_DISABLE = 0,
-        PRCHG_ENABLE  = 1
-    };
+	enum PRCHG {
+		PRCHG_DISABLE = 0,
+		PRCHG_ENABLE  = 1
+	};
 
-    enum ECID_CPUIF_SEL {
-        ECID_NSC_CPUIF   = 0,       // non-secure cpu interface
-        ECID_SEC_CPUIF   = 1        // secure cpu interface
-    };
+	enum ECID_CPUIF_SEL {
+		ECID_NSC_CPUIF   = 0,       // non-secure cpu interface
+		ECID_SEC_CPUIF   = 1        // secure cpu interface
+	};
 
 
 //------------------------------------------------------------------------------

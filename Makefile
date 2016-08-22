@@ -25,21 +25,31 @@ LDFLAGS		= -Bstatic						\
 		-Wl,--end-group						\
 		-nostdlib
 
-SYS_OBJS	 = 	startup_$(OPMODE).o iROMBOOT.o CRYPTO.o GPIO.o
+SYS_OBJS	 = 	startup_$(OPMODE)_$(EMUL_CPU).o iROMBOOT.o CRYPTO.o libplat.o printf.o debug.o
 SYS_OBJS	+= 	iSDHCBOOT.o
 SYS_OBJS	+= 	iUSBBOOT.o
 SYS_OBJS	+= 	iSPIBOOT.o
 SYS_OBJS	+= 	iNANDBOOTEC.o
 SYS_OBJS	+= 	iSDHCFSBOOT.o fatfs.o diskio.o
+SYS_OBJS	+= 	libarm.o lib_$(OPMODE).o
+
+ifeq ($(EMUL_CPU), NXP5540)
 SYS_OBJS	+= 	cpuif_regmap_framework.o
 SYS_OBJS	+= 	nx_chip_sfr.o
-SYS_OBJS	+= 	libarm.o lib_$(OPMODE).o
+endif
 
 SYS_OBJS_LIST	= 	$(addprefix $(DIR_OBJOUTPUT)/,$(SYS_OBJS))
 
-SYS_INCLUDES 	=	-I ./src			\
-			-I ./prototype/base 		\
+SYS_INCLUDES 	=	-I ./src
+
+ifeq ($(EMUL_CPU), NXP5430)
+SYS_INCLUDES 	+=	-I ./oldprototype/base 		\
+			-I ./oldprototype/module
+endif
+ifeq ($(EMUL_CPU), NXP5540)
+SYS_INCLUDES 	+=	-I ./prototype/base 		\
 			-I ./prototype/module
+endif
 
 
 ################################################################################
@@ -73,7 +83,9 @@ endif
 link:
 	$(Q)echo [link.... $(PROJECT_NAME).elf]
 	$(Q)$(CC) $(SYS_OBJS_LIST) $(LDFLAGS) -o $(DIR_TARGETOUTPUT)/$(PROJECT_NAME).elf
+ifeq ($(EMUL_CPU), NXP5540)
 #	@cp -f $(DIR_TARGETOUTPUT)/$(PROJECT_NAME).elf  ../../bootcodegen/firstly_boot_program.elf
+endif
 
 bin:
 	$(Q)echo [binary.... $(PROJECT_NAME).bin]

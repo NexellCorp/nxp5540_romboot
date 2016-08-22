@@ -27,10 +27,18 @@
 #include <nx_debug2.h>
 #include <nx_type.h>
 
+#ifdef NXP5430
 #include <nx_chip.h>
+#endif
+
+#ifdef NXP5540
+#include <nx_chip_iomux.h>
+#endif
 
 #include <nx_gpio.h>
 #include <nx_mcus.h>
+#include "libarm.h"
+#include "libplat.h"
 #include "nx_etacarinae_bootheader.h"
 
 #define ROW_START			(0)
@@ -151,8 +159,8 @@ static S32 NX_NAND_GetErrorLocation(U32 *pLocation)
 				NX_NFECCSTATUS_CHIENERR) >> 4;
 	volatile U32 *pRegErrLoc = pNandControl->NFERRLOCATION;
 
-	if (((pNandControl->NFECCSTATUS & NX_NFECCSTATUS_CHIENERR)>>4) !=
-		((pNandControl->NFECCSTATUS & NX_NFECCSTATUS_ELPERR)>>16))
+	if (((pNandControl->NFECCSTATUS & NX_NFECCSTATUS_CHIENERR) >> 4) !=
+		((pNandControl->NFECCSTATUS & NX_NFECCSTATUS_ELPERR) >> 16))
 		return -1;
 
 	for (i = 0; i < ErrorCount / 2; i++) {
@@ -485,11 +493,33 @@ sd 5   b 21 0 gpio:1 reset:0	sdex 5 b  8 2 gpio:0 reset:0
 sd 6   b 22 0 gpio:1 reset:0	sdex 6 b  9 2 gpio:0 reset:0
 sd 7   b 23 0 gpio:1 reset:0	sdex 7 b 10 2 gpio:0 reset:0
 */
+
+#ifdef NXP5540
+static const union nxpad nandpad[14] = {
+	PADI_MCUS_SD_0_,
+	PADI_MCUS_SD_1_,
+	PADI_MCUS_SD_2_,
+	PADI_MCUS_SD_3_,
+	PADI_MCUS_SD_4_,
+	PADI_MCUS_SD_5_,
+	PADI_MCUS_SD_6_,
+	PADI_MCUS_SD_7_,
+	PADI_MCUS_nNFOE,
+	PADI_MCUS_nNFWE,
+	PADI_MCUS_nNCS_0_,
+	PADI_MCUS_ALE,
+	PADI_MCUS_CLE,
+	PADI_MCUS_RnB
+};
+#endif
+
 void Decrypt(U32 *SrcAddr, U32 *DestAddr, U32 Size);
 //------------------------------------------------------------------------------
 CBOOL iNANDBOOTEC(U32 option)
 {
-	CBOOL Result = CTRUE;
+	CBOOL Result = CFALSE;
+	U32 dwBinAddr, dwBinAddr_Save, BootSize;
+	S32 iBinSecLeft;
 	NANDBOOTECSTATUS BootStatus, *pBootStatus;
 	struct NX_SecondBootInfo *pSBI;
 
@@ -503,7 +533,7 @@ CBOOL iNANDBOOTEC(U32 option)
 	pNandControl->NFTOCH = regtemp;
 	pNandControl->NFTCAH = regtemp;
 
-
+#ifdef NXP5430
 	pGPIOReg[GPIO_GROUP_C]->GPIOx_ALTFN[0] =
 		(pGPIOReg[GPIO_GROUP_C]->GPIOx_ALTFN[0] & ~0x00000300) |
 		0x00000300;		        // C  4     ALT3
@@ -524,64 +554,64 @@ CBOOL iNANDBOOTEC(U32 option)
 	pGPIOReg[GPIO_GROUP_C]->GPIOx_ALTFN[1] =
 		(pGPIOReg[GPIO_GROUP_C]->GPIOx_ALTFN[1] & ~0xC000FFFF) |
 		0xC000FFFF;	// C 31, 23, 22, 21, 20, 19, 18, 17, 16 ALT3, C 30 ALT2
+#endif
+#ifdef NXP5540
+	U32 i;
+	for (i = 0; i < 14; i++) {
+		GPIOSetAltFunction(&nandpad[i].padi, CTRUE);
+		GPIOSetDrvSt(&nandpad[i].padi, NX_GPIO_DRVSTRENGTH_3);
+		GPIOSetPullup(&nandpad[i].padi, NX_GPIO_PULL_OFF);
+	}
+#endif
 
-	if (NANDFlash_Open(pBootStatus, option)) {
-		if (NANDFlash_ReadSector(pBootStatus, (U32 *)pSBI)) {
-			if (option & 1<< DECRYPT)
-				Decrypt((U32*)pSBI, (U32*)pSBI,
-						pBootStatus->dwSectorSize);
+	if (!NANDFlash_Open(pBootStatus, option))
+		goto errexit;
 
-			if (pSBI->SIGNATURE == HEADER_ID) {
-				U32 dwBinAddr, dwBinAddr_Save, BootSize;
-				S32 iBinSecLeft;
-				BootSize = pSBI->LOADSIZE;
+	if (!NANDFlash_ReadSector(pBootStatus, (U32 *)pSBI))
+		goto errexit;
 
-				if (BootSize >
-					INTERNAL_SRAM_SIZE - SECONDBOOT_STACK)
-					BootSize =
-						INTERNAL_SRAM_SIZE -
-						SECONDBOOT_STACK;
+	if (option & 1 << DECRYPT)
+		Decrypt((U32*)pSBI, (U32*)pSBI,
+				pBootStatus->dwSectorSize);
 
-				/* already read 512 byte when header load. */
-				if (pBootStatus->dwSectorSize > 512)
-					BootSize -= 512;
+	if (pSBI->SIGNATURE != HEADER_ID)
+		goto errexit;
 
-				iBinSecLeft = getquotient(BootSize +
-						(pBootStatus->dwSectorSize - 1),
-						pBootStatus->dwSectorSize);
+	BootSize = pSBI->LOADSIZE;
 
-				dwBinAddr_Save =
-					dwBinAddr =
-					(U32)BASEADDR_SRAM +
-					pBootStatus->dwSectorSize;
-				while (iBinSecLeft--) {
-					if (NANDFlash_ReadSector(pBootStatus,
-								(U32 *)dwBinAddr)) {
-						dwBinAddr +=
-							pBootStatus->dwSectorSize;
-					} else {
-						Result = CFALSE;
-						break;
-					}
-				}
-				if (option & 1<< DECRYPT)
-					Decrypt((U32*)dwBinAddr_Save,
-							(U32*)dwBinAddr_Save,
-							BootSize);
-			} else
-				Result = CFALSE;
-		} else
-			Result = CFALSE;
-	} else
-		Result = CFALSE;
+	if (BootSize > INTERNAL_SRAM_SIZE - SECONDBOOT_STACK)
+		BootSize = INTERNAL_SRAM_SIZE - SECONDBOOT_STACK;
 
+	/* already read 512 byte when header load. */
+	if (pBootStatus->dwSectorSize > 512)
+		BootSize -= 512;
+
+	iBinSecLeft = getquotient(BootSize + (pBootStatus->dwSectorSize - 1),
+					pBootStatus->dwSectorSize);
+
+	dwBinAddr_Save = dwBinAddr =
+				(U32)BASEADDR_SRAM + pBootStatus->dwSectorSize;
+	while (iBinSecLeft--) {
+		if (NANDFlash_ReadSector(pBootStatus, (U32 *)dwBinAddr))
+			dwBinAddr += pBootStatus->dwSectorSize;
+		else
+			break;
+	}
+
+	if (iBinSecLeft == 0) {
+		if (option & 1 << DECRYPT)
+			Decrypt((U32*)dwBinAddr_Save,
+				(U32*)dwBinAddr_Save,
+				BootSize);
+		Result = CTRUE;
+	}
+errexit:
 	NANDFlash_Close();
 
 	pNandControl->NFCONTROL =
 		(pNandControl->NFCONTROL &
 		 ~(NX_NFCTRL_BANK | NX_NFCTRL_HWBOOT_W | NX_NFCTRL_EXSEL_W)) |
 		0x00;	// nNSCS0, Select SD bus
-
 
 	return Result;
 }

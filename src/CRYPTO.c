@@ -23,7 +23,9 @@
 #include <nx_chip.h>
 
 #include <nx_crypto.h>
-//#include <nx_clkgen.h>
+#ifdef NXP5430
+#include <nx_clkgen.h>
+#endif
 #include <nx_ecid.h>
 
 #ifdef SW_CRYPTO_EMUL
@@ -346,26 +348,28 @@ void ResetCon(U32 devicenum, CBOOL en);
 
 static struct NX_ECID_RegisterSet * const pECIDReg =
 		(struct NX_ECID_RegisterSet *)PHY_BASEADDR_ECID_MODULE;
+#ifdef NXP5430
 static struct NX_CLKGEN_RegisterSet * const pCryptoClkGenReg =
 		(struct NX_CLKGEN_RegisterSet *)PHY_BASEADDR_CLKGEN34_MODULE;
+#endif
 static NX_CRYPTO_RegisterSet * const pCrypto =
 		(NX_CRYPTO_RegisterSet *)PHY_BASEADDR_CRYPTO_MODULE;
 
 void Decrypt(U32 *SrcAddr, U32 *DestAddr, U32 Size)
 {
-	register U32 i = 0, DataSize = ((Size + 15) & 0xFFF0);
+	register U32 i = 0, DataSize = ((Size + 15) & 0x3FFF0);
 #ifdef NXP5430
-//	ResetCon(RESETINDEX_OF_ECID_MODULE_i_nRST, CTRUE);	// reset on
-//	ResetCon(RESETINDEX_OF_ECID_MODULE_i_nRST, CFALSE);	// reset negate
+	ResetCon(RESETINDEX_OF_ECID_MODULE_i_nRST, CTRUE);	// reset on
+	ResetCon(RESETINDEX_OF_ECID_MODULE_i_nRST, CFALSE);	// reset negate
 #endif
 
 	while (!(pECIDReg->EC[2] & 0x1 << 15));	// wait for ecid ready
 
 #ifdef NXP5430
-//	ResetCon(RESETINDEX_OF_CRYPTO_MODULE_i_nRST, CTRUE);	// reset on
-//	ResetCon(RESETINDEX_OF_CRYPTO_MODULE_i_nRST, CFALSE);	// reset negate
+	ResetCon(RESETINDEX_OF_CRYPTO_MODULE_i_nRST, CTRUE);	// reset on
+	ResetCon(RESETINDEX_OF_CRYPTO_MODULE_i_nRST, CFALSE);	// reset negate
 
-//	pCryptoClkGenReg->CLKENB = 1 << 3;	// pclk always mode.
+	pCryptoClkGenReg->CLKENB = 1 << 3;	// pclk always mode.
 #endif
 
 	while (i < (DataSize >> 2)) {			// 128bits == 4bytes x 4

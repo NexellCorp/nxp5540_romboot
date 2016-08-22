@@ -20,16 +20,28 @@
 #include <nx_etacarinae.h>
 #include "nx_etacarinae_bootoption.h"
 #include <nx_type.h>
-#include <nx_debug2.h>
+#include "debug.h"
 
+#ifdef NXP5430
 #include <nx_chip.h>
 
+#endif
+#ifdef NXP5540
+#include <nx_chip_sfr.h>
+#endif
 #include <nx_clkpwr.h>
 #include <nx_alive.h>
 #include <nx_gpio.h>
+#include "printf.h"
 
+#ifdef NXP5430
 struct NX_GPIO_RegisterSet (* const pGPIOReg)[1] =
 	(struct NX_GPIO_RegisterSet (*)[])PHY_BASEADDR_GPIOA_MODULE;
+#endif
+#ifdef NXP5540
+struct NX_GPIO_RegisterSet (* const pGPIOReg)[1] =
+	(struct NX_GPIO_RegisterSet (*)[])PHY_BASEADDR_GPIO1_MODULE;
+#endif
 struct NX_ALIVE_RegisterSet * const pALIVEReg =
 	(struct NX_ALIVE_RegisterSet *)PHY_BASEADDR_ALIVE_MODULE;
 
@@ -41,6 +53,7 @@ void iROMBOOT(U32 OrgBootOption)
 	U32 BootState = 0;
 	U32 option = OrgBootOption;
 
+#ifdef NXP5430
 	//--------------------------------------------------------------------------
 	// Power Management Control
 	//--------------------------------------------------------------------------
@@ -51,28 +64,25 @@ void iROMBOOT(U32 OrgBootOption)
 
 	// Disable writing data to ALIVE registers.
 	pALIVEReg->ALIVEPWRGATEREG 	= 0;
+#endif
 
 	//--------------------------------------------------------------------------
 	// Debug Console
 	//--------------------------------------------------------------------------
-	#if defined(NX_DEBUG)
-	DebugInit();
+	DebugInit(3);
 
-	DebugPutString( "\n\n" );
-	DebugPutString( "--------------------------------------------------------------------------------\n" );
-	DebugPutString( " iROMBOOT by Nexell Co. : Built on " );
-	DebugPutString( __DATE__ );
-	DebugPutString( " " );
-	DebugPutString( __TIME__ );
-	DebugPutString( "\n" );
-	DebugPutString( "--------------------------------------------------------------------------------\n\n" );
-	#endif	// NX_DEBUG
+	printf(
+"\r\n\n"
+"-------------------------------------------------------------------------------\r\n"
+" iROMBOOT by Nexell Co. : Built on %s %s\r\n"
+"-------------------------------------------------------------------------------\r\n\n",
+__DATE__, __TIME__);
 
 
 	do {
-		//--------------------------------------------------------------------------
-		// iROMBOOT mode : option [2:0]
-		//--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+// iROMBOOT mode : option [2:0]
+//--------------------------------------------------------------------------
 		switch ((option >> BOOTMODE) & 0x7) {
 		case SDFSBOOT :	// iSDHCFSBOOT (SD/MMC/eSD/eMMC)
 		{
@@ -113,47 +123,48 @@ void iROMBOOT(U32 OrgBootOption)
 			break;
 
 		option = OrgBootOption & ~0x7UL;
-		if (BootState == 0) {
-			BootState = 1;
-			if (option & 1<<NEXTTRY) {
-				if (((OrgBootOption & 0x7) == SDBOOT) ||
-					((OrgBootOption & 0x7) == SDFSBOOT)) {
-					if (OrgBootOption & 1 << PORTNUMBER1) {// port 2 or 2 High speed
-						option &= ~(1 << PORTNUMBER1);
-						if (option & 1 << NEXTPORT)
-							option &= ~(1 << PORTNUMBER);		// 2 or 3 => 0
-						else
-							option |= 1 << PORTNUMBER;		// 2 or 3 => 1
-					} else {
-						if (OrgBootOption & 1 << PORTNUMBER) {		// port 1
-							if (option & 1 << NEXTPORT)
-								option |= 1<<PORTNUMBER1;	// 1 => 2
-							option &= ~(1 << PORTNUMBER); 	// 1 => 0
-						} else {		// port 0
-							if (option & 1 << NEXTPORT)
-								option |= 1 << PORTNUMBER;	// 0 => 1
-							else
-								option |= 1 << PORTNUMBER1;	// 0 => 2
-						}
-					}
-				} else {
-					if ((OrgBootOption & 0x7) != NANDECBOOT)
-						option &= ~(1 << PORTNUMBER1);
-					if (option & 1 << NEXTPORT) {
-						option ^= 1 << PORTNUMBER;
-					}
-				}
-
-				if (option & 1 << USE_FS)
-					option |= SDFSBOOT;
-				else
-					option |= SDBOOT;
-			}
-		} else {
+		if (BootState != 0) {
 			option |= USBBOOT;
+			continue;
 		}
 
-	} while(1);
+		BootState = 1;
+		if (!(option & 1 << NEXTTRY))
+			continue;
+
+		if (((OrgBootOption & 0x7) == SDBOOT) ||
+			((OrgBootOption & 0x7) == SDFSBOOT)) {
+			if (OrgBootOption & 1 << PORTNUMBER1) {// port 2 or 2 High speed
+				option &= ~(1 << PORTNUMBER1);
+				if (option & 1 << NEXTPORT)
+					option &= ~(1 << PORTNUMBER);	// 2 or 3 => 0
+				else
+					option |= 1 << PORTNUMBER;	// 2 or 3 => 1
+			} else {
+				if (OrgBootOption & 1 << PORTNUMBER) {	// port 1
+					if (option & 1 << NEXTPORT)
+						option |= 1 << PORTNUMBER1;	// 1 => 2
+					option &= ~(1 << PORTNUMBER);		// 1 => 0
+				} else {					// port 0
+					if (option & 1 << NEXTPORT)
+						option |= 1 << PORTNUMBER;	// 0 => 1
+					else
+						option |= 1 << PORTNUMBER1;	// 0 => 2
+				}
+			}
+		} else {
+			if ((OrgBootOption & 0x7) != NANDECBOOT)
+				option &= ~(1 << PORTNUMBER1);
+			if (option & 1 << NEXTPORT) {
+				option ^= 1 << PORTNUMBER;
+			}
+		}
+
+		if (option & 1 << USE_FS)
+			option |= SDFSBOOT;
+		else
+			option |= SDBOOT;
+	} while (1);
 
 
 	pLaunch();

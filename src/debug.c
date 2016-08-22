@@ -1,232 +1,240 @@
 //------------------------------------------------------------------------------
-//
-//	Copyright (C) 2009 Nexell Co. All Rights Reserved
-//	Nexell Co. Proprietary & Confidential
-//
-//	NEXELL INFORMS THAT THIS CODE AND INFORMATION IS PROVIDED "AS IS" BASE
-//	AND	WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING
-//	BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS
-//	FOR A PARTICULAR PURPOSE.
-//
-//	Module		:
-//	File		:
-//	Description	:
-//	Author		:
-//	Export		:
-//	History		:
-//
-//------------------------------------------------------------------------------
-#include <nx_peridot.h>
-#include <debug.h>
-
-#if defined(NX_DEBUG)
-#include <nx_chip.h>
-
-#include <nx_gpio.h>
-#include <nx_CLKGEN.h>
+/*
+ *	Copyright (C) 2012 Nexell Co., All Rights Reserved
+ *	Nexell Co. Proprietary & Confidential
+ *
+ *	NEXELL INFORMS THAT THIS CODE AND INFORMATION IS PROVIDED "AS IS" BASE
+ *	AND WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING
+ *	BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR
+ *	FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ *	Module		:
+ *	File		: debug.c
+ *	Description	:
+ *	Author		: Hans
+ *	History		: 
+ *
+ */
 #include <nx_uart.h>
+#include "libarm.h"
+#include "libplat.h"
 
-#define SOURCE_CLOCK	NX_CLKSRCPLL1_FREQ
-#define SOURCE_DIVID	(10UL)				// 147456000/10 = 14745600
-#define BAUD_RATE		(115200)
-
-#define BAUD_RATE		(115200)
-
-void ResetCon(U32 devicenum, CBOOL en);
-void GPIOSetAltFunction(U32 AltFunc);
-U32 get_fcs(U32 fcs, U8 data);
-
-#if DIRECT_IO
-extern struct NX_GPIO_RegisterSet (* const pGPIOReg)[1];
+#ifdef NXP5430
+#include <nx_chip.h>
+#include <nx_tieoff.h>
+#include <nx_clkgen.h>
 #endif
-static struct NX_CLKGEN_RegisterSet * const pUartClkGenReg =
-	(struct NX_CLKGEN_RegisterSet *)PHY_BASEADDR_CLKGEN22_MODULE;
-static struct NX_UART_RegisterSet * const pUARTReg =
-	(struct NX_UART_RegisterSet *)PHY_BASEADDR_UART0_MODULE;
 
+#ifdef NXP5540
+#include "cpuif_regmap_framework.h"
+#include <nx_chip_iomux.h>
+#include <nx_chip_sfr.h>
+#include <nx_clockcontrol_def.h>
+#include <nx_resetcontrol_def.h>
+#endif
+
+#define NX_CLKSRC_UART 0
+#define SOURCE_DIVID	(4UL)
+#define BAUD_RATE	(115200)
+
+static struct NX_UART_RegisterSet * pReg_Uart;
+
+#ifdef NXP5430
+const U32 UARTBASEADDR[] =
+{
+	PHY_BASEADDR_UART0_MODULE,
+	PHY_BASEADDR_pl01115_Uart_modem_MODULE,
+	PHY_BASEADDR_UART1_MODULE,
+	PHY_BASEADDR_pl01115_Uart_nodma0_MODULE,
+	PHY_BASEADDR_pl01115_Uart_nodma1_MODULE,
+	PHY_BASEADDR_pl01115_Uart_nodma2_MODULE
+};
+const U32 UARTCLKGENADDR[] =
+{
+	PHY_BASEADDR_CLKGEN22_MODULE,
+	PHY_BASEADDR_CLKGEN24_MODULE,
+	PHY_BASEADDR_CLKGEN23_MODULE,
+	PHY_BASEADDR_CLKGEN25_MODULE,
+	PHY_BASEADDR_CLKGEN26_MODULE,
+	PHY_BASEADDR_CLKGEN27_MODULE
+};
+const U8 RESETNUM[] =
+{
+	RESETINDEX_OF_UART0_MODULE_nUARTRST,
+	RESETINDEX_OF_pl01115_Uart_modem_MODULE_nUARTRST,
+	RESETINDEX_OF_UART1_MODULE_nUARTRST,
+	RESETINDEX_OF_pl01115_Uart_nodma0_MODULE_nUARTRST,
+	RESETINDEX_OF_pl01115_Uart_nodma1_MODULE_nUARTRST,
+	RESETINDEX_OF_pl01115_Uart_nodma2_MODULE_nUARTRST
+};
+const U32 GPIOALTNUM[] =
+{
+	PADINDEX_OF_UART0_UARTRXD,
+	PADINDEX_OF_UART0_UARTTXD,
+	PADINDEX_OF_pl01115_Uart_modem_UARTRXD,
+	PADINDEX_OF_pl01115_Uart_modem_UARTTXD,
+	PADINDEX_OF_UART1_UARTRXD,
+	PADINDEX_OF_UART1_UARTTXD,
+	PADINDEX_OF_pl01115_Uart_nodma0_UARTRXD,
+	PADINDEX_OF_pl01115_Uart_nodma0_UARTTXD,
+	PADINDEX_OF_pl01115_Uart_nodma1_UARTRXD,
+	PADINDEX_OF_pl01115_Uart_nodma1_UARTTXD,
+	PADINDEX_OF_pl01115_Uart_nodma2_UARTRXD,
+	PADINDEX_OF_pl01115_Uart_nodma2_UARTTXD
+};
+const U32 UARTSMC[] =
+{
+	TIEOFFINDEX_OF_UART0_USESMC,
+	TIEOFFINDEX_OF_UART0_SMCTXENB,
+	TIEOFFINDEX_OF_UART0_SMCRXENB,
+	TIEOFFINDEX_OF_UART2_USESMC,
+	TIEOFFINDEX_OF_UART2_SMCTXENB,
+	TIEOFFINDEX_OF_UART2_SMCRXENB,
+	TIEOFFINDEX_OF_UART1_USESMC,
+	TIEOFFINDEX_OF_UART1_SMCTXENB,
+	TIEOFFINDEX_OF_UART1_SMCRXENB,
+	TIEOFFINDEX_OF_UART3_USESMC,
+	TIEOFFINDEX_OF_UART3_SMCTXENB,
+	TIEOFFINDEX_OF_UART3_SMCRXENB,
+	TIEOFFINDEX_OF_UART4_USESMC,
+	TIEOFFINDEX_OF_UART4_SMCTXENB,
+	TIEOFFINDEX_OF_UART4_SMCRXENB,
+	TIEOFFINDEX_OF_UART5_USESMC,
+	TIEOFFINDEX_OF_UART5_SMCTXENB,
+	TIEOFFINDEX_OF_UART5_SMCRXENB
+};
+#endif
+
+#ifdef NXP5430
+static struct NX_TIEOFF_RegisterSet * const pReg_Tieoff =
+	(struct NX_TIEOFF_RegisterSet *)PHY_BASEADDR_TIEOFF_MODULE;
+#endif
+
+#ifdef NXP5540
+#if 0
+#define PHY_BASEADDR_CMU_BBUS_MODULE		0x20130000
+#define CMUI_UART_0_CORE_grp_clk_src	{PHY_BASEADDR_CMU_BBUS_MODULE, 0x400, 0, 32}
+#define CMUI_UART_0_CORE_dy_div_val	{PHY_BASEADDR_CMU_BBUS_MODULE, 0x448, 0, 32}
+#define CMUI_UART_0_CORE_dy_div_busy_st	{PHY_BASEADDR_CMU_BBUS_MODULE, 0x450, 0, 32}
+#define CMUI_UART_0_CORE_clk_enb	{PHY_BASEADDR_CMU_BBUS_MODULE, 0x40c, 0, 1}
+#define CMUI_UART_0_APB_clk_enb		{PHY_BASEADDR_CMU_BBUS_MODULE, 0x20c, 3, 1}
+#define RSTI_uart_0_core_rst		{PHY_BASEADDR_CMU_BBUS_MODULE, ((1 << 15)|0x0), 20, 1}
+#endif
+
+#define PADI_UART0_TXD			((1 << 16) | (4 << 8) | (24 << 3) | 1)
+#endif
 //------------------------------------------------------------------------------
 
-CBOOL DebugInit(void)
+CBOOL DebugInit(U32 port)
 {
-#if DIRECT_IO
-	register U32 *pGPIOxReg =
-		(U32 *)&pGPIOReg[(PADINDEX_OF_UART0_UARTRXD >> 8) & 0x7]->GPIOxALTFN[(PADINDEX_OF_UART0_UARTRXD >> 6) & 0x1];
-	*pGPIOxReg = (*pGPIOxReg & ~0x30000000) | 0x10000000;
-#else
-	 GPIOSetAltFunction(PADINDEX_OF_UART0_UARTRXD);
-#endif
-	ResetCon(RESETINDEX_OF_UART0_MODULE_nUARTRST, CTRUE);	// reset on
-	ResetCon(RESETINDEX_OF_UART0_MODULE_nUARTRST, CFALSE);	// reset negate
+	U32 SOURCE_CLOCK;
+#ifdef NXP5430
+	pReg_Uart = (struct NX_UART_RegisterSet *)(UARTBASEADDR[port]);
+	struct NX_CLKGEN_RegisterSet * const pReg_UartClkGen =
+		(struct NX_CLKGEN_RegisterSet * const)(UARTCLKGENADDR[port]);
+	U32 reset_number = RESETNUM[port];
+	U32 GPIO_TXD = GPIOALTNUM[port * 2 + 1];
 
-	pUartClkGenReg->CLKENB	= (1 << 3);			// PCLKMODE : always, Clock Gen Disable
-	pUartClkGenReg->CLKGEN[0]	= ((SOURCE_DIVID - 1) << 5) | (1 << 2);	// UARTCLK = PLL1 / 10 = 147,456,000 / 10 = 14,745,600 Hz
+	SOURCE_CLOCK = 800000000;
+
+	GPIOSetAltFunction(GPIO_TXD);
+
+	pReg_Tieoff->TIEOFFREG[((UARTSMC[port * 3 + 0]) & 0xFFFF) >> 5] &=
+				(~(1 << ((UARTSMC[port * 3 + 0]) & 0x1F)));
+	pReg_Tieoff->TIEOFFREG[((UARTSMC[port * 3 + 1]) & 0xFFFF) >> 5] &=
+				(~(1 << ((UARTSMC[port * 3 + 1]) & 0x1F)));
+	pReg_Tieoff->TIEOFFREG[((UARTSMC[port * 3 + 2]) & 0xFFFF) >> 5] &=
+				(~(1 << ((UARTSMC[port * 3 + 2]) & 0x1F)));
+
+	ResetCon(reset_number, CTRUE);	// reset on
+	ResetCon(reset_number, CFALSE); // reset negate
+
+	pReg_UartClkGen->CLKENB = (1 << 3);	// PCLKMODE : always, Clock Gen Disable
+	pReg_UartClkGen->CLKGEN[0] = ((SOURCE_DIVID - 1) << 5) |
+					(NX_CLKSRC_UART << 2);
+#endif
+#ifdef NXP5540
+	U32 regval;
+	GPIOSetAltFunction(PADI_UART0_TXD, CTRUE);
+
+	nx_cpuif_reg_write_one(CMUI_UART_0_CORE_grp_clk_src, NX_CLKSRC_UART);
+	// sdmmc core clock divider value
+	nx_cpuif_reg_write_one(CMUI_UART_0_CORE_dy_div_val, (SOURCE_DIVID - 1));
+	while (1 == nx_cpuif_reg_read_one(CMUI_UART_0_CORE_dy_div_busy_st, &regval));
+	// sdmmc core clock enable
+	nx_cpuif_reg_write_one(CMUI_UART_0_CORE_clk_enb, 1);
+
+	// sdmmc bus clock enable
+	nx_cpuif_reg_write_one(CMUI_UART_0_APB_clk_enb, 1);
+	// sdmmc reset enable
+	nx_cpuif_reg_write_one(RSTI_uart_0_core_rst, 1);
+#endif
 
 	//--------------------------------------------------------------------------
-	pUARTReg->LCR_H	= 0x0070;	// 8 bit, none parity, stop 1, normal mode
-	pUARTReg->CR	= 0x0200;	// rx enable
+	pReg_Uart->LCON 	= 0x3;
 
-	pUARTReg->IBRD	= (U16)(SOURCE_CLOCK/SOURCE_DIVID / ((BAUD_RATE / 1) * 16));	// IBRD = 8, 115200bps
-	pUARTReg->FBRD	= (U16)(SOURCE_CLOCK/SOURCE_DIVID % ((BAUD_RATE / 1) * 16));	// FBRD = 0,
+	pReg_Uart->UCON 	= 0x113340;
 
-	pUartClkGenReg->CLKENB	= (1 << 3) | (1 << 2);		// PCLKMODE : always, Clock Gen Enable
+	pReg_Uart->FCON 	= 0x441;
+
+	pReg_Uart->MCON 	= 0x00;
+
+	pReg_Uart->BRDR 	= getquotient(
+					getquotient(SOURCE_CLOCK, SOURCE_DIVID),
+					((BAUD_RATE / 1) * 16)) - 1;
+	pReg_Uart->FRACVAL	= getquotient(
+					((getremainder(
+						getquotient(SOURCE_CLOCK,
+							SOURCE_DIVID),
+						((BAUD_RATE / 1) * 16)) + 32) * 16),
+					((BAUD_RATE / 1) * 16));
+
+#ifdef NXP5430
+	// PCLKMODE : always, Clock Gen Enable
+	pReg_UartClkGen->CLKENB = (1 << 3) | (1 << 2);
+#endif
+#ifdef NXP5540
+//	nx_cpuif_reg_write_one(CMUI_UART_0_CORE_clk_enb, 1);
+#endif
+
+
+	pReg_Uart->UCON 	= 0x113345;
+	//--------------------------------------------------------------------------
 
 	return CTRUE;
 }
 
-void DebugPutch(S8 ch)
+void	DebugPutch(S8 ch)
 {
-	const U16 TX_FIFO_FULL	= 1 << 5;
-	while (pUARTReg->FR & TX_FIFO_FULL)	{ ; }
-	pUARTReg->DR = (U32)ch;
+	const U32 TX_FIFO_FULL = 1 << 24;
+	while (pReg_Uart->FSTATUS & TX_FIFO_FULL)	{ ; }
+	pReg_Uart->THR = (U32)ch;
 }
 
-S8 DebugGetch(void)
+CBOOL	DebugIsUartTxDone(void)
 {
-	const U16 RX_FIFO_EMPTY	= 1 << 4;
-	while (pUARTReg->FR & RX_FIFO_EMPTY)	{ ; }
-	return (S8)pUARTReg->DR;
+	const U32 TX_TRANS_EMPTY = 1 << 2;
+	if ((pReg_Uart->FSTATUS >> 16) & 0xFF)
+		return (CBOOL)CFALSE;
+	else
+		return (CBOOL)(pReg_Uart->USTATUS & TX_TRANS_EMPTY) ?
+				CTRUE : CFALSE;
 }
 
-//------------------------------------------------------------------------------
-
-void DebugPutString(const S8* const String)
+CBOOL	DebugIsTXEmpty(void)
 {
-	const S8 *pString;
-
-	pString = (const S8 *)String;
-	while (CNULL != *pString)
-		DebugPutch(*pString++);
+	return (CBOOL)((pReg_Uart->FSTATUS >> 16) & 0xFF) ? CFALSE : CTRUE;
 }
 
-S32 DebugGetString(S8* const pStringBuffer)
+CBOOL	DebugIsBusy(void)
 {
-	S8	*pString = pStringBuffer;
-	S8	buf;
-	S32		iSize	= 0;
-
-	while (1) {
-		/* get character */
-		buf = DebugGetch();
-
-		/* backspace */
-		if (buf == 0x08) {
-			if (iSize > 0) {
-				DebugPutch(buf);
-				DebugPutch(' ');
-				DebugPutch(buf);
-
-				pString--;
-				iSize--;
-			}
-			continue;
-		}
-
-		/* print character */
-		DebugPutch(buf);
-
-		if (buf == '\r')	break;
-
-		/* increase string index */
-		*pString++ = buf;
-		iSize++;
-	}
-
-	*pString++ = '\0';
-
-	return iSize;
+	const U32 TX_TRANS_EMPTY = 1 << 2;
+	return (CBOOL)(pReg_Uart->USTATUS & TX_TRANS_EMPTY) ? CTRUE : CFALSE;
 }
 
-//------------------------------------------------------------------------------
-void DebugPutDec(S32 value)
+S8	DebugGetch(void)
 {
-	S8 ch[16];
-	U32 data;
-	S32	i, chsize;
-
-	data = (value < 0) ? (U32)(-value) : (U32)value;
-
-	chsize = 0;
-	do {
-		ch[chsize++] = (data % 10) + '0';
-		data /= 10;
-	} while (data != 0);
-
-	if (value < 0)
-		DebugPutch('-');
-
-	for (i = 0; i < chsize; i++)
-		DebugPutch(ch[chsize - i - 1]);
+	const U32 RX_FIFO_EMPTY	= 1 << 4;
+	while (pReg_Uart->FSTATUS & RX_FIFO_EMPTY)	{ ; }
+	return (S8)pReg_Uart->RBR;
 }
-
-//------------------------------------------------------------------------------
-void	DebugPutHex(S32 value)
-{
-	S8 ch;
-	U32 data;
-	S32	i;
-
-	data = (U32)value;
-
-	DebugPutch('0');
-	DebugPutch('x');
-
-	for( i=0 ; i<8 ; i++ )
-	{
-		ch = (S8)(( data >> (28 - i*4) ) & 0xF);
-		ch = (ch > 9 ) ? (ch - 10 + 'A') : (ch + '0');
-		DebugPutch( ch );
-	}
-}
-
-//------------------------------------------------------------------------------
-void	DebugPutByte( S8 value )
-{
-	S8 ch;
-	U32 data;
-	S32	i;
-
-	data = (U32)value;
-
-	for( i=0 ; i<2 ; i++ )
-	{
-		ch = (S8)(( data >> (4 - i*4) ) & 0xF);
-		ch = (ch > 9 ) ? (ch - 10 + 'A') : (ch + '0');
-		DebugPutch( ch );
-	}
-}
-
-//------------------------------------------------------------------------------
-void	DebugPutWord( S16 value )
-{
-	S8 ch;
-	U32 data;
-	S32	i;
-
-	data = (U32)value;
-
-	for( i=0 ; i<4 ; i++ )
-	{
-		ch = (S8)(( data >> (12 - i*4) ) & 0xF);
-		ch = (ch > 9 ) ? (ch - 10 + 'A') : (ch + '0');
-		DebugPutch( ch );
-	}
-}
-
-//------------------------------------------------------------------------------
-void	DebugPutDWord( S32 value )
-{
-	S8 ch;
-	U32 data;
-	S32	i;
-
-	data = (U32)value;
-
-	for( i=0 ; i<8 ; i++ )
-	{
-		ch = (S8)(( data >> (28 - i*4) ) & 0xF);
-		ch = (ch > 9 ) ? (ch - 10 + 'A') : (ch + '0');
-		DebugPutch( ch );
-	}
-}
-
-#endif	// NX_DEBUG

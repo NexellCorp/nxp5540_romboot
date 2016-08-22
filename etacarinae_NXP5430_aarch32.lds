@@ -4,11 +4,11 @@ ENTRY(Vectors)
 
 SECTIONS
 {
-	. = 0x00000000;
+	. = 0x50000000;
 	. = ALIGN(4);
 	.text :
 	{
-		obj/startup_aarch32.o	(.text)
+		obj/startup_aarch32_NXP5430.o	(.text)
 		*(.text)
 	}
 

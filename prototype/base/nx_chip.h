@@ -103,106 +103,106 @@ extern "C" {
 //-----------
 // NUMBER OF MODULES
 //-----------
-		#define NUMBER_OF_CORE										4
-		#define NUMBER_OF_CPUIF_P5QP_MODULE							1
-        #define NUMBER_OF_nx01301_CORTEXA9MP_TOP_QUADL2C_MODULE     1
-        #define NUMBER_OF_MCUSTOP_MODULE                            1
-        #define NUMBER_OF_AXISRAM_MODULE                            1
-        #define NUMBER_OF_DMA_MODULE                                2
-        #define NUMBER_OF_SDMA_MODULE                               2
-        #define NUMBER_OF_MDMA_MODULE                               1
-        #define NUMBER_OF_DREX_MODULE                               1
-        #define NUMBER_OF_CLKPWR_MODULE                             1
-        #define NUMBER_OF_INTC_MODULE                               1
-        #define NUMBER_OF_pl01115_Uart_modem_MODULE                 1
-        #define NUMBER_OF_UART_MODULE                               9
-        //#define NUMBER_OF_pl01115_Uart_nodma_MODULE                 3
-        #define NUMBER_OF_SSP_MODULE                                3
-        // @modified sei 2015-03-20 : add 3 more i2c module
-        #define NUMBER_OF_I2C_MODULE                                5
-        #define NUMBER_OF_I2S_MODULE                                4
-        #define NUMBER_OF_DEINTERLACE_MODULE                        1
-        #define NUMBER_OF_SCALER_MODULE                             3 //@modified by choiyk 2015/11/30
-        #define NUMBER_OF_AC97_MODULE                               1
-        #define NUMBER_OF_SPDIFRX_MODULE                            1
-        #define NUMBER_OF_SPDIFTX_MODULE                            1
-        #define NUMBER_OF_TIMER_MODULE                              2
-        #define NUMBER_OF_PWM_MODULE                                4
-        #define NUMBER_OF_CLKGEN_MODULE                             41
-        #define NUMBER_OF_WDT_MODULE                                2
-        #define NUMBER_OF_MPEGTSI_MODULE                            1
-        #define NUMBER_OF_DISPLAYTOP_MODULE                         1
-        #define NUMBER_OF_VIP_MODULE                                4
-        #define NUMBER_OF_MALI400_MODULE                            1
-        #define NUMBER_OF_ADC_MODULE                                1
-        #define NUMBER_OF_PPM_MODULE                                1
-        #define NUMBER_OF_ahb3x1_MODULE                             1
-        #define NUMBER_OF_SDMMC_MODULE                              3
-        #define NUMBER_OF_CODA980_MODULE                            1
-        #define NUMBER_OF_DWC_GMAC_MODULE                           1
-        #define NUMBER_OF_USB20OTG_MODULE                           1
-        #define NUMBER_OF_USB20HOST_MODULE                          1
-        #define NUMBER_OF_USB3_MODULE                          		1
-        #define NUMBER_OF_CAN_MODULE                                2
-        #define NUMBER_OF_ECID_MODULE                               1
-        #define NUMBER_OF_RSTCON_MODULE                             1
-        #define NUMBER_OF_A3BM_AXI_TOP_MASTER_BUS_MODULE            1
-        #define NUMBER_OF_A3BM_AXI_BOTTOM_MASTER_BUS_MODULE         1
-        #define NUMBER_OF_A3BM_AXI_PERI_BUS_MODULE                  1
-        #define NUMBER_OF_A3BM_AXI_DISPLAY_BUS_MODULE               1
-        #define NUMBER_OF_GPIO_MODULE                               8
-        #define NUMBER_OF_CRYPTO_MODULE                             1
-        #define NUMBER_OF_PDM_MODULE                                4
-        #define NUMBER_OF_TIEOFF_MODULE                             1
-        #define NUMBER_OF_TMCB_MODULE                               4
-        #define NUMBER_OF_TMU_MODULE                                1
+#define NUMBER_OF_CORE					4
+#define NUMBER_OF_CPUIF_P5QP_MODULE			1
+#define NUMBER_OF_nx01301_CORTEXA9MP_TOP_QUADL2C_MODULE	1
+#define NUMBER_OF_MCUSTOP_MODULE			1
+#define NUMBER_OF_AXISRAM_MODULE			1
+#define NUMBER_OF_DMA_MODULE				2
+#define NUMBER_OF_SDMA_MODULE				2
+#define NUMBER_OF_MDMA_MODULE				1
+#define NUMBER_OF_DREX_MODULE				1
+#define NUMBER_OF_CLKPWR_MODULE				1
+#define NUMBER_OF_INTC_MODULE				1
+#define NUMBER_OF_pl01115_Uart_modem_MODULE		1
+#define NUMBER_OF_UART_MODULE				9
+//#define NUMBER_OF_pl01115_Uart_nodma_MODULE		3
+#define NUMBER_OF_SSP_MODULE				3
+// @modified sei 2015-03-20 : add 3 more i2c module
+#define NUMBER_OF_I2C_MODULE				5
+#define NUMBER_OF_I2S_MODULE				4
+#define NUMBER_OF_DEINTERLACE_MODULE			1
+#define NUMBER_OF_SCALER_MODULE				3 //@modified by choiyk 2015/11/30
+#define NUMBER_OF_AC97_MODULE				1
+#define NUMBER_OF_SPDIFRX_MODULE			1
+#define NUMBER_OF_SPDIFTX_MODULE			1
+#define NUMBER_OF_TIMER_MODULE				2
+#define NUMBER_OF_PWM_MODULE				4
+#define NUMBER_OF_CLKGEN_MODULE				41
+#define NUMBER_OF_WDT_MODULE				2
+#define NUMBER_OF_MPEGTSI_MODULE			1
+#define NUMBER_OF_DISPLAYTOP_MODULE			1
+#define NUMBER_OF_VIP_MODULE				4
+#define NUMBER_OF_MALI400_MODULE			1
+#define NUMBER_OF_ADC_MODULE				1
+#define NUMBER_OF_PPM_MODULE				1
+#define NUMBER_OF_ahb3x1_MODULE				1
+#define NUMBER_OF_SDMMC_MODULE				3
+#define NUMBER_OF_CODA980_MODULE			1
+#define NUMBER_OF_DWC_GMAC_MODULE			1
+#define NUMBER_OF_USB20OTG_MODULE			1
+#define NUMBER_OF_USB20HOST_MODULE			1
+#define NUMBER_OF_USB3_MODULE                          	1
+#define NUMBER_OF_CAN_MODULE				2
+#define NUMBER_OF_ECID_MODULE				1
+#define NUMBER_OF_RSTCON_MODULE				1
+#define NUMBER_OF_A3BM_AXI_TOP_MASTER_BUS_MODULE	1
+#define NUMBER_OF_A3BM_AXI_BOTTOM_MASTER_BUS_MODULE	1
+#define NUMBER_OF_A3BM_AXI_PERI_BUS_MODULE		1
+#define NUMBER_OF_A3BM_AXI_DISPLAY_BUS_MODULE		1
+#define NUMBER_OF_GPIO_MODULE				8
+#define NUMBER_OF_CRYPTO_MODULE				1
+#define NUMBER_OF_PDM_MODULE				4
+#define NUMBER_OF_TIEOFF_MODULE				1
+#define NUMBER_OF_TMCB_MODULE				4
+#define NUMBER_OF_TMU_MODULE				1
 
-        #define NUMBER_OF_TZPC_MODULE                               1
+#define NUMBER_OF_TZPC_MODULE				1
 
 
-	// @added by choiyk 2014/09/15, MLC, DPC
-		#define NUMBER_OF_DPC_MODULE 2
-		#define NUMBER_OF_MLC_MODULE 2
+// @added by choiyk 2014/09/15, MLC, DPC
+	#define NUMBER_OF_DPC_MODULE 2
+	#define NUMBER_OF_MLC_MODULE 2
 
-	// @added by yjkim 2014/12/29, PKA
-		#define NUMBER_OF_PKA_MODULE 1
+// @added by yjkim 2014/12/29, PKA
+	#define NUMBER_OF_PKA_MODULE 1
 
-	// @added by choiyk 2015/02/06, ISS_CPUIF
-		#define NUMBER_OF_ISS_CPUIF_MODULE 1
+// @added by choiyk 2015/02/06, ISS_CPUIF
+	#define NUMBER_OF_ISS_CPUIF_MODULE 1
 
-	// @added by choiyk 2016/05/18, LVDS
-		#define NUMBER_OF_LVDS_MODULE 2
-	// @added by yjkim 2015/11/30, WAVE
-		#define NUMBER_OF_WAVE412_MODULE 1
-		#define NUMBER_OF_WAVE420_MODULE 1
-		#define NUMBER_OF_WAVE412_MAPC_MODULE 1
+// @added by choiyk 2016/05/18, LVDS
+	#define NUMBER_OF_LVDS_MODULE 2
+// @added by yjkim 2015/11/30, WAVE
+	#define NUMBER_OF_WAVE412_MODULE 1
+	#define NUMBER_OF_WAVE420_MODULE 1
+	#define NUMBER_OF_WAVE412_MAPC_MODULE 1
 
-	// @added by charles 2015-12-09, CMU
-		#define NUMBER_OF_CMU_BBUS_MODULE		1
-		#define NUMBER_OF_CMU_CODA_MODULE   	1
-		#define NUMBER_OF_ARMTOP_MODULE			1
-		#define NUMBER_OF_ARMTOP_P1_MODULE		1
-		#define NUMBER_OF_CMU_DISP_MODULE   	1
-		#define NUMBER_OF_CMU_DREX0_MODULE  	1
-		#define NUMBER_OF_CMU_DREX1_MODULE  	1
-		#define NUMBER_OF_CMU_GPU_MODULE    	1
-		#define NUMBER_OF_CMU_HDMI_MODULE   	1
-		#define NUMBER_OF_CMU_ISP_MODULE    	1
-		#define NUMBER_OF_CMU_LBUS_MODULE   	1
-		#define NUMBER_OF_CMU_PCIE_MODULE   	1
-		#define NUMBER_OF_CMU_SYS_MODULE    	1
-		#define NUMBER_OF_CMU_TBUS_MODULE   	1
-		#define NUMBER_OF_CMU_USB_MODULE    	1
-		#define NUMBER_OF_CMU_WAVE_MODULE   	1
-		#define NUMBER_OF_CMU_WAVE420_MODULE	1
+// @added by charles 2015-12-09, CMU
+	#define NUMBER_OF_CMU_BBUS_MODULE		1
+	#define NUMBER_OF_CMU_CODA_MODULE   	1
+	#define NUMBER_OF_ARMTOP_MODULE			1
+	#define NUMBER_OF_ARMTOP_P1_MODULE		1
+	#define NUMBER_OF_CMU_DISP_MODULE   	1
+	#define NUMBER_OF_CMU_DREX0_MODULE  	1
+	#define NUMBER_OF_CMU_DREX1_MODULE  	1
+	#define NUMBER_OF_CMU_GPU_MODULE    	1
+	#define NUMBER_OF_CMU_HDMI_MODULE   	1
+	#define NUMBER_OF_CMU_ISP_MODULE    	1
+	#define NUMBER_OF_CMU_LBUS_MODULE   	1
+	#define NUMBER_OF_CMU_PCIE_MODULE   	1
+	#define NUMBER_OF_CMU_SYS_MODULE    	1
+	#define NUMBER_OF_CMU_TBUS_MODULE   	1
+	#define NUMBER_OF_CMU_USB_MODULE    	1
+	#define NUMBER_OF_CMU_WAVE_MODULE   	1
+	#define NUMBER_OF_CMU_WAVE420_MODULE	1
 
-		#define NUMBER_OF_CPUIF_SBUS_MODULE		1
-		#define NUMBER_OF_CPUIF_BBUS_MODULE		1
-		#define NUMBER_OF_CPUIF_LBUS_MODULE		1
-		#define NUMBER_OF_CPUIF_TBUS_MODULE		1
+	#define NUMBER_OF_CPUIF_SBUS_MODULE		1
+	#define NUMBER_OF_CPUIF_BBUS_MODULE		1
+	#define NUMBER_OF_CPUIF_LBUS_MODULE		1
+	#define NUMBER_OF_CPUIF_TBUS_MODULE		1
 
-	// @added by yjkim 2016/06/07, MCU
-		#define NUMBER_OF_MCU_MODULE			1
+// @added by yjkim 2016/06/07, MCU
+	#define NUMBER_OF_MCU_MODULE			1
 //------------
 // PHY BASEADDR
 //------------
@@ -404,46 +404,48 @@ extern "C" {
 //    #define PHY_BASEADDR_I2C0_MODULE                            0xC00A4000
 //    #define PHY_BASEADDR_I2C1_MODULE                            0xC00A5000
 //    #define PHY_BASEADDR_I2C2_MODULE                            0xC00A6000
-    #define PHY_BASEADDR_CLKGEN39_MODULE                        0xC00A7000
-    #define PHY_BASEADDR_CLKGEN24_MODULE                        0xC00A8000
-    #define PHY_BASEADDR_CLKGEN22_MODULE                        0xC00A9000
-    #define PHY_BASEADDR_CLKGEN23_MODULE                        0xC00AA000
-    #define PHY_BASEADDR_CLKGEN25_MODULE                        0xC00AB000
-    #define PHY_BASEADDR_CLKGEN37_MODULE                        0xC00AC000
-    #define PHY_BASEADDR_CLKGEN38_MODULE                        0xC00AD000
-    #define PHY_BASEADDR_CLKGEN6_MODULE                         0xC00AE000
-    #define PHY_BASEADDR_CLKGEN7_MODULE                         0xC00AF000
 
-    #define PHY_BASEADDR_CLKGEN8_MODULE                         0xC00B0000
-    #define PHY_BASEADDR_CLKGEN27_MODULE                        0xC00B1000
-    #define PHY_BASEADDR_CLKGEN15_MODULE                        0xC00B2000
-    #define PHY_BASEADDR_CLKGEN16_MODULE                        0xC00B3000
-    #define PHY_BASEADDR_CLKGEN17_MODULE                        0xC00B4000
-    #define PHY_BASEADDR_CLKGEN28_MODULE                        0xC00B5000
-    #define PHY_BASEADDR_CLKGEN35_MODULE                        0xC00B6000
-    #define PHY_BASEADDR_CLKGEN12_MODULE                        0xC00B7000
-    #define PHY_BASEADDR_CLKGEN11_MODULE                        0xC00B8000
-    #define PHY_BASEADDR_CLKGEN14_MODULE                        0xC00B9000
-    #define PHY_BASEADDR_CLKGEN13_MODULE                        0xC00BA000
-    #define PHY_BASEADDR_CLKGEN0_MODULE                         0xC00BB000
-    #define PHY_BASEADDR_CLKGEN1_MODULE                         0xC00BC000
-    #define PHY_BASEADDR_CLKGEN2_MODULE                         0xC00BD000
-    #define PHY_BASEADDR_CLKGEN3_MODULE                         0xC00BE000
-    #define PHY_BASEADDR_CLKGEN4_MODULE                         0xC00BF000
+#define PHY_BASEADDR_CLKGEN0_MODULE                         0xC00BB000
+#define PHY_BASEADDR_CLKGEN1_MODULE                         0xC00BC000
+#define PHY_BASEADDR_CLKGEN2_MODULE                         0xC00BD000
+#define PHY_BASEADDR_CLKGEN3_MODULE                         0xC00BE000
+#define PHY_BASEADDR_CLKGEN4_MODULE                         0xC00BF000
+#define PHY_BASEADDR_CLKGEN5_MODULE                         0xC00C0000
+#define PHY_BASEADDR_CLKGEN6_MODULE                         0xC00AE000
+#define PHY_BASEADDR_CLKGEN7_MODULE                         0xC00AF000
+#define PHY_BASEADDR_CLKGEN8_MODULE                         0xC00B0000
+#define PHY_BASEADDR_CLKGEN9_MODULE                         0xC00CA000
+#define PHY_BASEADDR_CLKGEN10_MODULE                        0xC00C8000
+#define PHY_BASEADDR_CLKGEN11_MODULE                        0xC00B8000
+#define PHY_BASEADDR_CLKGEN12_MODULE                        0xC00B7000
+#define PHY_BASEADDR_CLKGEN13_MODULE                        0xC00BA000
+#define PHY_BASEADDR_CLKGEN14_MODULE                        0xC00B9000
+#define PHY_BASEADDR_CLKGEN15_MODULE                        0xC00B2000
+#define PHY_BASEADDR_CLKGEN16_MODULE                        0xC00B3000
+#define PHY_BASEADDR_CLKGEN17_MODULE                        0xC00B4000
+#define PHY_BASEADDR_CLKGEN18_MODULE                        0xC00C5000
+#define PHY_BASEADDR_CLKGEN19_MODULE                        0xC00CC000
+#define PHY_BASEADDR_CLKGEN20_MODULE                        0xC00CD000
+#define PHY_BASEADDR_CLKGEN21_MODULE                        0xC00C3000
+#define PHY_BASEADDR_CLKGEN22_MODULE                        0xC00A9000
+#define PHY_BASEADDR_CLKGEN23_MODULE                        0xC00AA000
+#define PHY_BASEADDR_CLKGEN24_MODULE                        0xC00A8000
+#define PHY_BASEADDR_CLKGEN25_MODULE                        0xC00AB000
 
-    #define PHY_BASEADDR_CLKGEN5_MODULE                         0xC00C0000
-    #define PHY_BASEADDR_CLKGEN30_MODULE                        0xC00C1000
-    #define PHY_BASEADDR_CLKGEN31_MODULE                        0xC00C2000
-    #define PHY_BASEADDR_CLKGEN21_MODULE                        0xC00C3000
-    #define PHY_BASEADDR_CLKGEN29_MODULE                        0xC00C4000
-    #define PHY_BASEADDR_CLKGEN18_MODULE                        0xC00C5000
-    #define PHY_BASEADDR_CLKGEN34_MODULE                        0xC00C6000
-    #define PHY_BASEADDR_CLKGEN33_MODULE                        0xC00C7000
-    #define PHY_BASEADDR_CLKGEN10_MODULE                        0xC00C8000
-    #define PHY_BASEADDR_CLKGEN9_MODULE                         0xC00CA000
-    #define PHY_BASEADDR_CLKGEN36_MODULE                        0xC00CB000
-    #define PHY_BASEADDR_CLKGEN19_MODULE                        0xC00CC000
-    #define PHY_BASEADDR_CLKGEN20_MODULE                        0xC00CD000
+#define PHY_BASEADDR_CLKGEN27_MODULE                        0xC00B1000
+#define PHY_BASEADDR_CLKGEN28_MODULE                        0xC00B5000
+#define PHY_BASEADDR_CLKGEN29_MODULE                        0xC00C4000
+#define PHY_BASEADDR_CLKGEN30_MODULE                        0xC00C1000
+#define PHY_BASEADDR_CLKGEN31_MODULE                        0xC00C2000
+
+#define PHY_BASEADDR_CLKGEN33_MODULE                        0xC00C7000
+#define PHY_BASEADDR_CLKGEN34_MODULE                        0xC00C6000
+#define PHY_BASEADDR_CLKGEN35_MODULE                        0xC00B6000
+#define PHY_BASEADDR_CLKGEN36_MODULE                        0xC00CB000
+#define PHY_BASEADDR_CLKGEN37_MODULE                        0xC00AC000
+#define PHY_BASEADDR_CLKGEN38_MODULE                        0xC00AD000
+#define PHY_BASEADDR_CLKGEN39_MODULE                        0xC00A7000
+
     #define PHY_BASEADDR_CAN0_MODULE                            0xC00CE000
     #define PHY_BASEADDR_CAN1_MODULE                            0xC00CF000
 

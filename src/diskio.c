@@ -72,19 +72,17 @@ DRESULT disk_read (
 	U8 drv,			/* Physical drive nmuber (0..) */
 	U8 *buff,		/* Data buffer to store read data */
 	U32 sector,		/* Sector address (LBA) */
-	U8 count		/* Number of sectors to read (1..255) */
-)
+	U8 count,		/* Number of sectors to read (1..255) */
+	U32 *diskhandle)
 {
 	CBOOL	Result;
-	SDXCBOOTSTATUS *pSDXCBootStatus, **pgSDXCBootStatus;
-
-	pgSDXCBootStatus = (SDXCBOOTSTATUS**)(BASEADDR_SRAM+INTERNAL_SRAM_SIZE-sizeof(U32));
-	pSDXCBootStatus = *pgSDXCBootStatus;
+	SDXCBOOTSTATUS *pSDXCBootStatus = (SDXCBOOTSTATUS *)diskhandle;
 
 	switch (drv) {
-	case MMC :
-		Result = NX_SDMMC_ReadSectors( pSDXCBootStatus, sector, count, (U32*)buff );
-		if(Result)
+	case MMC:
+		Result = NX_SDMMC_ReadSectors(pSDXCBootStatus, sector,
+							count, (U32*)buff);
+		if (Result)
 			return RES_OK;
 	}
 	return RES_PARERR;

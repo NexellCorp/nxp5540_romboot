@@ -4,7 +4,7 @@ ENTRY(Vectors)
 
 SECTIONS
 {
-	. = 0xFFFF0200;
+	. = 0x50000000;
 	. = ALIGN(4);
 	.text :
 	{

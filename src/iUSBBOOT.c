@@ -26,23 +26,32 @@
 
 #include <nx_chip.h>
 
-//#include <nx_tieoff.h>
-#include <nx_tieoff_usb20otg.h>
 #include <nx_usb20otg.h>
 #include <iUSBBOOT.h>
 #include "nx_etacarinae_bootheader.h"
 
+#ifdef NXP5430
+#include <nx_tieoff.h>
+#endif
+
+#ifdef NXP5540
+#include <nx_tieoff_usb20otg.h>
 #include "nx_resetcontrol_def.h"
 #include "nx_clockcontrol_def.h"
 #include "cpuif_regmap_framework.h"
+#endif
 
-void ResetCon(U32 devicenum, CBOOL en);
-void Decrypt(U32 *SrcAddr, U32 *DestAddr, U32 Size);
+#include "libarm.h"
+#include "libplat.h"
 
-//static struct NX_TIEOFF_RegisterSet * const pTieoffreg =
-//	(struct NX_TIEOFF_RegisterSet *)PHY_BASEADDR_TIEOFF_MODULE;
+#ifdef NXP5430
+static struct NX_TIEOFF_RegisterSet * const pTieoffreg =
+	(struct NX_TIEOFF_RegisterSet *)PHY_BASEADDR_TIEOFF_MODULE;
+#endif
+#ifdef NXP5540
 static struct NX_TIEOFF_USB20OTG_RegisterSet * const pTieoffreg =
 	(struct NX_TIEOFF_USB20OTG_RegisterSet *)PHY_BASEADDR_TIEOFF_OTG_MODULE;
+#endif
 static struct NX_USB_OTG_RegisterSet * const pUOReg =
 	(struct NX_USB_OTG_RegisterSet *)PHY_BASEADDR_USB20OTG_MODULE_AHBS0;
 
@@ -821,17 +830,23 @@ CBOOL iUSBBOOT(U32 option)
 
 	for(i = 0; i < sizeof(USBBOOTSTATUS); i++);
 		ptr[i] = 0;
+#ifdef NXP5430
+	ResetCon(RESETINDEX_OF_USB20OTG_MODULE_i_nRST, CTRUE);  // reset on
+	ResetCon(RESETINDEX_OF_USB20OTG_MODULE_i_nRST, CFALSE); // reset negate
+#endif
 
-    nx_cpuif_reg_write_one(CMU_INFO_DEF__USB_CMU_0___CLK__clock_enable, 1);       // usb cmu clock enable
-    nx_cpuif_reg_write_one(RST_INFO_DEF__usb_cmu_0_rst, 1);                       // usb cmu reset release
+#ifdef NXP5540
+    nx_cpuif_reg_write_one(CMUI_USB_CMU_0_CLK_clk_enb, 1);	// usb cmu clock enable
+    nx_cpuif_reg_write_one(RSTI_usb_cmu_0_rst, 1);	// usb cmu reset release
 
-    nx_cpuif_reg_write_one(CMU_INFO_DEF__OTG_SYS_0___AHB__clock_enable, 1);       // usb otg ahb clock enable
-    nx_cpuif_reg_write_one(RST_INFO_DEF__otg_sys_0_ahb_rst, 1);                   // usb otg ahb reset release
-    nx_cpuif_reg_write_one(CMU_INFO_DEF__OTG_SYS_0___APB__clock_enable, 1);       // usb otg apb clock enable
-    nx_cpuif_reg_write_one(RST_INFO_DEF__otg_sys_0_apb_rst, 1);                   // usb otg apb reset release
+    nx_cpuif_reg_write_one(CMUI_OTG_SYS_0_AHB_clk_enb, 1);	// usb otg ahb clock enable
+    nx_cpuif_reg_write_one(RSTI_otg_sys_0_ahb_rst, 1);	// usb otg ahb reset release
+    nx_cpuif_reg_write_one(CMUI_OTG_SYS_0_APB_clk_enb, 1);	// usb otg apb clock enable
+    nx_cpuif_reg_write_one(RSTI_otg_sys_0_apb_rst, 1);	// usb otg apb reset release
 
-    nx_cpuif_reg_write_one(CMU_INFO_DEF__USB_0___AXI__clock_enable, 1);           // usb bus axi clock enable
-    nx_cpuif_reg_write_one(RST_INFO_DEF__usb_0_axi_rst, 1);                       // usb bus axi reset release
+    nx_cpuif_reg_write_one(CMUI_USB_0_AXI_clk_enb, 1);	// usb bus axi clock enable
+    nx_cpuif_reg_write_one(RSTI_usb_0_axi_rst, 1);	// usb bus axi reset release
+#endif
 
 
     pTieoffreg->TIEOFFREG[2] |= 3 << 29;          // 29: enable, 30:phy word interface (0: 8 bit, 1: 16 bit)
@@ -879,7 +894,7 @@ CBOOL iUSBBOOT(U32 option)
 		pUOReg->DCSR.DCTL &= ~SOFT_DISCONNECT;
 
 		/* usb init device */
-		pUOReg->DCSR.DCFG = 1<<18;// | pUSBBootStatus->speed<<0; /* [][1: full speed(30Mhz) 0:high speed]*/
+		pUOReg->DCSR.DCFG = 1 << 18;// | pUSBBootStatus->speed<<0; /* [][1: full speed(30Mhz) 0:high speed]*/
 		pUOReg->GCSR.GINTMSK = INT_RESUME | INT_OUT_EP | INT_IN_EP |
 					INT_ENUMDONE | INT_RESET | INT_SUSPEND |
 					INT_RX_FIFO_NOT_EMPTY;
@@ -907,14 +922,21 @@ CBOOL iUSBBOOT(U32 option)
 	pUOReg->GCSR.GRSTCTL = CORE_SOFT_RESET;
 	while (!(pUOReg->GCSR.GRSTCTL & AHB_MASTER_IDLE));
 
+#ifdef NXP5540
 	(*(volatile U32 *)(PHY_BASEADDR_USB20OTG_MODULE_APB + 0x00)) = 0x00; // reset Avalid, Bvalid, sessend
+#endif
 
 	pTieoffreg->TIEOFFREG[0] &= ~(1 << 8);	// 8 : i_nUtmiResetSync
 	pTieoffreg->TIEOFFREG[0] &= ~(1 << 7);	// 7 : i_nResetSync
 	pTieoffreg->TIEOFFREG[1] |=   3 << 27 ;	// 27 : POR_ENB=1, 28 : POR=1
 
-	nx_cpuif_reg_write_one( RST_INFO_DEF__otg_sys_0_ahb_rst, 0 );   // usb otg ahb reset release
-	nx_cpuif_reg_write_one( RST_INFO_DEF__otg_sys_0_apb_rst, 0 );   // usb otg apb reset release
+#ifdef NXP5430
+	ResetCon(RESETINDEX_OF_USB20OTG_MODULE_i_nRST, CTRUE);  // reset on
+#endif
+#ifdef NXP5540
+	nx_cpuif_reg_write_one(RSTI_otg_sys_0_ahb_rst, 0);   // usb otg ahb reset release
+	nx_cpuif_reg_write_one(RSTI_otg_sys_0_apb_rst, 0);   // usb otg apb reset release
+#endif
 
 	if (option & 1 << DECRYPT)
 		Decrypt((U32*)pUSBBootStatus->RxBuffAddr_save,

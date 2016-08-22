@@ -19,8 +19,8 @@
 ###########################################################################
 DEBUG			= y
 
-EMUL_CPU		= NXP5430
-#EMUL_CPU		= NXP5540
+#EMUL_CPU		= NXP5430
+EMUL_CPU		= NXP5540
 
 OPMODE			= aarch32
 #OPMODE			= aarch64
@@ -87,17 +87,17 @@ endif
 # MISC tools for MS-DOS
 ###########################################################################
 ifeq ($(OS),Windows_NT)
-KDIR			= mkdir
+MKDIR			= mkdir
 RM			= del /q /f
-V			= move
+MV			= move
 CD			= cd
 CP			= copy
 ECHO			= echo
 RMDIR			= rmdir /s /q
 else
-KDIR			= mkdir -p
+MKDIR			= mkdir -p
 RM			= rm -f
-V			= mv
+MV			= mv
 CD			= cd
 CP			= cp
 ECHO			= echo

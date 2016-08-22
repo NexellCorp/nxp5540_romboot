@@ -11,7 +11,7 @@
 	#define __NX_CPUIF_REG_FUNC_BODY__
 
 void nx_cpuif_reg_write_one_notread(
-		__nx_cpuif_symbol__ symbol,
+		_nx_cpuif_sym_ symbol,
 		unsigned int  regval)
 {
 	unsigned int * reg_addr;
@@ -24,7 +24,7 @@ void nx_cpuif_reg_write_one_notread(
 	unsigned int reg_bitwidth;
 	unsigned int masked_writeval;
 
-	reg_addr     = CAST_TO_PTR(*symbol.baseaddr +  symbol.offset);
+	reg_addr     = CAST_TO_PTR(*symbol.baseaddr + symbol.offset);
 	reg_startbit = symbol.startbit;
 	reg_bitwidth = symbol.bitwidth;
 
@@ -64,7 +64,7 @@ void nx_cpuif_reg_write_one_notread(
 
 }
 
-void nx_cpuif_reg_write_one(__nx_cpuif_symbol__ symbol, unsigned int  regval)
+void nx_cpuif_reg_write_one(_nx_cpuif_sym_ symbol, unsigned int  regval)
 {
 	unsigned int * reg_addr;
 	unsigned int reg_val;
@@ -76,7 +76,7 @@ void nx_cpuif_reg_write_one(__nx_cpuif_symbol__ symbol, unsigned int  regval)
 	unsigned int reg_bitwidth;
 	unsigned int masked_writeval;
 
-	reg_addr     = CAST_TO_PTR(*symbol.baseaddr +  symbol.offset);
+	reg_addr     = CAST_TO_PTR(*symbol.baseaddr + symbol.offset);
 	reg_startbit = symbol.startbit;
 	reg_bitwidth = symbol.bitwidth;
 
@@ -117,7 +117,9 @@ void nx_cpuif_reg_write_one(__nx_cpuif_symbol__ symbol, unsigned int  regval)
 
 }
 
-unsigned int nx_cpuif_reg_read_one (__nx_cpuif_symbol__ symbol, unsigned int * regval)
+unsigned int nx_cpuif_reg_read_one (
+		_nx_cpuif_sym_ symbol,
+		unsigned int * regval)
 {
 	unsigned int * reg_addr;
 	unsigned int reg_val;
@@ -132,7 +134,7 @@ unsigned int nx_cpuif_reg_read_one (__nx_cpuif_symbol__ symbol, unsigned int * r
 	reg_startbit = symbol.startbit;
 	reg_bitwidth = symbol.bitwidth;
 
-	reg = (unsigned int *) reg_addr;
+	reg = (unsigned int *)reg_addr;
 	reg_val  = ReadIODW(reg);
 #ifdef CPUIF_REGMAP_DEBUG
 	nx_cpuif_debug_print("\n[DEBUG] reg_val = 0x%x(%d), reg_addr = 0x%x",
@@ -160,7 +162,5 @@ unsigned int nx_cpuif_reg_read_one (__nx_cpuif_symbol__ symbol, unsigned int * r
 
 	return reg_readval;
 }
-
-
 
 #endif // #ifdef __NX_CPUIF_REG_FUNC_BODY__

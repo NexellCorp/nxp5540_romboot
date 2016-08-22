@@ -44,61 +44,67 @@ CBOOL ProcessNSIH(FIL *file, U8 *pOutData, U32 option)
 	NX_DEBUG_DEC(file->fsize);
 	NX_DEBUG_MSG("\r\n");
 
+	if (FSize > 32 * 1024)
+		FSize = 32 * 1024;
+
 	while (FSize) {
 		U32 RSize;
 		S8 txtbuffer[512];
 
-		if (f_read(file, (void*)txtbuffer, 512, &RSize) == FR_OK) {
-			U32 chcnt = 0;
-			FSize -= RSize;
+		if (f_read(file, (void*)txtbuffer, 512, &RSize) != FR_OK)
+			return CFALSE;
 
-			if (option & 1 << DECRYPT)
-				Decrypt((U32*)txtbuffer, (U32*)txtbuffer, RSize);
+		U32 chcnt = 0;
+		FSize -= RSize;
 
-			while (RSize > chcnt) {
-				S8 ch = txtbuffer[chcnt++];
+		if (option & 1 << DECRYPT)
+			Decrypt((U32*)txtbuffer, (U32*)txtbuffer, RSize);
 
-				if (skipline == 0) {
-					if (ch >= '0' && ch <= '9') {
-						writeval = writeval * 16 + ch - '0';
-						writesize += 4;
-					} else if (ch >= 'a' && ch <= 'f') {
-						writeval = writeval * 16 + ch - 'a' + 10;
-						writesize += 4;
-					} else if (ch >= 'A' && ch <= 'F') {
-						writeval = writeval * 16 + ch - 'A' + 10;
-						writesize += 4;
-					} else {
-						if (writesize == 8 ||
-							writesize == 16 ||
-							writesize == 32) {
-							S32 i;
-							for (i=0; i<writesize/8; i++) {
-								pOutData[bytesize++] = (U8)(writeval & 0xFF);
-								writeval >>= 8;
-							}
-						} else {
-							if (writesize != 0) {
-								NX_DEBUG_MSG("ProcessNSIH : Error at ");
-								NX_DEBUG_DEC(line + 1);
-								NX_DEBUG_MSG(" line.\r\n");
-								return CFALSE;
-							}
-						}
+		while (RSize > chcnt) {
+			S8 ch = txtbuffer[chcnt++];
 
-						writesize = 0;
-						skipline = 1;
+			if (ch == '\n') {
+				line++;
+				skipline = 0;
+				writeval = 0;
+				continue;
+			}
+
+			if (skipline == 1)
+				continue;
+
+			if (ch >= '0' && ch <= '9') {
+				writeval = writeval * 16 + ch - '0';
+				writesize += 4;
+			} else if (ch >= 'a' && ch <= 'f') {
+				writeval = writeval * 16 + ch - 'a' + 10;
+				writesize += 4;
+			} else if (ch >= 'A' && ch <= 'F') {
+				writeval = writeval * 16 + ch - 'A' + 10;
+				writesize += 4;
+			} else {
+				if (writesize == 8 ||
+					writesize == 16 ||
+					writesize == 32) {
+					S32 i;
+					for (i = 0; i < writesize / 8; i++) {
+						pOutData[bytesize++] =
+							(U8)(writeval & 0xFF);
+						writeval >>= 8;
+					}
+				} else {
+					if (writesize != 0) {
+						NX_DEBUG_MSG("ProcessNSIH : Error at ");
+						NX_DEBUG_DEC(line + 1);
+						NX_DEBUG_MSG(" line.\r\n");
+						return CFALSE;
 					}
 				}
 
-				if (ch == '\n') {
-					line++;
-					skipline = 0;
-					writeval = 0;
-				}
+				writesize = 0;
+				skipline = 1;
 			}
-		} else
-			return CFALSE;
+		}
 	}
 
 	NX_DEBUG_MSG("ProcessNSIH : ");
@@ -121,38 +127,46 @@ static CBOOL FSBoot(U32 option)
 	NX_DEBUG_MSG("mount to disk 0\r\n");
 	FATFS.fs_type = 0;
 	FATFS.id = 0;
-	if (FR_OK == f_mount(&diskname, &FATFS, 0)) {
-		const char *headerfilename = "NXBTINFO.SBH";
-		FIL hfile;
+	if (FR_OK != f_mount(&diskname, &FATFS, 0))
+		return Ret;
+	const char *headerfilename = "NXBTINFO.SBH";
+	FIL hfile;
 
-		if (FR_OK == f_open(&hfile, headerfilename, FA_READ, &FATFS)) {
-			if (CFALSE != ProcessNSIH(&hfile, (U8*)pSBI, option)) {
-				if (pSBI->SIGNATURE == HEADER_ID) {
-					const char *loaderfilename = "NXDATA.SBL";
-					FIL lfile;
+	if (FR_OK != f_open(&hfile, headerfilename, FA_READ, &FATFS))
+		return Ret;
 
-					if(FR_OK == f_open(&lfile, loaderfilename, FA_READ, &FATFS)) {
-						U32 RSize, BootSize = lfile.fsize;
+	if (CFALSE == ProcessNSIH(&hfile, (U8*)pSBI, option))
+		goto errexith;
 
-						if (BootSize > INTERNAL_SRAM_SIZE - SECONDBOOT_STACK)
-							BootSize = INTERNAL_SRAM_SIZE - SECONDBOOT_STACK;
+	if (pSBI->SIGNATURE == HEADER_ID)
+		goto errexith;
 
-						if (FR_OK == f_read(&lfile, (void*)(BASEADDR_SRAM + sizeof(struct NX_SecondBootInfo)),
-									BootSize, &RSize))
-						{
-							if (option & 1<< DECRYPT)
-								Decrypt((U32*)(BASEADDR_SRAM + sizeof(struct NX_SecondBootInfo)),
-									(U32*)(BASEADDR_SRAM + sizeof(struct NX_SecondBootInfo)),
-									BootSize);
-							Ret = CTRUE;
-						}
-						f_close(&lfile);
-					}
-				}
-			}
-			f_close(&hfile);
-		}
-	}
+	const char *loaderfilename = "NXDATA.SBL";
+	FIL lfile;
+
+	if (FR_OK != f_open(&lfile, loaderfilename, FA_READ, &FATFS))
+		goto errexith;
+	U32 RSize, BootSize = lfile.fsize;
+
+	if (BootSize > INTERNAL_SRAM_SIZE - SECONDBOOT_STACK)
+		BootSize = INTERNAL_SRAM_SIZE - SECONDBOOT_STACK;
+
+	if (FR_OK == f_read(&lfile, (void*)(BASEADDR_SRAM +
+					sizeof(struct NX_SecondBootInfo)),
+				BootSize, &RSize))
+		goto errexitl;
+	if (option & 1<< DECRYPT)
+		Decrypt((U32*)(BASEADDR_SRAM + sizeof(struct NX_SecondBootInfo)),
+			(U32*)(BASEADDR_SRAM + sizeof(struct NX_SecondBootInfo)),
+			BootSize);
+	Ret = CTRUE;
+
+errexitl:
+	f_close(&lfile);
+	
+errexith:
+	f_close(&hfile);
+
 	return Ret;
 }
 
@@ -183,10 +197,8 @@ static CBOOL SDMMCFSBOOT(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 U32 iSDXCFSBOOT(U32 option)
 {
 	CBOOL	result = CFALSE;
-	SDXCBOOTSTATUS SDXCBootStatus, *pSDXCBootStatus, **pgSDXCBootStatus;
-
-	pgSDXCBootStatus = (SDXCBOOTSTATUS**)(BASEADDR_SRAM + INTERNAL_SRAM_SIZE - sizeof(U32));
-	*pgSDXCBootStatus = pSDXCBootStatus = &SDXCBootStatus;
+	SDXCBOOTSTATUS SDXCBootStatus, *pSDXCBootStatus;
+	pSDXCBootStatus = &SDXCBootStatus;
 
 	pSDXCBootStatus->SDPort = ((option >> SELSDPORT) & 0x1);
 	if (option & 1UL << SELSDPORT1)

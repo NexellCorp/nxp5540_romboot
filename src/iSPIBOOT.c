@@ -5,16 +5,16 @@
 //
 //	Nexell informs that this code and information is provided "as is" base
 //	and without warranty of any kind, either expressed or implied, including
-//	but not limited to the implied warranties of merchantability and/or fitness
-//	for a particular puporse.
-//
+//	but not limited to the implied warranties of merchantability and/or
+//	fitness for a particular puporse.
 //
 //	Module		: iSPIBOOT.c
 //	File		:
 //	Description	:
 //	Author		: Hans
 //	History		:
-//					Hans: 2014.01.12 First implementation
+//			Hans: 2014.01.12 First implementation
+//			Hans: 2016.08.16 modify for nxp5430
 ==============================================================================*/
 #include <nx_etacarinae.h>
 #include "nx_etacarinae_bootoption.h"
@@ -24,13 +24,21 @@
 #include <nx_chip.h>
 
 #include <nx_gpio.h>
-//#include <nx_clkgen.h>
+
+#ifdef NXP5430
+#include <nx_clkgen.h>
+#endif
 #include <nx_ssp.h>
 #include "nx_etacarinae_bootheader.h"
 
+#ifdef NXP5540
 #include "nx_resetcontrol_def.h"
 #include "nx_clockcontrol_def.h"
 #include "cpuif_regmap_framework.h"
+#endif
+
+#include "libarm.h"
+#include "libplat.h"
 
 /*----------------------------------------------------------------------------*/
 
@@ -41,10 +49,10 @@
 #define SER_READ	0x03	/* Read Data from Memory Array */
 #define SER_WRITE	0x02	/* Write Data to Memory Array */
 
-#define SER_SR_READY	1<<0	/* Ready bit */
-#define SER_SR_WEN	1<<1	/* Write Enable indicate 0:not write enabled 1:write enabled */
-#define SER_SR_BPx	3<<2	/* Block Write Protect bits */
-#define SER_SR_WPEN	1<<7	/* Write Protect Enable bit */
+#define SER_SR_READY	(1 << 0)	/* Ready bit */
+#define SER_SR_WEN	(1 << 1)	/* Write Enable indicate 0:not write enabled 1:write enabled */
+#define SER_SR_BPx	(3 << 2)	/* Block Write Protect bits */
+#define SER_SR_WPEN	(1 << 7)	/* Write Protect Enable bit */
 
 
 /*#define SPI_SOURCE_CLOCK	NX_CLKSRCPLL2_FREQ */
@@ -52,10 +60,6 @@
 #define SPI_SOURCE_DIVIDHIGH	(18UL)		/* 550000000/18/2 = 15.277778MHz */
 #define SPI_SOURCE_DIVIDLOW	(48UL)		/* 96000000/48/2 = 1.000000MHz */
 
-U32 get_fcs(U32 fcs, U8 data);
-//void ResetCon(U32 devicenum, CBOOL en);
-void Decrypt(U32 *SrcAddr, U32 *DestAddr, U32 Size);
-void GPIOSetAltFunction(U32 AltFunc);
 /*
 spi 0
 clk c 29 1 gpio:0
@@ -77,6 +81,13 @@ txd c 12 2 gpio:1 default 0
 */
 //------------------------------------------------------------------------------
 extern struct NX_GPIO_RegisterSet (* const pGPIOReg)[1];
+static struct NX_SSP_RegisterSet * const pgSSPSPIReg[3] =
+{
+	(struct NX_SSP_RegisterSet *)PHY_BASEADDR_SSP0_MODULE,
+	(struct NX_SSP_RegisterSet *)PHY_BASEADDR_SSP1_MODULE,
+	(struct NX_SSP_RegisterSet *)PHY_BASEADDR_SSP2_MODULE
+};
+#ifdef NXP5430
 static struct NX_CLKGEN_RegisterSet * const pgSSPClkGenReg[3] =
 {
 	(struct NX_CLKGEN_RegisterSet *)PHY_BASEADDR_CLKGEN37_MODULE,
@@ -84,12 +95,6 @@ static struct NX_CLKGEN_RegisterSet * const pgSSPClkGenReg[3] =
 	(struct NX_CLKGEN_RegisterSet *)PHY_BASEADDR_CLKGEN39_MODULE
 };
 
-static struct NX_SSP_RegisterSet * const pgSSPSPIReg[3] =
-{
-	(struct NX_SSP_RegisterSet *)PHY_BASEADDR_SSP0_MODULE,
-	(struct NX_SSP_RegisterSet *)PHY_BASEADDR_SSP1_MODULE,
-	(struct NX_SSP_RegisterSet *)PHY_BASEADDR_SSP2_MODULE
-};
 
 static U32 const SPIResetNum[6] =
 {
@@ -100,6 +105,29 @@ static U32 const SPIResetNum[6] =
 	RESETINDEX_OF_SSP2_MODULE_PRESETn,
 	RESETINDEX_OF_SSP2_MODULE_nSSPRST
 };
+#endif
+#ifdef NXP5540
+static const union nxpad spipad[3][4] = {
+{
+	PADI_SSP0_MISO,
+	PADI_SSP0_MOSI,
+	PADI_SSP0_SSPCLK_IO,
+	PADI_SSP0_SSPFSS
+},
+{
+	PADI_SSP1_MISO,
+	PADI_SSP1_MOSI,
+	PADI_SSP1_SSPCLK_IO,
+	PADI_SSP1_SSPFSS
+},
+{
+	PADI_SSP2_MISO,
+	PADI_SSP2_MOSI,
+	PADI_SSP2_SSPCLK_IO,
+	PADI_SSP2_SSPFSS
+}};
+
+#endif
 
 U32 iSPIBOOT(U32 option)
 {
@@ -118,36 +146,38 @@ U32 iSPIBOOT(U32 option)
 	}
 	register struct NX_SSP_RegisterSet * const pSSPSPIReg =
 						pgSSPSPIReg[SPIPort];
-
-	if(SPIPort == 0) {
+#ifdef NXP5540
+	if (SPIPort == 0) {
 		U32 regval;
-		//nx_cpuif_reg_write_one(CMU_INFO_DEF__SPI_0___CORE__group_clock_source, 0);                                // clock source
-		nx_cpuif_reg_write_one(CMU_INFO_DEF__SPI_0___CORE__dynamic_divider_value, (SPI_SOURCE_DIVIDOVER - 1));      // clock divider value
-		while (1 == nx_cpuif_reg_read_one(CMU_INFO_DEF__SPI_0___CORE__dynamic_divider_busy_status, &regval));
-		nx_cpuif_reg_write_one(CMU_INFO_DEF__SPI_0___CORE__clock_enable, 1);                                      // clock enable
+		//nx_cpuif_reg_write_one(CMUI_SPI_0_CORE_group_clock_source, 0);                                // clock source
+		nx_cpuif_reg_write_one(CMUI_SPI_0_CORE_dy_div_val, (SPI_SOURCE_DIVIDOVER - 1));      // clock divider value
+		while (1 == nx_cpuif_reg_read_one(CMUI_SPI_0_CORE_dy_div_busy_st, &regval));
+		nx_cpuif_reg_write_one(CMUI_SPI_0_CORE_clk_enb, 1);                                      // clock enable
 
-		nx_cpuif_reg_write_one(CMU_INFO_DEF__SPI_0___APB__clock_enable, 1);                                       // clock enable
-		nx_cpuif_reg_write_one(RST_INFO_DEF__spi_0_apb_rst, 1);                                                   // reset enable
-	} else if(SPIPort == 1) {
+		nx_cpuif_reg_write_one(CMUI_SPI_0_APB_clk_enb, 1);                                       // clock enable
+		nx_cpuif_reg_write_one(RSTI_spi_0_apb_rst, 1);                                                   // reset enable
+	} else if (SPIPort == 1) {
 		U32 regval;
-		//nx_cpuif_reg_write_one(CMU_INFO_DEF__SPI_1___CORE__group_clock_source, 0);                                // clock source
-		nx_cpuif_reg_write_one(CMU_INFO_DEF__SPI_1___CORE__dynamic_divider_value, (SPI_SOURCE_DIVIDOVER - 1));      // clock divider value
-		while (1 == nx_cpuif_reg_read_one(CMU_INFO_DEF__SPI_1___CORE__dynamic_divider_busy_status, &regval));
-		nx_cpuif_reg_write_one(CMU_INFO_DEF__SPI_1___CORE__clock_enable, 1);                                      // clock enable
+		//nx_cpuif_reg_write_one(CMUI_SPI_1_CORE_group_clock_source, 0);                                // clock source
+		nx_cpuif_reg_write_one(CMUI_SPI_1_CORE_dy_div_val, (SPI_SOURCE_DIVIDOVER - 1));      // clock divider value
+		while (1 == nx_cpuif_reg_read_one(CMUI_SPI_1_CORE_dy_div_busy_st, &regval));
+		nx_cpuif_reg_write_one(CMUI_SPI_1_CORE_clk_enb, 1);                                      // clock enable
 
-		nx_cpuif_reg_write_one(CMU_INFO_DEF__SPI_1___APB__clock_enable, 1);                                       // clock enable
-		nx_cpuif_reg_write_one(RST_INFO_DEF__spi_1_apb_rst, 1);                                                   // reset enable
+		nx_cpuif_reg_write_one(CMUI_SPI_1_APB_clk_enb, 1);                                       // clock enable
+		nx_cpuif_reg_write_one(RSTI_spi_1_apb_rst, 1);                                                   // reset enable
 	} else {
 		U32 regval;
-		//nx_cpuif_reg_write_one( CMU_INFO_DEF__SPI_2___CORE__group_clock_source, 0 );                                // clock source
-		nx_cpuif_reg_write_one(CMU_INFO_DEF__SPI_2___CORE__dynamic_divider_value, (SPI_SOURCE_DIVIDOVER - 1));      // clock divider value
-		while (1 == nx_cpuif_reg_read_one(CMU_INFO_DEF__SPI_2___CORE__dynamic_divider_busy_status, &regval));
-		nx_cpuif_reg_write_one(CMU_INFO_DEF__SPI_2___CORE__clock_enable, 1);                                      // clock enable
+		//nx_cpuif_reg_write_one( CMUI_SPI_2_CORE_group_clock_source, 0 );                                // clock source
+		nx_cpuif_reg_write_one(CMUI_SPI_2_CORE_dy_div_val, (SPI_SOURCE_DIVIDOVER - 1));      // clock divider value
+		while (1 == nx_cpuif_reg_read_one(CMUI_SPI_2_CORE_dy_div_busy_st, &regval));
+		nx_cpuif_reg_write_one(CMUI_SPI_2_CORE_clk_enb, 1);                                      // clock enable
 
-		nx_cpuif_reg_write_one(CMU_INFO_DEF__SPI_2___APB__clock_enable, 1);                                       // clock enable
-		nx_cpuif_reg_write_one(RST_INFO_DEF__spi_2_apb_rst, 1);                                                   // reset enable
+		nx_cpuif_reg_write_one(CMUI_SPI_2_APB_clk_enb, 1);                                       // clock enable
+		nx_cpuif_reg_write_one(RSTI_spi_2_apb_rst, 1);                                                   // reset enable
 	}
+#endif
 
+#ifdef NXP5430
 	if (SPIPort == 0) {
 		register struct NX_GPIO_RegisterSet * pGPIOxReg =
 			(struct NX_GPIO_RegisterSet *)&pGPIOReg[GPIO_GROUP_F];
@@ -200,6 +230,16 @@ U32 iSPIBOOT(U32 option)
 		pGPIOxReg->GPIOx_PULLENB &= ~(1<<25 | 1<<24 | 1<<22);
 		pGPIOxReg->GPIOx_PULLENB_DISABLE_DEFAULT |= (1<<25 | 1<<24 | 1<<22);
 	}
+#endif
+
+#ifdef NXP5540
+	U32 i;
+	for (i = 0; i < 4; i++) {
+		GPIOSetAltFunction(&spipad[SPIPort][i].padi, CTRUE);
+		GPIOSetDrvSt(&spipad[SPIPort][i].padi, NX_GPIO_DRVSTRENGTH_3);
+		GPIOSetPullup(&spipad[SPIPort][i].padi, NX_GPIO_PULL_OFF);
+	}
+#endif
 
 	if (option & 1 << SERIALFLASHSPEED)
 		pSSPSPIReg->CH_CFG =
@@ -309,6 +349,7 @@ U32 iSPIBOOT(U32 option)
 
 	pSSPSPIReg->CS_REG |= 1 << 0;		// chip select state to inactive
 
+#ifdef NXP5430
 	if (SPIPort == 0) {
 		register struct NX_GPIO_RegisterSet * pGPIOxReg =
 			(struct NX_GPIO_RegisterSet *)&pGPIOReg[GPIO_GROUP_C];
@@ -369,6 +410,14 @@ U32 iSPIBOOT(U32 option)
 		pGPIOxReg->GPIOx_PULLENB &= ~(1<<12 | 1<<10 | 1<<9);
 		pGPIOxReg->GPIOx_PULLENB_DISABLE_DEFAULT |= (1<<12 | 1<<10 | 1<<9);
 	}
+#endif
 
+#ifdef NXP5540
+	for (i = 0; i < 4; i++) {
+		GPIOSetAltFunction(&spipad[SPIPort][i].padi, CFALSE);
+		GPIOSetDrvSt(&spipad[SPIPort][i].padi, NX_GPIO_DRVSTRENGTH_3);
+		GPIOSetPullup(&spipad[SPIPort][i].padi, NX_GPIO_PULL_OFF);
+	}
+#endif
 	return ret;
 }
