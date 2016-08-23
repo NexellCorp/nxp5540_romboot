@@ -20,7 +20,13 @@
 #include <nx_type.h>
 #include <nx_debug2.h>
 
+#ifdef NXP5430
 #include <nx_chip.h>
+#endif
+
+#ifdef NXP5540
+#include <nx_chip_sfr.h>
+#endif
 
 #include <fatfs.h>
 

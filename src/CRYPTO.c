@@ -20,13 +20,17 @@
 #include <nx_type.h>
 #include <nx_debug2.h>
 
-#include <nx_chip.h>
 
 #include <nx_crypto.h>
 #ifdef NXP5430
+#include <nx_chip.h>
 #include <nx_clkgen.h>
 #endif
 #include <nx_ecid.h>
+
+#ifdef NXP5540
+#include <nx_chip_sfr.h>
+#endif
 
 #ifdef SW_CRYPTO_EMUL
 U32 erk[64];

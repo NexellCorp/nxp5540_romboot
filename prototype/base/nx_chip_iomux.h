@@ -36,8 +36,8 @@ struct nxpadi {
 	unsigned int flag: 16;	/* pad property 0: not controlable */
 };
 union nxpad {
-	struct nxpadi padi;
 	unsigned int padd;
+	struct nxpadi padi;
 };
 
 

@@ -398,14 +398,6 @@ typedef struct
 #define NX_SDMMC_MAX_BIU_DATASIZE   (1UL<<12)
 
 //------------------------------------------------------------------------------
-/// @brief  To remove following waring on RVDS compiler
-//          Warning : #66-D: enumeration value is out of "int" range
-//------------------------------------------------------------------------------
-#ifdef __arm
-#pragma diag_remark 66      // disable #66 warining
-#endif
-
-//------------------------------------------------------------------------------
 /// @name   Module Interface
 //------------------------------------------------------------------------------
 //@{

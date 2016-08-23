@@ -24,13 +24,13 @@
 #include <nx_type.h>
 #include <nx_debug2.h>
 
-#include <nx_chip.h>
 
 #include <nx_usb20otg.h>
 #include <iUSBBOOT.h>
 #include "nx_etacarinae_bootheader.h"
 
 #ifdef NXP5430
+#include <nx_chip.h>
 #include <nx_tieoff.h>
 #endif
 
@@ -39,6 +39,7 @@
 #include "nx_resetcontrol_def.h"
 #include "nx_clockcontrol_def.h"
 #include "cpuif_regmap_framework.h"
+#include "nx_chip_sfr.h"
 #endif
 
 #include "libarm.h"
@@ -47,13 +48,15 @@
 #ifdef NXP5430
 static struct NX_TIEOFF_RegisterSet * const pTieoffreg =
 	(struct NX_TIEOFF_RegisterSet *)PHY_BASEADDR_TIEOFF_MODULE;
+static struct NX_USB_OTG_RegisterSet * const pUOReg =
+	(struct NX_USB_OTG_RegisterSet *)PHY_BASEADDR_USB20OTG_MODULE_AHBS0;
 #endif
 #ifdef NXP5540
 static struct NX_TIEOFF_USB20OTG_RegisterSet * const pTieoffreg =
 	(struct NX_TIEOFF_USB20OTG_RegisterSet *)PHY_BASEADDR_TIEOFF_OTG_MODULE;
-#endif
 static struct NX_USB_OTG_RegisterSet * const pUOReg =
-	(struct NX_USB_OTG_RegisterSet *)PHY_BASEADDR_USB20OTG_MODULE_AHBS0;
+	(struct NX_USB_OTG_RegisterSet *)PHY_BASEADDR_USB_OTG_LINK_A_MODULE;
+#endif
 
 static const U8 __attribute__ ((aligned(4)))
 	gs_DeviceDescriptorFS[DEVICE_DESCRIPTOR_SIZE] =
@@ -923,7 +926,7 @@ CBOOL iUSBBOOT(U32 option)
 	while (!(pUOReg->GCSR.GRSTCTL & AHB_MASTER_IDLE));
 
 #ifdef NXP5540
-	(*(volatile U32 *)(PHY_BASEADDR_USB20OTG_MODULE_APB + 0x00)) = 0x00; // reset Avalid, Bvalid, sessend
+	(*(volatile U32 *)(PHY_BASEADDR_USB_OTG_LINK_A_MODULE + 0x00)) = 0x00; // reset Avalid, Bvalid, sessend
 #endif
 
 	pTieoffreg->TIEOFFREG[0] &= ~(1 << 8);	// 8 : i_nUtmiResetSync

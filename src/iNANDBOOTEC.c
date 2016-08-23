@@ -496,20 +496,20 @@ sd 7   b 23 0 gpio:1 reset:0	sdex 7 b 10 2 gpio:0 reset:0
 
 #ifdef NXP5540
 static const union nxpad nandpad[14] = {
-	PADI_MCUS_SD_0_,
-	PADI_MCUS_SD_1_,
-	PADI_MCUS_SD_2_,
-	PADI_MCUS_SD_3_,
-	PADI_MCUS_SD_4_,
-	PADI_MCUS_SD_5_,
-	PADI_MCUS_SD_6_,
-	PADI_MCUS_SD_7_,
-	PADI_MCUS_nNFOE,
-	PADI_MCUS_nNFWE,
-	PADI_MCUS_nNCS_0_,
-	PADI_MCUS_ALE,
-	PADI_MCUS_CLE,
-	PADI_MCUS_RnB
+	{PADI_MCUS_SD_0_},
+	{PADI_MCUS_SD_1_},
+	{PADI_MCUS_SD_2_},
+	{PADI_MCUS_SD_3_},
+	{PADI_MCUS_SD_4_},
+	{PADI_MCUS_SD_5_},
+	{PADI_MCUS_SD_6_},
+	{PADI_MCUS_SD_7_},
+	{PADI_MCUS_nNFOE},
+	{PADI_MCUS_nNFWE},
+	{PADI_MCUS_nNCS_0_},
+	{PADI_MCUS_ALE},
+	{PADI_MCUS_CLE},
+	{PADI_MCUS_RnB}
 };
 #endif
 

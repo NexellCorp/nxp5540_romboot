@@ -146,7 +146,7 @@ unsigned int nx_cpuif_reg_read_one (
 	reg_readval = (reg_val & reg_mask) >> reg_startbit;
 	reg_val = reg_readval;
 
-	if (regval != NULL)
+	if (regval != CNULL)
 		*regval = reg_val;
 
 #ifdef CPUIF_REGMAP_DEBUG

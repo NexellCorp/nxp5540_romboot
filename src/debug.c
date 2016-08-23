@@ -155,7 +155,8 @@ CBOOL DebugInit(U32 port)
 #endif
 #ifdef NXP5540
 	U32 regval;
-	GPIOSetAltFunction(PADI_UART0_TXD, CTRUE);
+	SOURCE_CLOCK = 550000000;
+	GPIOSetAltFunction((struct nxpadi *)PADI_UART0_TXD, CTRUE);
 
 	nx_cpuif_reg_write_one(CMUI_UART_0_CORE_grp_clk_src, NX_CLKSRC_UART);
 	// sdmmc core clock divider value

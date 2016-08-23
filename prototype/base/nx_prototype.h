@@ -14,8 +14,8 @@
 //  Author      : Goofy
 //  Export      :
 //  History     :
-//      2012-07-25  Tony     append PHY_BASEADDR_LIST_ALPHA( x ) : alphabetic version.
-//      2012-06-27  Gamza   append PHY_BASEADDR_LIST( x )
+//      2012-07-25  Tony     append PHY_BASEADDR_LIST_ALPHA(x) : alphabetic version.
+//      2012-06-27  Gamza   append PHY_BASEADDR_LIST(x)
 //      2010.10.05  Hans    add gloval io access function
 //      2010.04.27  Hans
 //      2007.04.04  Goofy   First draft
@@ -45,21 +45,21 @@
 //  NX_????_GetPhysicalAddress
 //------------------------------------------------------------------------------
 //    (*) 칩내에 인스턴스가 한개이상 만들어지지 않는다고 확신되는 모듈
-//    U32  NX_INTC_GetPhysicalAddress( void )
+//    U32  NX_INTC_GetPhysicalAddress(void)
 //    {
-//        const U32 PhysicalAddr[] =  {   PHY_BASEADDR_LIST( INTC )  }; // PHY_BASEADDR_INTC_MODULE
-//        NX_CASSERT( 1 == (sizeof(PhysicalAddr)/sizeof(PhysicalAddr[0])) );
-//        NX_ASSERT( PHY_BASEADDR_INTC_MODULE == PhysicalAddr[0] );
+//        const U32 PhysicalAddr[] =  {   PHY_BASEADDR_LIST(INTC)  }; // PHY_BASEADDR_INTC_MODULE
+//        NX_CASSERT(1 == (sizeof(PhysicalAddr)/sizeof(PhysicalAddr[0])));
+//        NX_ASSERT(PHY_BASEADDR_INTC_MODULE == PhysicalAddr[0]);
 //        return PhysicalAddr[0];
 //    }
 //    (*) 칩내에 인스턴스가 다수개 만들어질 지도 모르는 모듈
-//    U32 NX_UART_GetPhysicalAddress( U32 ModuleIndex )
+//    U32 NX_UART_GetPhysicalAddress(U32 ModuleIndex)
 //    {
-//        static const U32 PhysicalAddr[] = { PHY_BASEADDR_LIST( UART ) }; // PHY_BASEADDR_UART?_MODULE
-//        NX_CASSERT( NUMBER_UART_MODULE == (sizeof(PhysicalAddr)/sizeof(PhysicalAddr[0])) );
-//        NX_ASSERT( NUMBER_UART_MODULE > ModuleIndex );
-//        // NX_ASSERT( PHY_BASEADDR_UART0_MODULE == PhysicalAddr[0] );
-//        // NX_ASSERT( PHY_BASEADDR_UART1_MODULE == PhysicalAddr[1] );
+//        static const U32 PhysicalAddr[] = { PHY_BASEADDR_LIST(UART) }; // PHY_BASEADDR_UART?_MODULE
+//        NX_CASSERT(NUMBER_UART_MODULE == (sizeof(PhysicalAddr)/sizeof(PhysicalAddr[0])));
+//        NX_ASSERT(NUMBER_UART_MODULE > ModuleIndex);
+//        // NX_ASSERT(PHY_BASEADDR_UART0_MODULE == PhysicalAddr[0]);
+//        // NX_ASSERT(PHY_BASEADDR_UART1_MODULE == PhysicalAddr[1]);
 //        // ...
 //        return (U32)PhysicalAddr[ModuleIndex];
 //    }
@@ -68,22 +68,22 @@
 //  NX_????_GetInterruptNumber
 //------------------------------------------------------------------------------
 //    (*) 칩내에 인스턴스가 한개이상 만들어지지 않고, 모듈이 하나의 인터럽트 채널을 갖는 경우.
-//    U32  NX_MALI_GetInterruptNumber( void )
+//    U32  NX_MALI_GetInterruptNumber(void)
 //    {
-//        const U32 InterruptNumber[] =  {   INTNUM_LIST( MALI )  }; // INTNUM_OF_MALI_MODULE
-//        NX_CASSERT( 1 == (sizeof(InterruptNumber)/sizeof(InterruptNumber[0])) );
-//        NX_ASSERT( INTNUM_OF_MALI_MODULE == InterruptNumber[0] );
+//        const U32 InterruptNumber[] =  {   INTNUM_LIST(MALI)  }; // INTNUM_OF_MALI_MODULE
+//        NX_CASSERT(1 == (sizeof(InterruptNumber)/sizeof(InterruptNumber[0])));
+//        NX_ASSERT(INTNUM_OF_MALI_MODULE == InterruptNumber[0]);
 //        return InterruptNumber[0];
 //    }
 //
 //    (*) 칩내에 인스턴스가 다수개 만들어질 지도 모르고, 모듈이 하나의 인터럽트 채널을 갖는 경우.
-//    U32  NX_UART_GetInterruptNumber( U32 ModuleIndex )
+//    U32  NX_UART_GetInterruptNumber(U32 ModuleIndex)
 //    {
-//        const U32 InterruptNumber[] =  {   INTNUM_LIST( UART )  };  // INTNUM_OF_UART?_MODULE
-//        NX_CASSERT( NUMBER_UART_MODULE == (sizeof(InterruptNumber)/sizeof(InterruptNumber[0])) );
-//        NX_ASSERT( NUMBER_UART_MODULE > ModuleIndex );
-//        // NX_ASSERT( INTNUM_OF_UART0_MODULE == InterruptNumber[0] );
-//        // NX_ASSERT( INTNUM_OF_UART1_MODULE == InterruptNumber[1] );
+//        const U32 InterruptNumber[] =  {   INTNUM_LIST(UART)  };  // INTNUM_OF_UART?_MODULE
+//        NX_CASSERT(NUMBER_UART_MODULE == (sizeof(InterruptNumber)/sizeof(InterruptNumber[0])));
+//        NX_ASSERT(NUMBER_UART_MODULE > ModuleIndex);
+//        // NX_ASSERT(INTNUM_OF_UART0_MODULE == InterruptNumber[0]);
+//        // NX_ASSERT(INTNUM_OF_UART1_MODULE == InterruptNumber[1]);
 //        // ...
 //        return InterruptNumber[ModuleIndex];
 //    }
@@ -97,21 +97,21 @@
 //        NX_CMDPROC_INTCH_ABORT  = 1, ///< Abort channel
 //    };
 //    /// in "nx_cmdproc.cpp"
-//    U32  NX_CMDPROC_GetInterruptNumber( U32 ModuleIndex, U32 ChannelIndex )
+//    U32  NX_CMDPROC_GetInterruptNumber(U32 ModuleIndex, U32 ChannelIndex)
 //    {
 //        const U32 InterruptNumber[2][] =
 //        {
-//            { INTNUM_WITH_CHANNEL_LIST( CMDPROC, DONE  ) }, // INTNUM_OF_CMDPROC?_MODULE_DONE
-//            { INTNUM_WITH_CHANNEL_LIST( CMDPROC, ABORT ) }, // INTNUM_OF_CMDPROC?_MODULE_ABORT
+//            { INTNUM_WITH_CHANNEL_LIST(CMDPROC, DONE) }, // INTNUM_OF_CMDPROC?_MODULE_DONE
+//            { INTNUM_WITH_CHANNEL_LIST(CMDPROC, ABORT) }, // INTNUM_OF_CMDPROC?_MODULE_ABORT
 //        };
-//        NX_CASSERT( NUMBER_CMDPROC_MODULE == (sizeof(InterruptNumber[0])/sizeof(InterruptNumber[0][0])) );
-//        NX_ASSERT( NUMBER_CMDPROC_MODULE > ModuleIndex );
-//        NX_ASSERT( (sizeof(InterruptNumber)/sizeof(InterruptNumber[0])) > ChannelIndex );
-//        // NX_ASSERT( INTNUM_OF_CMDPROC0_MODULE_DONE == InterruptNumber[0][0] );
-//        // NX_ASSERT( INTNUM_OF_CMDPROC1_MODULE_DONE == InterruptNumber[0][1] );
+//        NX_CASSERT(NUMBER_CMDPROC_MODULE == (sizeof(InterruptNumber[0])/sizeof(InterruptNumber[0][0])));
+//        NX_ASSERT(NUMBER_CMDPROC_MODULE > ModuleIndex);
+//        NX_ASSERT((sizeof(InterruptNumber)/sizeof(InterruptNumber[0])) > ChannelIndex);
+//        // NX_ASSERT(INTNUM_OF_CMDPROC0_MODULE_DONE == InterruptNumber[0][0]);
+//        // NX_ASSERT(INTNUM_OF_CMDPROC1_MODULE_DONE == InterruptNumber[0][1]);
 //        // ...
-//        // NX_ASSERT( INTNUM_OF_CMDPROC0_MODULE_ABORT == InterruptNumber[1][0] );
-//        // NX_ASSERT( INTNUM_OF_CMDPROC1_MODULE_ABORT == InterruptNumber[1][1] );
+//        // NX_ASSERT(INTNUM_OF_CMDPROC0_MODULE_ABORT == InterruptNumber[1][0]);
+//        // NX_ASSERT(INTNUM_OF_CMDPROC1_MODULE_ABORT == InterruptNumber[1][1]);
 //        // ...
 //        return InterruptNumber[ChannelIndex][ModuleIndex];
 //    }
@@ -120,22 +120,22 @@
 //  NX_????_GetDMANumber
 //------------------------------------------------------------------------------
 //    (*) 칩내에 인스턴스가 한개이상 만들어지지 않고, 모듈이 하나의 DMA 채널을 갖는 경우.
-//    U32  NX_MALI_GetDMANumber( void )
+//    U32  NX_MALI_GetDMANumber(void)
 //    {
-//        const U32 DMANumber[] =  {   DMAINDEX_LIST( MALI )  }; // DMAINDEX_OF_MALI_MODULE
-//        NX_CASSERT( 1 == (sizeof(DMANumber)/sizeof(DMANumber[0])) );
-//        NX_ASSERT( DMAINDEX_OF_MALI_MODULE == DMANumber[0] );
+//        const U32 DMANumber[] =  {   DMAINDEX_LIST(MALI)  }; // DMAINDEX_OF_MALI_MODULE
+//        NX_CASSERT(1 == (sizeof(DMANumber)/sizeof(DMANumber[0])));
+//        NX_ASSERT(DMAINDEX_OF_MALI_MODULE == DMANumber[0]);
 //        return DMANumber[0];
 //    }
 //
 //    (*) 칩내에 인스턴스가 다수개 만들어질 지도 모르고, 모듈이 하나의 DMA 채널을 갖는 경우.
-//    U32  NX_SDHC_GetDMANumber( U32 ModuleIndex )
+//    U32  NX_SDHC_GetDMANumber(U32 ModuleIndex)
 //    {
-//        const U32 DMANumber[] =  {   DMAINDEX_LIST( SDHC )  };  //DMAINDEX_OF_SDHC?_MODULE
-//        NX_CASSERT( NUMBER_SDHC_MODULE == (sizeof(DMANumber)/sizeof(DMANumber[0])) );
-//        NX_ASSERT( NUMBER_SDHC_MODULE > ModuleIndex );
-//        // NX_ASSERT( DMAINDEX_OF_SDHC0_MODULE == DMANumber[0] );
-//        // NX_ASSERT( DMAINDEX_OF_SDHC1_MODULE == DMANumber[1] );
+//        const U32 DMANumber[] =  {   DMAINDEX_LIST(SDHC)  };  //DMAINDEX_OF_SDHC?_MODULE
+//        NX_CASSERT(NUMBER_SDHC_MODULE == (sizeof(DMANumber)/sizeof(DMANumber[0])));
+//        NX_ASSERT(NUMBER_SDHC_MODULE > ModuleIndex);
+//        // NX_ASSERT(DMAINDEX_OF_SDHC0_MODULE == DMANumber[0]);
+//        // NX_ASSERT(DMAINDEX_OF_SDHC1_MODULE == DMANumber[1]);
 //        // ...
 //        return DMANumber[ModuleIndex];
 //    }
@@ -149,21 +149,21 @@
 //        NX_UART_DMACH_RX = 1, ///< Rx channel
 //    };
 //    /// in "nx_uart.cpp"
-//    U32  NX_UART_GetDMANumber( U32 ModuleIndex, U32 ChannelIndex )
+//    U32  NX_UART_GetDMANumber(U32 ModuleIndex, U32 ChannelIndex)
 //    {
 //        const U32 DMANumber[2][] =
 //        {
-//            { DMAINDEX_WITH_CHANNEL_LIST( UART, TX ) }, // DMAINDEX_OF_UART?_MODULE_TX
-//            { DMAINDEX_WITH_CHANNEL_LIST( UART, RX ) }, // DMAINDEX_OF_UART?_MODULE_RX
+//            { DMAINDEX_WITH_CHANNEL_LIST(UART, TX) }, // DMAINDEX_OF_UART?_MODULE_TX
+//            { DMAINDEX_WITH_CHANNEL_LIST(UART, RX) }, // DMAINDEX_OF_UART?_MODULE_RX
 //        };
-//        NX_CASSERT( NUMBER_UART_MODULE == (sizeof(DMANumber[0])/sizeof(DMANumber[0][0])) );
-//        NX_ASSERT( NUMBER_UART_MODULE > ModuleIndex );
-//        NX_ASSERT( (sizeof(DMANumber)/sizeof(DMANumber[0])) > ChannelIndex );
-//        // NX_ASSERT( DMAINDEX_OF_UART0_MODULE_TX == DMANumber[0][0] );
-//        // NX_ASSERT( DMAINDEX_OF_UART1_MODULE_TX == DMANumber[0][1] );
+//        NX_CASSERT(NUMBER_UART_MODULE == (sizeof(DMANumber[0])/sizeof(DMANumber[0][0])));
+//        NX_ASSERT(NUMBER_UART_MODULE > ModuleIndex);
+//        NX_ASSERT((sizeof(DMANumber)/sizeof(DMANumber[0])) > ChannelIndex);
+//        // NX_ASSERT(DMAINDEX_OF_UART0_MODULE_TX == DMANumber[0][0]);
+//        // NX_ASSERT(DMAINDEX_OF_UART1_MODULE_TX == DMANumber[0][1]);
 //        // ...
-//        // NX_ASSERT( DMAINDEX_OF_UART0_MODULE_RX == DMANumber[0][0] );
-//        // NX_ASSERT( DMAINDEX_OF_UART1_MODULE_RX == DMANumber[0][1] );
+//        // NX_ASSERT(DMAINDEX_OF_UART0_MODULE_RX == DMANumber[0][0]);
+//        // NX_ASSERT(DMAINDEX_OF_UART1_MODULE_RX == DMANumber[0][1]);
 //        // ...
 //        return DMANumber[ChannelIndex][ModuleIndex];
 //    }
@@ -288,44 +288,44 @@
 #define _GET_MACRO_LIST_ALPHA_15(NAME,PRE,POST)  _GET_MACRO_LIST_ALPHA_14(NAME,PRE,POST), PRE ## NAME ## O ## POST
 
 #define CAT(a, ...) a ## __VA_ARGS__
-#define _GET_MACRO_LIST(NAME,PRE,POST,COUNT) CAT( _GET_MACRO_LIST_, COUNT )(NAME,PRE,POST)
-#define _GET_MACRO_LIST_ALPHA(NAME,PRE,POST,COUNT) CAT( _GET_MACRO_LIST_ALPHA_, COUNT )(NAME,PRE,POST)
+#define _GET_MACRO_LIST(NAME,PRE,POST,COUNT) CAT(_GET_MACRO_LIST_, COUNT)(NAME,PRE,POST)
+#define _GET_MACRO_LIST_ALPHA(NAME,PRE,POST,COUNT) CAT(_GET_MACRO_LIST_ALPHA_, COUNT)(NAME,PRE,POST)
 
-#define PHY_BASEADDR_LIST(NAME)                         _GET_MACRO_LIST(NAME, PHY_BASEADDR_  , _MODULE, NUMBER_OF_ ## NAME ## _MODULE)
-#define PHY_BASEADDR_WITH_CHANNEL_LIST(NAME,CHANNEL)    _GET_MACRO_LIST(NAME, PHY_BASEADDR_  , _MODULE_ ## CHANNEL, NUMBER_OF_ ## NAME ## _MODULE)
-#define INTNUM_LIST(NAME)                               _GET_MACRO_LIST(NAME, INTNUM_OF_     , _MODULE, NUMBER_OF_ ## NAME ## _MODULE)
-#define INTNUM_WITH_CHANNEL_LIST(NAME,CHANNEL)          _GET_MACRO_LIST(NAME, INTNUM_OF_     , _MODULE_ ## CHANNEL, NUMBER_OF_ ## NAME ## _MODULE)
-#define DMAINDEX_LIST(NAME)                             _GET_MACRO_LIST(NAME, DMAINDEX_OF_   , _MODULE, NUMBER_OF_ ## NAME ## _MODULE)
-#define DMAINDEX_WITH_CHANNEL_LIST(NAME,CHANNEL)        _GET_MACRO_LIST(NAME, DMAINDEX_OF_   , _MODULE_ ## CHANNEL, NUMBER_OF_ ## NAME ## _MODULE)
-#define PADINDEX_LIST(NAME)                             _GET_MACRO_LIST(NAME, PADINDEX_OF_   ,  , NUMBER_OF_ ## NAME ## _MODULE)
-#define PADINDEX_WITH_CHANNEL_LIST(NAME,CHANNEL)        _GET_MACRO_LIST(NAME, PADINDEX_OF_   , _ ## CHANNEL , NUMBER_OF_ ## NAME ## _MODULE)
-#define CLOCKINDEX_LIST(NAME)                           _GET_MACRO_LIST(NAME, CLOCKINDEX_OF_ , _MODULE, NUMBER_OF_ ## NAME ## _MODULE)
-#define RESETINDEX_LIST(NAME,CHANNEL)     			    _GET_MACRO_LIST( NAME, RESETINDEX_OF_ , _MODULE_ ## CHANNEL, NUMBER_OF_ ## NAME ## _MODULE)
+#define PHY_BASEADDR_LIST(NAME)				_GET_MACRO_LIST(NAME, PHY_BASEADDR_  , _MODULE,		    NUMBER_OF_ ## NAME ## _MODULE)
+#define PHY_BASEADDR_WITH_CHANNEL_LIST(NAME,CHANNEL)	_GET_MACRO_LIST(NAME, PHY_BASEADDR_  , _MODULE_ ## CHANNEL, NUMBER_OF_ ## NAME ## _MODULE)
+#define INTNUM_LIST(NAME)				_GET_MACRO_LIST(NAME, INTNUM_OF_     , _MODULE,		    NUMBER_OF_ ## NAME ## _MODULE)
+#define INTNUM_WITH_CHANNEL_LIST(NAME,CHANNEL)		_GET_MACRO_LIST(NAME, INTNUM_OF_     , _MODULE_ ## CHANNEL, NUMBER_OF_ ## NAME ## _MODULE)
+#define DMAINDEX_LIST(NAME)				_GET_MACRO_LIST(NAME, DMAINDEX_OF_   , _MODULE,		    NUMBER_OF_ ## NAME ## _MODULE)
+#define DMAINDEX_WITH_CHANNEL_LIST(NAME,CHANNEL)	_GET_MACRO_LIST(NAME, DMAINDEX_OF_   , _MODULE_ ## CHANNEL, NUMBER_OF_ ## NAME ## _MODULE)
+#define PADINDEX_LIST(NAME)				_GET_MACRO_LIST(NAME, PADINDEX_OF_   ,			  , NUMBER_OF_ ## NAME ## _MODULE)
+#define PADINDEX_WITH_CHANNEL_LIST(NAME,CHANNEL)	_GET_MACRO_LIST(NAME, PADINDEX_OF_   , _	## CHANNEL, NUMBER_OF_ ## NAME ## _MODULE)
+#define CLOCKINDEX_LIST(NAME)				_GET_MACRO_LIST(NAME, CLOCKINDEX_OF_ , _MODULE,		    NUMBER_OF_ ## NAME ## _MODULE)
+#define RESETINDEX_LIST(NAME,CHANNEL)			_GET_MACRO_LIST(NAME, RESETINDEX_OF_ , _MODULE_ ## CHANNEL, NUMBER_OF_ ## NAME ## _MODULE)
 //@modified martin 2012/8/6
-#define TIEOFFINDEX_WITH_CHANNEL_LIST(NAME,CHANNEL)        _GET_MACRO_LIST( NAME, TIEOFFINDEX_OF_   , _ ## CHANNEL , NUMBER_OF_ ## NAME ## _MODULE)
+#define TIEOFFINDEX_WITH_CHANNEL_LIST(NAME,CHANNEL)	_GET_MACRO_LIST(NAME, TIEOFFINDEX_OF_, _	## CHANNEL, NUMBER_OF_ ## NAME ## _MODULE)
 
-#define PHY_BASEADDR_LIST_ALPHA(NAME)                         _GET_MACRO_LIST_ALPHA(NAME, PHY_BASEADDR_  , _MODULE, NUMBER_OF_ ## NAME ## _MODULE)
-#define PHY_BASEADDR_WITH_CHANNEL_LIST_ALPHA(NAME,CHANNEL)    _GET_MACRO_LIST_ALPHA(NAME, PHY_BASEADDR_  , _MODULE_ ## CHANNEL, NUMBER_OF_ ## NAME ## _MODULE)
-#define INTNUM_LIST_ALPHA(NAME)                               _GET_MACRO_LIST_ALPHA(NAME, INTNUM_OF_     , _MODULE, NUMBER_OF_ ## NAME ## _MODULE )
-#define INTNUM_WITH_CHANNEL_LIST_ALPHA(NAME,CHANNEL)          _GET_MACRO_LIST_ALPHA(NAME, INTNUM_OF_     , _MODULE_ ## CHANNEL, NUMBER_OF_ ## NAME ## _MODULE )
-#define DMAINDEX_LIST_ALPHA(NAME)                             _GET_MACRO_LIST_ALPHA(NAME, DMAINDEX_OF_   , _MODULE, NUMBER_OF_ ## NAME ## _MODULE )
-#define DMAINDEX_WITH_CHANNEL_LIST_ALPHA(NAME,CHANNEL)        _GET_MACRO_LIST_ALPHA(NAME, DMAINDEX_OF_   , _MODULE_ ## CHANNEL, NUMBER_OF_ ## NAME ## _MODULE)
-#define PADINDEX_LIST_ALPHA(NAME)                             _GET_MACRO_LIST_ALPHA(NAME, PADINDEX_OF_   ,  , NUMBER_OF_ ## NAME ## _MODULE )
-#define PADINDEX_WITH_CHANNEL_LIST_ALPHA(NAME,CHANNEL)        _GET_MACRO_LIST_ALPHA(NAME, PADINDEX_OF_   , _ ## CHANNEL , NUMBER_OF_ ## NAME ## _MODULE)
-#define CLOCKINDEX_LIST_ALPHA(NAME)                           _GET_MACRO_LIST_ALPHA(NAME, CLOCKINDEX_OF_ , _MODULE, NUMBER_OF_ ## NAME ## _MODULE)
-#define RESETINDEX_LIST_ALPHA(NAME,CHANNEL)     			    _GET_MACRO_LIST_ALPHA( NAME, RESETINDEX_OF_ , _MODULE_ ## CHANNEL, NUMBER_OF_ ## NAME ## _MODULE)
+#define PHY_BASEADDR_LIST_ALPHA(NAME)				_GET_MACRO_LIST_ALPHA(NAME, PHY_BASEADDR_  , _MODULE,		  NUMBER_OF_ ## NAME ## _MODULE)
+#define PHY_BASEADDR_WITH_CHANNEL_LIST_ALPHA(NAME,CHANNEL)	_GET_MACRO_LIST_ALPHA(NAME, PHY_BASEADDR_  , _MODULE_ ## CHANNEL, NUMBER_OF_ ## NAME ## _MODULE)
+#define INTNUM_LIST_ALPHA(NAME)					_GET_MACRO_LIST_ALPHA(NAME, INTNUM_OF_     , _MODULE,		  NUMBER_OF_ ## NAME ## _MODULE)
+#define INTNUM_WITH_CHANNEL_LIST_ALPHA(NAME,CHANNEL)		_GET_MACRO_LIST_ALPHA(NAME, INTNUM_OF_     , _MODULE_ ## CHANNEL, NUMBER_OF_ ## NAME ## _MODULE)
+#define DMAINDEX_LIST_ALPHA(NAME)				_GET_MACRO_LIST_ALPHA(NAME, DMAINDEX_OF_   , _MODULE,		  NUMBER_OF_ ## NAME ## _MODULE)
+#define DMAINDEX_WITH_CHANNEL_LIST_ALPHA(NAME,CHANNEL)		_GET_MACRO_LIST_ALPHA(NAME, DMAINDEX_OF_   , _MODULE_ ## CHANNEL, NUMBER_OF_ ## NAME ## _MODULE)
+#define PADINDEX_LIST_ALPHA(NAME)				_GET_MACRO_LIST_ALPHA(NAME, PADINDEX_OF_   ,			, NUMBER_OF_ ## NAME ## _MODULE)
+#define PADINDEX_WITH_CHANNEL_LIST_ALPHA(NAME,CHANNEL)		_GET_MACRO_LIST_ALPHA(NAME, PADINDEX_OF_   , _	      ## CHANNEL, NUMBER_OF_ ## NAME ## _MODULE)
+#define CLOCKINDEX_LIST_ALPHA(NAME)				_GET_MACRO_LIST_ALPHA(NAME, CLOCKINDEX_OF_ , _MODULE,		  NUMBER_OF_ ## NAME ## _MODULE)
+#define RESETINDEX_LIST_ALPHA(NAME,CHANNEL)			_GET_MACRO_LIST_ALPHA(NAME, RESETINDEX_OF_ , _MODULE_ ## CHANNEL, NUMBER_OF_ ## NAME ## _MODULE)
 //@modified martin 2012/8/6
-#define TIEOFFINDEX_LIST_ALPHA(NAME,CHANNEL)     			    _GET_MACRO_LIST_ALPHA( NAME, TIEOFFINDEX_OF_ , _MODULE_ ## CHANNEL, NUMBER_OF_ ## NAME ## _MODULE)
+#define TIEOFFINDEX_LIST_ALPHA(NAME,CHANNEL)			_GET_MACRO_LIST_ALPHA(NAME, TIEOFFINDEX_OF_, _MODULE_ ## CHANNEL, NUMBER_OF_ ## NAME ## _MODULE)
 
-#define NX_BIT_GETBIT_RANGE32( Value,  MSB, LSB ) NX_BIT_GetBitRange32( Value,  MSB, LSB )
-#define NX_BIT_SETBIT_RANGE32( OldValue, BitValue,  BitNumber ) NX_BIT_SetBitRange32( OldValue, BitValue,  BitNumber )
+#define NX_BIT_GETBIT_RANGE32(Value, MSB, LSB) NX_BIT_GetBitRange32(Value, MSB, LSB)
+#define NX_BIT_SETBIT_RANGE32(OldValue, BitValue, BitNumber) NX_BIT_SetBitRange32(OldValue, BitValue, BitNumber)
 
-// #define NX_BIT_SETBIT32(OldValue, BitValue, MSB, LSB  ) NX_BIT_SetBit( U32 OldValue, U32 BitValue, U32 MSB, U32 LSB );
-// #define NX_BIT_SETBIT32(OldValue, BitValue, BitNumber ) NX_BIT_SetBit(OldValue, BitValue, BitNumber )
-// #define NX_BIT_SETBIT16(OldValue,BitValue, MSB, LSB ) NX_BIT_SetBit(OldValue,BitValue, MSB, LSB )
-// #define NX_BIT_SetBit16 NX_BIT_SetBit( U16 OldValue, U32 BitValue, U32 BitNumber );
-// #define NX_BIT_GetBit    NX_BIT_GetBit( U32 Value, U32 BitNumber );
-// #define NX_BIT_GetBitU16 NX_BIT_GetBit( U16 Value, U32 MSB, U32 LSB );
-// #define NX_BIT_GetBitCBOOL NX_BIT_GetBit( U16 Value, U32 BitNumber );
+// #define NX_BIT_SETBIT32(OldValue, BitValue, MSB, LSB) NX_BIT_SetBit(U32 OldValue, U32 BitValue, U32 MSB, U32 LSB);
+// #define NX_BIT_SETBIT32(OldValue, BitValue, BitNumber) NX_BIT_SetBit(OldValue, BitValue, BitNumber)
+// #define NX_BIT_SETBIT16(OldValue,BitValue, MSB, LSB) NX_BIT_SetBit(OldValue,BitValue, MSB, LSB)
+// #define NX_BIT_SetBit16 NX_BIT_SetBit(U16 OldValue, U32 BitValue, U32 BitNumber);
+// #define NX_BIT_GetBit    NX_BIT_GetBit(U32 Value, U32 BitNumber);
+// #define NX_BIT_GetBitU16 NX_BIT_GetBit(U16 Value, U32 MSB, U32 LSB);
+// #define NX_BIT_GetBitCBOOL NX_BIT_GetBit(U16 Value, U32 BitNumber);
 
 #endif  // __NX_PROTOTYPE_H__

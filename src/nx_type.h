@@ -34,6 +34,7 @@ typedef int		S32;	///< 32bit signed integer(s.31) value
 typedef unsigned char	U8;	///< 8bit unsigned integer value
 typedef unsigned short	U16;	///< 16bit unsigned integer value
 typedef unsigned int	U32;	///< 32bit unsigned integer value
+typedef unsigned long	U64;	///< 64bit unsigned integer value
 
 #define S8_MIN		-128		///< signed char min value
 #define S8_MAX		127		///< signed char max value
@@ -41,6 +42,8 @@ typedef unsigned int	U32;	///< 32bit unsigned integer value
 #define S16_MAX		32767		///< signed short max value
 #define S32_MIN		-2147483648	///< signed integer min value
 #define S32_MAX		2147483647	///< signed integer max value
+#define S64_MIN		-9223372036854775808	///< signed integer min value
+#define S64_MAX		9223372036854775807	///< signed integer max value
 
 #define U8_MIN		0		///< unsigned char min value
 #define U8_MAX		255		///< unsigned char max value
@@ -48,6 +51,8 @@ typedef unsigned int	U32;	///< 32bit unsigned integer value
 #define U16_MAX		65535		///< unsigned short max value
 #define U32_MIN		0		///< unsigned integer min value
 #define U32_MAX		4294967295	///< unsigned integer max value
+#define U64_MIN		0		///< unsigned integer min value
+#define U64_MAX		18446744073709551616	///< unsigned integer max value
 /// @}
 
 //==============================================================================

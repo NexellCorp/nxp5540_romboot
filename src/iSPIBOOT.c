@@ -21,20 +21,22 @@
 #include <nx_type.h>
 #include <nx_debug2.h>
 
-#include <nx_chip.h>
 
 #include <nx_gpio.h>
 
 #ifdef NXP5430
+#include <nx_chip.h>
 #include <nx_clkgen.h>
 #endif
 #include <nx_ssp.h>
 #include "nx_etacarinae_bootheader.h"
 
 #ifdef NXP5540
-#include "nx_resetcontrol_def.h"
-#include "nx_clockcontrol_def.h"
+#include <nx_resetcontrol_def.h>
+#include <nx_clockcontrol_def.h>
 #include "cpuif_regmap_framework.h"
+#include <nx_chip_sfr.h>
+#include <nx_chip_iomux.h>
 #endif
 
 #include "libarm.h"
@@ -81,13 +83,13 @@ txd c 12 2 gpio:1 default 0
 */
 //------------------------------------------------------------------------------
 extern struct NX_GPIO_RegisterSet (* const pGPIOReg)[1];
+#ifdef NXP5430
 static struct NX_SSP_RegisterSet * const pgSSPSPIReg[3] =
 {
 	(struct NX_SSP_RegisterSet *)PHY_BASEADDR_SSP0_MODULE,
 	(struct NX_SSP_RegisterSet *)PHY_BASEADDR_SSP1_MODULE,
 	(struct NX_SSP_RegisterSet *)PHY_BASEADDR_SSP2_MODULE
 };
-#ifdef NXP5430
 static struct NX_CLKGEN_RegisterSet * const pgSSPClkGenReg[3] =
 {
 	(struct NX_CLKGEN_RegisterSet *)PHY_BASEADDR_CLKGEN37_MODULE,
@@ -107,24 +109,30 @@ static U32 const SPIResetNum[6] =
 };
 #endif
 #ifdef NXP5540
+static struct NX_SSP_RegisterSet * const pgSSPSPIReg[3] =
+{
+	(struct NX_SSP_RegisterSet *)PHY_BASEADDR_SPI0_MODULE,
+	(struct NX_SSP_RegisterSet *)PHY_BASEADDR_SPI1_MODULE,
+	(struct NX_SSP_RegisterSet *)PHY_BASEADDR_SPI2_MODULE
+};
 static const union nxpad spipad[3][4] = {
 {
-	PADI_SSP0_MISO,
-	PADI_SSP0_MOSI,
-	PADI_SSP0_SSPCLK_IO,
-	PADI_SSP0_SSPFSS
+	{PADI_SSP0_MISO},
+	{PADI_SSP0_MOSI},
+	{PADI_SSP0_SSPCLK_IO},
+	{PADI_SSP0_SSPFSS}
 },
 {
-	PADI_SSP1_MISO,
-	PADI_SSP1_MOSI,
-	PADI_SSP1_SSPCLK_IO,
-	PADI_SSP1_SSPFSS
+	{PADI_SSP1_MISO},
+	{PADI_SSP1_MOSI},
+	{PADI_SSP1_SSPCLK_IO},
+	{PADI_SSP1_SSPFSS}
 },
 {
-	PADI_SSP2_MISO,
-	PADI_SSP2_MOSI,
-	PADI_SSP2_SSPCLK_IO,
-	PADI_SSP2_SSPFSS
+	{PADI_SSP2_MISO},
+	{PADI_SSP2_MOSI},
+	{PADI_SSP2_SSPCLK_IO},
+	{PADI_SSP2_SSPFSS}
 }};
 
 #endif

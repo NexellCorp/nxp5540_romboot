@@ -14,9 +14,7 @@
  *	History		: 2016.08.12 First Implementation
  */
 
-#include <nx_type.h>
-
-#include <nx_gpio.h>
+#include "libplat.h"
 
 #ifdef NXP5540
 #include <nx_chip_iomux.h>
@@ -60,7 +58,7 @@ inline void GPIOSetAltFunction(U32 AltFunc)
 
 #ifdef NXP5540
 extern struct NX_GPIO_RegisterSet (* const pGPIOReg)[1];
-void GPIOSetAltFunction(struct nxpadi *pad, CBOOL setalt)
+void GPIOSetAltFunction(const struct nxpadi *pad, CBOOL setalt)
 {
 	U32 regvalue;
 	U32 alt = setalt ? pad->alt : 0;
@@ -71,7 +69,7 @@ void GPIOSetAltFunction(struct nxpadi *pad, CBOOL setalt)
 	regvalue = pGPIOReg[pad->grp]->GPIOx_ALTFN[pad->pin >> 4];
 	pGPIOReg[pad->grp]->GPIOx_ALTFN[pad->pin >> 4] =
 		(regvalue & ~(3 << (pad->pin & 0xF))) |
-			pad->alt << (pad->pin & 0xF);
+			alt << (pad->pin & 0xF);
 }
 #if 0
 void GPIO_SetIO(struct padi *pad, CBOOL inout)	/* 0: out, 1: in */
@@ -85,7 +83,7 @@ void GPIO_SetIO(struct padi *pad, CBOOL inout)	/* 0: out, 1: in */
 		pGPIOReg->GPIOx_SET_OUTENB = 1 << pad->pin;
 }
 #endif
-void GPIOSetDrvSt(struct nxpadi *pad, NX_GPIO_DRVSTRENGTH str)
+void GPIOSetDrvSt(const struct nxpadi *pad, NX_GPIO_DRVSTRENGTH str)
 {
 	struct NX_GPIO_RegisterSet *pGPIOxReg = pGPIOReg[pad->grp];
 	U32 d0 = str & 1, d1 = (str >> 1) & 1;
@@ -108,7 +106,7 @@ void GPIOSetDrvSt(struct nxpadi *pad, NX_GPIO_DRVSTRENGTH str)
 		pGPIOxReg->GPIOx_CLR_DRV1_DISABLE_DEFAULT = 0x1 << pad->pin;
 	}
 }
-void GPIOSetPullup(struct nxpadi *pad, NX_GPIO_PULL pull)
+void GPIOSetPullup(const struct nxpadi *pad, NX_GPIO_PULL pull)
 {
 	struct NX_GPIO_RegisterSet *pGPIOxReg = pGPIOReg[pad->grp];
 	U32 pullupdown = pull & 1, pullen = (pull >> 1) & 1;

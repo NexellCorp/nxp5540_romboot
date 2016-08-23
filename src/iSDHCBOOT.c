@@ -33,6 +33,7 @@
 #include "nx_resetcontrol_def.h"
 #include "nx_clockcontrol_def.h"
 #include "cpuif_regmap_framework.h"
+#include "nx_chip_iomux.h"
 #endif
 
 #include "libarm.h"
@@ -1410,28 +1411,28 @@ strb d 05 1 gpio:0        strb d 16 1 gpio:0        strb d 27 2 gpio:0
 #ifdef NXP5540
 static const union nxpad sdmmcpad[3][6] = {
 {
-	PADI_SDMMC0_CDATA_0_,
-	PADI_SDMMC0_CDATA_1_,
-	PADI_SDMMC0_CDATA_2_,
-	PADI_SDMMC0_CDATA_3_,
-	PADI_SDMMC0_CCLK,
-	PADI_SDMMC0_CMD
+	{PADI_SDMMC0_CDATA_0_},
+	{PADI_SDMMC0_CDATA_1_},
+	{PADI_SDMMC0_CDATA_2_},
+	{PADI_SDMMC0_CDATA_3_},
+	{PADI_SDMMC0_CCLK},
+	{PADI_SDMMC0_CMD}
 },
 {
-	PADI_SDMMC1_CDATA_0_,
-	PADI_SDMMC1_CDATA_1_,
-	PADI_SDMMC1_CDATA_2_,
-	PADI_SDMMC1_CDATA_3_,
-	PADI_SDMMC1_CCLK,
-	PADI_SDMMC1_CMD
+	{PADI_SDMMC1_CDATA_0_},
+	{PADI_SDMMC1_CDATA_1_},
+	{PADI_SDMMC1_CDATA_2_},
+	{PADI_SDMMC1_CDATA_3_},
+	{PADI_SDMMC1_CCLK},
+	{PADI_SDMMC1_CMD}
 },
 {
-	PADI_SDMMC2_CDATA_0_,
-	PADI_SDMMC2_CDATA_1_,
-	PADI_SDMMC2_CDATA_2_,
-	PADI_SDMMC2_CDATA_3_,
-	PADI_SDMMC2_CCLK,
-	PADI_SDMMC2_CMD
+	{PADI_SDMMC2_CDATA_0_},
+	{PADI_SDMMC2_CDATA_1_},
+	{PADI_SDMMC2_CDATA_2_},
+	{PADI_SDMMC2_CDATA_3_},
+	{PADI_SDMMC2_CCLK},
+	{PADI_SDMMC2_CMD}
 }};
 #endif
 void NX_SDPADSetALT(U32 PortNum)

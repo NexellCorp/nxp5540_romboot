@@ -20,6 +20,7 @@
 //------------------------
 // implentation of ALIVE 
 //------------------------
+#define PHY_BASEADDR_CLKPWR_MODULE	PHY_BASEADDR_SYSCTRLTOP_MODULE
 #define NUMBER_OF_ALIVE_MODULE 1
 #define PHY_BASEADDR_ALIVE_MODULE     (PHY_BASEADDR_CLKPWR_MODULE + 0x800)  // 2048
 
