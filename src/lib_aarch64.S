@@ -21,25 +21,32 @@
 .global xget_fcs
 //; unsigned int xget_fcs(unsigned int fcs, unsigned long data);
 xget_fcs:
-	crc32x	w0, w0, x1
+//	crc32x	w0, w0, x1
 	ret
 
 .global iget_fcs
 //; unsigned int iget_fcs(unsigned int fcs, unsigned int data);
 iget_fcs:
-	crc32w	w0, w0, w1
+//	crc32w	w0, w0, w1
 	ret
 
 .global sget_fcs
 //; unsigned int sget_fcs(unsigned int fcs, unsigned short data);
 sget_fcs:
-	crc32h	w0, w0, w1
+//	crc32h	w0, w0, w1
 	ret
 
 .global get_fcs
 //; unsigned int get_fcs(unsigned int fcs, unsigned char data);
 get_fcs:
-	crc32b	w0, w0, w1
+//	crc32b	w0, w0, w1
+	ret
+
+.global GetSaveAArchMode
+//;
+GetSaveAArchMode:
+	mrs	x0, SPSR_EL3
+	ubfx	w0, w0, #4, #1			//; nRW bit 0: AArch64, 1: AArch32
 	ret
 
 .global GetCPUID
@@ -50,18 +57,6 @@ GetCPUID:
 	lsr	x0, x0, #8
 	and	x0, x0, #0x0F			//; check processor affinity
 	orr	x0, x1, x0			//; mark cpu group 0 or 1
-	ret
-
-.global GetSCR_EL3
-//; unsigned int GetSCR_EL3(void);
-GetSCR_EL3:
-	mrs	x0, SCR_EL3
-	ret
-
-.global SetSCR_EL3
-//; void SetSCR_EL3(unsigned int rSCR);
-SetSCR_EL3:
-	msr	SCR_EL3, x0
 	ret
 
 .global GetSCR_EL3
@@ -118,15 +113,6 @@ GetSMCCodeFromAArch64:
 	mrs	x0, ELR_EL3
 	ldr	w0, [x0, #-4]		//; get smc instruction
 	ubfx	w0, w0, #5, #16		//; aarch64 smc get imm16 [20:5]
-	ret
-
-.global SetNS
-//; void SetNS(CBOOL bEnable, U32 tmp);
-SetNS:
-	mrs	x1, SCR_EL3
-	bic	x1, x1, #1<<0
-	orr	x1, x1, x0
-	msr	SCR_EL3, x1
 	ret
 
 .global EnterLowLevel

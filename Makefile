@@ -33,6 +33,11 @@ SYS_OBJS	+= 	iNANDBOOTEC.o
 SYS_OBJS	+= 	iSDHCFSBOOT.o fatfs.o diskio.o
 SYS_OBJS	+= 	libarm.o lib_$(OPMODE).o
 
+ifeq ($(EMUL_CPU), NXP5430)
+ifeq ($(OPMODE), aarch64)
+SYS_OBJS	+=	aarch64_exception_handler.o
+endif
+endif
 ifeq ($(EMUL_CPU), NXP5540)
 SYS_OBJS	+= 	cpuif_regmap_framework.o
 SYS_OBJS	+= 	nx_chip_sfr.o

@@ -19,11 +19,11 @@
 ###########################################################################
 DEBUG			= y
 
-#EMUL_CPU		= NXP5430
-EMUL_CPU		= NXP5540
+EMUL_CPU		= NXP5430
+#EMUL_CPU		= NXP5540
 
-OPMODE			= aarch32
-#OPMODE			= aarch64
+#OPMODE			= aarch32
+OPMODE			= aarch64
 
 
 CROSS_TOOL_TOP		=
@@ -40,7 +40,7 @@ ifeq ($(OPMODE), aarch64)
 ifeq ($(OS),Windows_NT)
 CROSS_TOOL		= $(CROSS_TOOL_TOP)aarch64-none-elf-
 else
-CROSS_TOOL		= $(CROSS_TOOL_TOP)aarch64-elf-
+CROSS_TOOL		= $(CROSS_TOOL_TOP)aarch64-none-elf-
 endif
 endif
 
@@ -65,7 +65,16 @@ CODE_MAIN_INCLUDE	=
 ###########################################################################
 # Build Environment
 ###########################################################################
-CPU			= cortex-a9
+ifeq ($(OPMODE), aarch32)
+ARCH			= armv7-a
+CPU			= cortex-15
+endif
+
+ifeq ($(OPMODE), aarch64)
+ARCH			= armv8-a
+CPU			= cortex-a53
+endif
+
 CC			= $(CROSS_TOOL)gcc
 LD 			= $(CROSS_TOOL)ld
 AS 			= $(CROSS_TOOL)as

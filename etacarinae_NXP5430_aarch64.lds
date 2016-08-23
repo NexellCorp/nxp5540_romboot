@@ -1,6 +1,6 @@
 OUTPUT_FORMAT("elf64-littleaarch64", "elf64-littleaarch64", "elf64-littleaarch64")
 OUTPUT_ARCH(aarch64)
-ENTRY(Vectors)
+ENTRY(Startup)
 
 SECTIONS
 {
@@ -8,7 +8,7 @@ SECTIONS
 	. = ALIGN(4);
 	.text :
 	{
-		obj/startup_aarch64.o	(.text)
+		obj/startup_aarch64_NXP5430.o	(.text)
 		*(.text)
 	}
 

@@ -41,7 +41,7 @@ unsigned int GetSCR_EL3(void);
 void SetSCR_EL3(unsigned int rSCR);
 unsigned int GetESR_EL3(void);
 U32 GetISR_EL1(void);
-boot GetSavedAArchMode(void);
+CBOOL GetSavedAArchMode(void);
 unsigned int GetSMCCodeFromAArch32(void);
 unsigned int GetSMCCodeFromAArch64(void);
 #endif
