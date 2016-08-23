@@ -163,7 +163,7 @@ CacheInit:
 //; Enable caches and branch prediction
 //;=============================================================================
 	MOV	R0, R11
-	TST	R0, #(0x1 << ICACHE )	//; if selsdex==0 check sd-icache bit
+	TST	R0, #(0x1 << ICACHE)	//; if selsdex==0 check sd-icache bit
 
 	MRCNE	P15, 0, R1, C1, C0, 0	//; Read System Control Register
 	ORRNE	R1, R1, #(BIT1_I)	//; Set I bit 12 to enable I Cache
