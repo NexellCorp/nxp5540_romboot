@@ -65,6 +65,9 @@ void iROMBOOT(U32 OrgBootOption)
 	// Disable writing data to ALIVE registers.
 	pALIVEReg->ALIVEPWRGATEREG 	= 0;
 #endif
+#ifdef NXP5540
+
+#endif
 
 	//--------------------------------------------------------------------------
 	// Debug Console

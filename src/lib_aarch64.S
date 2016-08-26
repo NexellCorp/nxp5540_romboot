@@ -21,25 +21,25 @@
 .global xget_fcs
 //; unsigned int xget_fcs(unsigned int fcs, unsigned long data);
 xget_fcs:
-//	crc32x	w0, w0, x1
+	crc32x	w0, w0, x1
 	ret
 
 .global iget_fcs
 //; unsigned int iget_fcs(unsigned int fcs, unsigned int data);
 iget_fcs:
-//	crc32w	w0, w0, w1
+	crc32w	w0, w0, w1
 	ret
 
 .global sget_fcs
 //; unsigned int sget_fcs(unsigned int fcs, unsigned short data);
 sget_fcs:
-//	crc32h	w0, w0, w1
+	crc32h	w0, w0, w1
 	ret
 
 .global get_fcs
 //; unsigned int get_fcs(unsigned int fcs, unsigned char data);
 get_fcs:
-//	crc32b	w0, w0, w1
+	crc32b	w0, w0, w1
 	ret
 
 .global GetSaveAArchMode
@@ -124,3 +124,34 @@ EnterLowLevel:
 	mov	x1, #5540
 	dsb	sy
 	ERET
+#if 0
+GetILineSize:
+	mrs	x1, ctr_el0
+	ubfx	x1, x1, #0xF
+	mov	x0, #4
+	lsl	x0, x0, x1
+	ret
+
+GetDLineSize:
+	mrs	x1, ctr_el0
+	ubfx	x1, x1, #16, #4
+	mov	x0, #4
+	lsl	x0, x0, x1
+	ret
+
+Dcache_flush_range:
+	mov	x19, x30
+	bl	GetDLineSize
+	mov	x2, x0
+	add	x1, x0, x1
+	sub	x3, x2, #1
+	bic	x0, x0, x3
+1:
+	dc	civac	//; flush:civac, clean:cvac, invalidate:ivac
+	add	x0, x0, x2
+	cmp	x0, x1
+	b.lo	1b
+	dsb	sy
+	mov	x30, x19
+	ret
+#endif

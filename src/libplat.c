@@ -68,8 +68,8 @@ void GPIOSetAltFunction(const struct nxpadi *pad, CBOOL setalt)
 
 	regvalue = pGPIOReg[pad->grp]->GPIOx_ALTFN[pad->pin >> 4];
 	pGPIOReg[pad->grp]->GPIOx_ALTFN[pad->pin >> 4] =
-		(regvalue & ~(3 << (pad->pin & 0xF))) |
-			alt << (pad->pin & 0xF);
+		(regvalue & ~(3 << ((pad->pin & 0xF) * 2))) |
+			(alt << ((pad->pin & 0xF) * 2));
 }
 #if 0
 void GPIO_SetIO(struct padi *pad, CBOOL inout)	/* 0: out, 1: in */

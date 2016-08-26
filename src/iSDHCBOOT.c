@@ -975,7 +975,7 @@ CBOOL NX_SDMMC_Terminate(SDXCBOOTSTATUS *pSDXCBootStatus)
 
 #ifdef NXP5430
 	// Disable CLKGEN
-	pgSDClkGenReg[pSDXCBootStatus->SDPort]->CLKENB = 0;
+	pSDClkGenReg->CLKENB = 0;
 	ResetCon(SDResetNum[pSDXCBootStatus->SDPort], CTRUE);	// reset on
 #endif
 

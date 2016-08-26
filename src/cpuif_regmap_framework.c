@@ -43,12 +43,12 @@ void nx_cpuif_reg_write_one_notread(
 
 #ifdef CPUIF_REGMAP_DEBUG
 	nx_cpuif_debug_print("\n[DEBUG]------------------------ ");
-	nx_cpuif_debug_print("\n[DEBUG] reg_addr        = 0x%x", reg_addr     );
-	nx_cpuif_debug_print("\n[DEBUG] reg_startbit    = 0x%x", reg_startbit );
-	nx_cpuif_debug_print("\n[DEBUG] reg_bitwidth    = 0x%x", reg_bitwidth );
-	nx_cpuif_debug_print("\n[DEBUG] masked_writeval = 0x%x", masked_writeval );
-	nx_cpuif_debug_print("\n[DEBUG] reg_writeval    = 0x%x", reg_writeval );
-	nx_cpuif_debug_print("\n[DEBUG] reg_mask        = 0x%x", reg_mask     );
+	nx_cpuif_debug_print("\n[DEBUG] reg_addr        = 0x%x", reg_addr);
+	nx_cpuif_debug_print("\n[DEBUG] reg_startbit    = 0x%x", reg_startbit);
+	nx_cpuif_debug_print("\n[DEBUG] reg_bitwidth    = 0x%x", reg_bitwidth);
+	nx_cpuif_debug_print("\n[DEBUG] masked_writeval = 0x%x", masked_writeval);
+	nx_cpuif_debug_print("\n[DEBUG] reg_writeval    = 0x%x", reg_writeval);
+	nx_cpuif_debug_print("\n[DEBUG] reg_mask        = 0x%x", reg_mask);
 	nx_cpuif_debug_print("\n[DEBUG]------------------------");
 #endif
 

@@ -444,7 +444,7 @@ static void nx_usb_int_bulkin(USBBOOTSTATUS *pUSBBootStatus)
 
 	bulkin_buf = (U8*)pUSBBootStatus->up_ptr;
 	remain_cnt = pUSBBootStatus->up_size -
-		((U32)pUSBBootStatus->up_ptr -
+		((MPTRS)pUSBBootStatus->up_ptr -
 			pUSBBootStatus->up_addr);
 
 	if (remain_cnt > pUSBBootStatus->bulkin_max_pktsize) {
@@ -475,7 +475,8 @@ static void nx_usb_int_bulkin(USBBOOTSTATUS *pUSBBootStatus)
 		pUSBBootStatus->up_ptr += remain_cnt;
 
 	} else { /*remain_cnt = 0*/
-		pUOReg->DCSR.DEPIR[BULK_IN_EP].DIEPCTL = (DEPCTL_SNAK|DEPCTL_BULK_TYPE);
+		pUOReg->DCSR.DEPIR[BULK_IN_EP].DIEPCTL =
+					(DEPCTL_SNAK|DEPCTL_BULK_TYPE);
 	}
 }
 static void nx_usb_int_bulkout(USBBOOTSTATUS *pUSBBootStatus,
@@ -484,7 +485,7 @@ static void nx_usb_int_bulkout(USBBOOTSTATUS *pUSBBootStatus,
 	if (CTRUE != pUSBBootStatus->bHeaderReceived) {
 		U32 *pdwBuffer = (U32*)BASEADDR_SRAM;
 		nx_usb_read_out_fifo(BULK_OUT_EP,
-				(U8 *)&pdwBuffer[pUSBBootStatus->iRxHeaderSize/4],
+				(U8 *)&pdwBuffer[pUSBBootStatus->iRxHeaderSize / 4],
 				fifo_cnt_byte);
 
 		if ((fifo_cnt_byte & 3) == 0) {
@@ -519,9 +520,9 @@ static void nx_usb_int_bulkout(USBBOOTSTATUS *pUSBBootStatus,
 					pUSBBootStatus->iRxSize;
 
 				NX_DEBUG_MSG("USB Load Address = ");
-				NX_DEBUG_HEX( (S32)pUSBBootStatus->RxBuffAddr );
+				NX_DEBUG_HEX((S32)pUSBBootStatus->RxBuffAddr);
 				NX_DEBUG_MSG(", ");
-				NX_DEBUG_DEC( pUSBBootStatus->iRxSize );
+				NX_DEBUG_DEC(pUSBBootStatus->iRxSize);
 				NX_DEBUG_MSG("\r\n");
 			} else {
 				pUSBBootStatus->iRxHeaderSize = 0;

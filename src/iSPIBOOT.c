@@ -141,16 +141,16 @@ U32 iSPIBOOT(U32 option)
 {
 	register struct NX_SecondBootInfo *pSBI;
 	register U8 *pdwBuffer = (U8*)BASEADDR_SRAM;
-	register U32 iRxSize = 0, saddr;
+	register U32 iRxSize = 0;
 	register U32 SPIPort = (option >> SELSPIPORT) & 0x1;
-	CBOOL ret = CFALSE, bHighSpeed = CFALSE;
+	CBOOL ret = CFALSE;//, bHighSpeed = CFALSE;
 
 	if (option & 1 << SELSPIPORT1)
 		SPIPort += 2;
 
 	if (SPIPort >= 3) {
 		SPIPort = 0;
-		bHighSpeed = CTRUE;     // ??
+//		bHighSpeed = CTRUE;     // ??
 	}
 	register struct NX_SSP_RegisterSet * const pSSPSPIReg =
 						pgSSPSPIReg[SPIPort];
@@ -158,30 +158,72 @@ U32 iSPIBOOT(U32 option)
 	if (SPIPort == 0) {
 		U32 regval;
 		//nx_cpuif_reg_write_one(CMUI_SPI_0_CORE_group_clock_source, 0);                                // clock source
-		nx_cpuif_reg_write_one(CMUI_SPI_0_CORE_dy_div_val, (SPI_SOURCE_DIVIDOVER - 1));      // clock divider value
+		nx_cpuif_reg_write_one(CMUI_SPI_0_CORE_dy_div_val,
+				(SPI_SOURCE_DIVIDOVER - 1));      // clock divider value
 		while (1 == nx_cpuif_reg_read_one(CMUI_SPI_0_CORE_dy_div_busy_st, &regval));
 		nx_cpuif_reg_write_one(CMUI_SPI_0_CORE_clk_enb, 1);                                      // clock enable
 
-		nx_cpuif_reg_write_one(CMUI_SPI_0_APB_clk_enb, 1);                                       // clock enable
-		nx_cpuif_reg_write_one(RSTI_spi_0_apb_rst, 1);                                                   // reset enable
+		/////////////////////////////////////////////////////
+		// @modified by choiyk 2016.08.25 pm0400. 
+		// S/W stop-and-go for SPI reset 
+		//---------------------------------------------------
+		// [original code]
+		// nx_cpuif_reg_write_one(CMUI_SPI_0_APB_clk_enb, 1);                                       // clock enable
+		// nx_cpuif_reg_write_one(RSTI_spi_0_apb_rst, 1);                                           // reset enable
+		//---------------------------------------------------
+		//
+		// sw code must be 
+		//
+		// clock off -> reset mode 1 -> reset on -> clock on		
+		//
+		//---------------------------------------------------
+		nx_cpuif_reg_write_one(CMUI_SPI_0_APB_clk_enb , 0); // clock disable
+		nx_cpuif_reg_write_one(CMUI_SPI_0_CORE_clk_enb, 0); // clock disable
+
+		nx_cpuif_reg_write_one(RSTM_spi_0_apb_rst, 1); // reset mode must be 1 
+		nx_cpuif_reg_write_one(RSTI_spi_0_apb_rst, 1); // reset enable
+
+		nx_cpuif_reg_write_one(CMUI_SPI_0_APB_clk_enb , 1); // clock enable
+		nx_cpuif_reg_write_one(CMUI_SPI_0_CORE_clk_enb, 1); // clock enable
+		/////////////////////////////////////////////////////
 	} else if (SPIPort == 1) {
 		U32 regval;
 		//nx_cpuif_reg_write_one(CMUI_SPI_1_CORE_group_clock_source, 0);                                // clock source
-		nx_cpuif_reg_write_one(CMUI_SPI_1_CORE_dy_div_val, (SPI_SOURCE_DIVIDOVER - 1));      // clock divider value
+		nx_cpuif_reg_write_one(CMUI_SPI_1_CORE_dy_div_val,
+				(SPI_SOURCE_DIVIDOVER - 1));      // clock divider value
 		while (1 == nx_cpuif_reg_read_one(CMUI_SPI_1_CORE_dy_div_busy_st, &regval));
 		nx_cpuif_reg_write_one(CMUI_SPI_1_CORE_clk_enb, 1);                                      // clock enable
 
-		nx_cpuif_reg_write_one(CMUI_SPI_1_APB_clk_enb, 1);                                       // clock enable
-		nx_cpuif_reg_write_one(RSTI_spi_1_apb_rst, 1);                                                   // reset enable
+		//nx_cpuif_reg_write_one(CMUI_SPI_1_APB_clk_enb, 1);                                       // clock enable
+		//nx_cpuif_reg_write_one(RSTI_spi_1_apb_rst, 1);                                                   // reset enable
+
+		nx_cpuif_reg_write_one(CMUI_SPI_1_APB_clk_enb , 0); // clock disable
+		nx_cpuif_reg_write_one(CMUI_SPI_1_CORE_clk_enb, 0); // clock disable
+
+		nx_cpuif_reg_write_one(RSTM_spi_1_apb_rst, 1); // reset mode must be 1 
+		nx_cpuif_reg_write_one(RSTI_spi_1_apb_rst, 1); // reset enable
+
+		nx_cpuif_reg_write_one(CMUI_SPI_1_APB_clk_enb , 1); // clock enable
+		nx_cpuif_reg_write_one(CMUI_SPI_1_CORE_clk_enb, 1); // clock enable
 	} else {
 		U32 regval;
 		//nx_cpuif_reg_write_one( CMUI_SPI_2_CORE_group_clock_source, 0 );                                // clock source
-		nx_cpuif_reg_write_one(CMUI_SPI_2_CORE_dy_div_val, (SPI_SOURCE_DIVIDOVER - 1));      // clock divider value
+		nx_cpuif_reg_write_one(CMUI_SPI_2_CORE_dy_div_val,
+				(SPI_SOURCE_DIVIDOVER - 1));      // clock divider value
 		while (1 == nx_cpuif_reg_read_one(CMUI_SPI_2_CORE_dy_div_busy_st, &regval));
 		nx_cpuif_reg_write_one(CMUI_SPI_2_CORE_clk_enb, 1);                                      // clock enable
 
-		nx_cpuif_reg_write_one(CMUI_SPI_2_APB_clk_enb, 1);                                       // clock enable
-		nx_cpuif_reg_write_one(RSTI_spi_2_apb_rst, 1);                                                   // reset enable
+		//nx_cpuif_reg_write_one(CMUI_SPI_2_APB_clk_enb, 1);                                       // clock enable
+		//nx_cpuif_reg_write_one(RSTI_spi_2_apb_rst, 1);                                                   // reset enable
+
+		nx_cpuif_reg_write_one(CMUI_SPI_2_APB_clk_enb , 0); // clock disable
+		nx_cpuif_reg_write_one(CMUI_SPI_2_CORE_clk_enb, 0); // clock disable
+
+		nx_cpuif_reg_write_one(RSTM_spi_2_apb_rst, 1); // reset mode must be 1 
+		nx_cpuif_reg_write_one(RSTI_spi_2_apb_rst, 1); // reset enable
+
+		nx_cpuif_reg_write_one(CMUI_SPI_2_APB_clk_enb , 1); // clock enable
+		nx_cpuif_reg_write_one(CMUI_SPI_2_CORE_clk_enb, 1); // clock enable
 	}
 #endif
 
@@ -220,8 +262,7 @@ U32 iSPIBOOT(U32 option)
 		pGPIOxReg->GPIOx_PULLSEL_DISABLE_DEFAULT |= (1<<21 | 1<<20 | 1<<18);
 		pGPIOxReg->GPIOx_PULLENB &= ~(1<<21 | 1<<20 | 1<<18);
 		pGPIOxReg->GPIOx_PULLENB_DISABLE_DEFAULT |= (1<<21 | 1<<20 | 1<<18);
-	}else
-	{
+	} else {
 		register struct NX_GPIO_RegisterSet * pGPIOxReg =
 			(struct NX_GPIO_RegisterSet *)&pGPIOReg[GPIO_GROUP_F];
 		pGPIOxReg->GPIOx_ALTFN[1] =
@@ -251,31 +292,31 @@ U32 iSPIBOOT(U32 option)
 
 	if (option & 1 << SERIALFLASHSPEED)
 		pSSPSPIReg->CH_CFG =
-			1<<6 |		// high speed en (0:low speed, 1:high speed)
-			0<<4 |		// master mode (0:master mode, 1:slave mode)
-			0<<2 |		// active high, format a
-			0<<1 |		// rx channel on (0:off, 1:on)
-			0<<0;		// tx channel on
+			1 << 6 |	// high speed en (0:low speed, 1:high speed)
+			0 << 4 |	// master mode (0:master mode, 1:slave mode)
+			0 << 2 |	// active high, format a
+			0 << 1 |	// rx channel on (0:off, 1:on)
+			0 << 0;		// tx channel on
 	else
 		pSSPSPIReg->CH_CFG =
-			0<<6 |		// high speed en (0:low speed, 1:high speed)
-			0<<4 |		// master mode (0:master mode, 1:slave mode)
-			0<<2 |		// active high, format a
-			0<<1 |		// rx channel on (0:off, 1:on)
-			0<<0;		// tx channel on
+			0 << 6 |	// high speed en (0:low speed, 1:high speed)
+			0 << 4 |	// master mode (0:master mode, 1:slave mode)
+			0 << 2 |	// active high, format a
+			0 << 1 |	// rx channel on (0:off, 1:on)
+			0 << 0;		// tx channel on
 
 	pSSPSPIReg->MODE_CFG =
-		0<<29 |		// channel width (0:byte, 1:half word, 2:word)
-		0<<17 |		// bus width
-		0<<11 |		// rx fifo trigger level
-		0<< 5 |		// tx fifo trigger level
-		0<< 2 |		// rx dma mode (0:disable, 1:enable)
-		0<< 1 |		// tx dma mode
-		0<< 0;		// dma transfer type (0:single, 1:4 burst)
+		0 << 29 |		// channel width (0:byte, 1:half word, 2:word)
+		0 << 17 |		// bus width
+		0 << 11 |		// rx fifo trigger level
+		0 <<  5 |		// tx fifo trigger level
+		0 <<  2 |		// rx dma mode (0:disable, 1:enable)
+		0 <<  1 |		// tx dma mode
+		0 <<  0;		// dma transfer type (0:single, 1:4 burst)
 
 	pSSPSPIReg->CS_REG =
-		0<< 1 |		// chip select toggle(0:auto, 1:manual)
-		1<< 0;		// chip select state (0: active, 1:inactive)
+		0 << 1 |		// chip select toggle(0:auto, 1:manual)
+		1 << 0;			// chip select state (0: active, 1:inactive)
 
 
 	pSSPSPIReg->SPI_INT_EN = 0;		// all interrupt disasble
@@ -287,11 +328,9 @@ U32 iSPIBOOT(U32 option)
 
 	pSSPSPIReg->SPI_TX_DATA = SER_READ;		// read command, Read Data from Memory Array
 
-	saddr = (option >> SERIALFLASHADDR) & 0x3;
-	while (saddr) {
+	if ((option >> SERIALFLASHADDR) & 0x1)
 		pSSPSPIReg->SPI_TX_DATA = 0;		// start memory array address high byte
-		saddr--;
-	}
+	pSSPSPIReg->SPI_TX_DATA = 0;			// start memory array address high byte
 	pSSPSPIReg->SPI_TX_DATA = 0;			// start memory array address mid byte
 	pSSPSPIReg->SPI_TX_DATA = 0;			// start memory array address low byte
 

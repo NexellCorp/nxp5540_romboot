@@ -19,8 +19,8 @@
 ###########################################################################
 DEBUG			= y
 
-EMUL_CPU		= NXP5430
-#EMUL_CPU		= NXP5540
+#EMUL_CPU		= NXP5430
+EMUL_CPU		= NXP5540
 
 #OPMODE			= aarch32
 OPMODE			= aarch64
@@ -67,12 +67,12 @@ CODE_MAIN_INCLUDE	=
 ###########################################################################
 ifeq ($(OPMODE), aarch32)
 ARCH			= armv7-a
-CPU			= cortex-15
+CPU			= cortex-a15
 endif
 
 ifeq ($(OPMODE), aarch64)
 ARCH			= armv8-a
-CPU			= cortex-a53
+CPU			= cortex-a53+crc
 endif
 
 CC			= $(CROSS_TOOL)gcc

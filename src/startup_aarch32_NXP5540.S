@@ -172,31 +172,31 @@ CacheInit:
 //;=============================================================================
 //; Reset Release for Access to SRAM
 //;=============================================================================
-        MOV	R1, #0x20000000
+	MOV	R1, #0x20000000
 	ORR	R1, R1, #0x00100000	//; cmu sys base
-        LDR	R2, [R1, #0x40C]	//; release cmu coda reset
-        ORR	R2, #0x00000010		//; cmu sys coda reset release
-        STR	R2, [R1, #0x40C]	//; release cmu coda reset
+	LDR	R2, [R1, #0x40C]	//; release cmu coda reset
+	ORR	R2, #0x00000010		//; cmu sys coda reset release
+	STR	R2, [R1, #0x40C]	//; release cmu coda reset
 
 //;	MOV	R1, #0x20000000
 //;	ORR	R1, R1, #0x00100000	//; cmu sys base
 	ORR	R1, R1, #0x00008000	//; cmu sys coda reset offset
-        LDR	R2, [R1, #0x0]		//; release cmu coda reset
-        ORR	R2, #0x40000000		//; cmu sys coda reset release
-        STR	R2, [R1, #0x0]		//; release cmu coda reset
+	LDR	R2, [R1, #0x0]		//; release cmu coda reset
+	ORR	R2, #0x40000000		//; cmu sys coda reset release
+	STR	R2, [R1, #0x0]		//; release cmu coda reset
 
 	MOV	R1, #0x20000000
 	ORR	R1, R1, #0x00210000	//; cmu coda base
-        LDR	R2, [R1, #0x408]	//; release axi sram reset
-        ORR	R2, #0x00000001		//; axi sram reset release
-        STR	R2, [R1, #0x408]	//; release axi sram reset
+	LDR	R2, [R1, #0x408]	//; release axi sram reset
+	ORR	R2, #0x00000001		//; axi sram reset release
+	STR	R2, [R1, #0x408]	//; release axi sram reset
 
 //;	MOV	R1, #0x20000000
 //;	ORR	R1, R1, #0x00210000	//; cmu coda base
 	ORR	R1, R1, #0x00008000	//; cmu coda sram offset
-        LDR	R2, [R1, #0x0]		//; release axi sram reset
-        ORR	R2, #0x00000060		//; axi sram reset release
-        STR	R2, [R1, #0x0]		//; release axi sram reset
+	LDR	R2, [R1, #0x0]		//; release axi sram reset
+	ORR	R2, #0x00000060		//; axi sram reset release
+	STR	R2, [R1, #0x0]		//; release axi sram reset
 
 //;=============================================================================
 //; Clear SRAM

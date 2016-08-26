@@ -95,10 +95,19 @@ typedef S32	CBOOL;		///< boolean type is 32bits signed integer
 NX_CASSERT	(sizeof(S8)	== 1);
 NX_CASSERT	(sizeof(S16)	== 2);
 NX_CASSERT	(sizeof(S32)	== 4);
+NX_CASSERT	(sizeof(S64)	== 8);
 NX_CASSERT	(sizeof(U8)	== 1);
 NX_CASSERT	(sizeof(U16)	== 2);
 NX_CASSERT	(sizeof(U32)	== 4);
+NX_CASSERT	(sizeof(U64)	== 8);
 NX_CASSERT	(sizeof(CBOOL)	== 4);
 /// @}
+
+#ifdef aarch32
+#define MPTRS	U32
+#endif
+#ifdef aarch64
+#define MPTRS	U64
+#endif
 
 #endif	// __NX_TYPE_H__

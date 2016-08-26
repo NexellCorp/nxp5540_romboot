@@ -33,10 +33,8 @@ SYS_OBJS	+= 	iNANDBOOTEC.o
 SYS_OBJS	+= 	iSDHCFSBOOT.o fatfs.o diskio.o
 SYS_OBJS	+= 	libarm.o lib_$(OPMODE).o
 
-ifeq ($(EMUL_CPU), NXP5430)
 ifeq ($(OPMODE), aarch64)
 SYS_OBJS	+=	aarch64_exception_handler.o
-endif
 endif
 ifeq ($(EMUL_CPU), NXP5540)
 SYS_OBJS	+= 	cpuif_regmap_framework.o
@@ -86,15 +84,15 @@ else
 endif
 
 link:
-	$(Q)echo [link.... $(PROJECT_NAME).elf]
-	$(Q)$(CC) $(SYS_OBJS_LIST) $(LDFLAGS) -o $(DIR_TARGETOUTPUT)/$(PROJECT_NAME).elf
+	$(Q)echo [link.... $(PROJECT_NAME)_$(EMUL_CPU)_$(OPMODE).elf]
+	$(Q)$(CC) $(SYS_OBJS_LIST) $(LDFLAGS) -o $(DIR_TARGETOUTPUT)/$(PROJECT_NAME)_$(EMUL_CPU)_$(OPMODE).elf
 ifeq ($(EMUL_CPU), NXP5540)
 #	@cp -f $(DIR_TARGETOUTPUT)/$(PROJECT_NAME).elf  ../../bootcodegen/firstly_boot_program.elf
 endif
 
 bin:
-	$(Q)echo [binary.... $(PROJECT_NAME).bin]
-	$(Q)$(MAKEBIN) -O binary $(DIR_TARGETOUTPUT)/$(PROJECT_NAME).elf $(DIR_TARGETOUTPUT)/$(PROJECT_NAME).bin
+	$(Q)echo [binary.... $(PROJECT_NAME)_$(EMUL_CPU)_$(OPMODE).bin]
+	$(Q)$(MAKEBIN) -O binary $(DIR_TARGETOUTPUT)/$(PROJECT_NAME)_$(EMUL_CPU)_$(OPMODE).elf $(DIR_TARGETOUTPUT)/$(PROJECT_NAME)_$(EMUL_CPU)_$(OPMODE).bin
 
 clean:
 ifeq ($(OS),Windows_NT)

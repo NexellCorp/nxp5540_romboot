@@ -129,9 +129,9 @@ CBOOL DebugInit(U32 port)
 {
 	U32 SOURCE_CLOCK;
 #ifdef NXP5430
-	pReg_Uart = (struct NX_UART_RegisterSet *)(UARTBASEADDR[port]);
+	pReg_Uart = (struct NX_UART_RegisterSet *)((MPTRS)UARTBASEADDR[port]);
 	struct NX_CLKGEN_RegisterSet * const pReg_UartClkGen =
-		(struct NX_CLKGEN_RegisterSet * const)(UARTCLKGENADDR[port]);
+		(struct NX_CLKGEN_RegisterSet * const)((MPTRS)UARTCLKGENADDR[port]);
 	U32 reset_number = RESETNUM[port];
 	U32 GPIO_TXD = GPIOALTNUM[port * 2 + 1];
 
@@ -155,6 +155,7 @@ CBOOL DebugInit(U32 port)
 #endif
 #ifdef NXP5540
 	U32 regval;
+	port = port;
 	SOURCE_CLOCK = 550000000;
 	GPIOSetAltFunction((struct nxpadi *)PADI_UART0_TXD, CTRUE);
 

@@ -427,7 +427,7 @@ static CBOOL NANDFlash_ReadSector(NANDBOOTECSTATUS *pBootStatus, U32 *pData)
 
 	// Set original ECCs.
 	NANDFlash_SetOriECC(pBootStatus,
-			(U32 *)((U32)pBootStatus->ECC +
+			(U32 *)((MPTRS)pBootStatus->ECC +
 				(8 - pBootStatus->iECCLeft) *
 				pBootStatus->dwSectorSize / 8));
 	pBootStatus->iECCLeft--;
@@ -592,7 +592,7 @@ CBOOL iNANDBOOTEC(U32 option)
 	dwBinAddr_Save = dwBinAddr =
 				(U32)BASEADDR_SRAM + pBootStatus->dwSectorSize;
 	while (iBinSecLeft--) {
-		if (NANDFlash_ReadSector(pBootStatus, (U32 *)dwBinAddr))
+		if (NANDFlash_ReadSector(pBootStatus, (U32 *)(MPTRS)dwBinAddr))
 			dwBinAddr += pBootStatus->dwSectorSize;
 		else
 			break;
@@ -600,8 +600,8 @@ CBOOL iNANDBOOTEC(U32 option)
 
 	if (iBinSecLeft == 0) {
 		if (option & 1 << DECRYPT)
-			Decrypt((U32*)dwBinAddr_Save,
-				(U32*)dwBinAddr_Save,
+			Decrypt((U32*)((MPTRS)dwBinAddr_Save),
+				(U32*)((MPTRS)dwBinAddr_Save),
 				BootSize);
 		Result = CTRUE;
 	}
