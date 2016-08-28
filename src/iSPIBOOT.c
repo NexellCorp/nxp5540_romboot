@@ -136,22 +136,147 @@ static const union nxpad spipad[3][4] = {
 }};
 
 #endif
-
-U32 iSPIBOOT(U32 option)
+void SPIPortInit(U32 SPIPort)
 {
-	register struct NX_SecondBootInfo *pSBI;
-	register U8 *pdwBuffer = (U8*)BASEADDR_SRAM;
-	register U32 iRxSize = 0;
-	register U32 SPIPort = (option >> SELSPIPORT) & 0x1;
-	CBOOL ret = CFALSE;//, bHighSpeed = CFALSE;
+#ifdef NXP5430
+	if (SPIPort == 0) {
+		register struct NX_GPIO_RegisterSet * pGPIOxReg =
+			(struct NX_GPIO_RegisterSet *)&pGPIOReg[GPIO_GROUP_F];
+		pGPIOxReg->GPIOx_ALTFN[0] =
+			(pGPIOxReg->GPIOx_ALTFN[0] & ~0xF0000000) | 0x50000000; // spi 0 gpio f 15 alt 1, 14 alt 1
+		pGPIOxReg->GPIOx_ALTFN[1] =
+			(pGPIOxReg->GPIOx_ALTFN[1] & ~0x0000000F) | 0x00000005;	// spi 0 gpio f 17 alt 1, 16 alt 1
 
-	if (option & 1 << SELSPIPORT1)
-		SPIPort += 2;
+		pGPIOxReg->GPIOx_SLEW &= ~(1<<17 | 1<<16 | 1<<14);                                  // txd, clk, frm
+		pGPIOxReg->GPIOx_SLEW_DISABLE_DEFAULT |= (1<<17 | 1<<16 | 1<<14);
+		pGPIOxReg->GPIOx_DRV0 |= (1<<17 | 1<<16 | 1<<14);
+		pGPIOxReg->GPIOx_DRV0_DISABLE_DEFAULT |= (1<<17 | 1<<16 | 1<<14);
+		pGPIOxReg->GPIOx_DRV1 |= (1<<17 | 1<<16 | 1<<14);
+		pGPIOxReg->GPIOx_DRV1_DISABLE_DEFAULT |= (1<<17 | 1<<16 | 1<<14);
+		pGPIOxReg->GPIOx_PULLSEL |= (1<<17 | 1<<16 | 1<<14);
+		pGPIOxReg->GPIOx_PULLSEL_DISABLE_DEFAULT |= (1<<17 | 1<<16 | 1<<14);
+		pGPIOxReg->GPIOx_PULLENB &= ~(1<<17 | 1<<16 | 1<<14);
+		pGPIOxReg->GPIOx_PULLENB_DISABLE_DEFAULT |= (1<<17 | 1<<16 | 1<<14);
+	} else if (SPIPort == 1) {
+		register struct NX_GPIO_RegisterSet * pGPIOxReg =
+			(struct NX_GPIO_RegisterSet *)&pGPIOReg[GPIO_GROUP_F];
+		pGPIOxReg->GPIOx_ALTFN[1] =
+			(pGPIOxReg->GPIOx_ALTFN[1] & ~0x00000FF0) | 0x00000550;	// spi 1 gpio f 21 alt 1, 20 alt 1, 19 alt 1, 18 alt 1
 
-	if (SPIPort >= 3) {
-		SPIPort = 0;
-//		bHighSpeed = CTRUE;     // ??
+		pGPIOxReg->GPIOx_SLEW &= ~(1<<21 | 1<<20 | 1<<18);                                  // txd, clk, frm
+		pGPIOxReg->GPIOx_SLEW_DISABLE_DEFAULT |= (1<<21 | 1<<20 | 1<<18);
+		pGPIOxReg->GPIOx_DRV0 |= (1<<21 | 1<<20 | 1<<18);
+		pGPIOxReg->GPIOx_DRV0_DISABLE_DEFAULT |= (1<<21 | 1<<20 | 1<<18);
+		pGPIOxReg->GPIOx_DRV1 |= (1<<21 | 1<<20 | 1<<18);
+		pGPIOxReg->GPIOx_DRV1_DISABLE_DEFAULT |= (1<<21 | 1<<20 | 1<<18);
+		pGPIOxReg->GPIOx_PULLSEL |= (1<<21 | 1<<20 | 1<<18);
+		pGPIOxReg->GPIOx_PULLSEL_DISABLE_DEFAULT |= (1<<21 | 1<<20 | 1<<18);
+		pGPIOxReg->GPIOx_PULLENB &= ~(1<<21 | 1<<20 | 1<<18);
+		pGPIOxReg->GPIOx_PULLENB_DISABLE_DEFAULT |= (1<<21 | 1<<20 | 1<<18);
+	} else {
+		register struct NX_GPIO_RegisterSet * pGPIOxReg =
+			(struct NX_GPIO_RegisterSet *)&pGPIOReg[GPIO_GROUP_F];
+		pGPIOxReg->GPIOx_ALTFN[1] =
+			(pGPIOxReg->GPIOx_ALTFN[1] & ~0x000FF000) | 0x00055000; // spi2 gpio f 25 alt 1, 24 alt 1, 23 alt 1, 22 alt 1
+
+		pGPIOxReg->GPIOx_SLEW &= ~(1<<25 | 1<<24 | 1<<22);							        // txd, clk, frm
+		pGPIOxReg->GPIOx_SLEW_DISABLE_DEFAULT |= (1<<25 | 1<<24 | 1<<22);
+		pGPIOxReg->GPIOx_DRV0 |= (1<<25 | 1<<24 | 1<<22);
+		pGPIOxReg->GPIOx_DRV0_DISABLE_DEFAULT |= (1<<25 | 1<<24 | 1<<22);
+		pGPIOxReg->GPIOx_DRV1 |= (1<<25 | 1<<24 | 1<<22);
+		pGPIOxReg->GPIOx_DRV1_DISABLE_DEFAULT |= (1<<25 | 1<<24 | 1<<22);
+		pGPIOxReg->GPIOx_PULLSEL |= (1<<25 | 1<<24 | 1<<22);
+		pGPIOxReg->GPIOx_PULLSEL_DISABLE_DEFAULT |= (1<<25 | 1<<24 | 1<<22);
+		pGPIOxReg->GPIOx_PULLENB &= ~(1<<25 | 1<<24 | 1<<22);
+		pGPIOxReg->GPIOx_PULLENB_DISABLE_DEFAULT |= (1<<25 | 1<<24 | 1<<22);
 	}
+#endif
+
+#ifdef NXP5540
+	U32 i;
+	for (i = 0; i < 4; i++) {
+		GPIOSetAltFunction(&spipad[SPIPort][i].padi, CTRUE);
+		GPIOSetDrvSt(&spipad[SPIPort][i].padi, NX_GPIO_DRVSTRENGTH_3);
+		GPIOSetPullup(&spipad[SPIPort][i].padi, NX_GPIO_PULL_OFF);
+	}
+#endif
+}
+void SPIPortDeinit(U32 SPIPort)
+{
+#ifdef NXP5430
+	if (SPIPort == 0) {
+		register struct NX_GPIO_RegisterSet * pGPIOxReg =
+			(struct NX_GPIO_RegisterSet *)&pGPIOReg[GPIO_GROUP_C];
+
+		pGPIOxReg->GPIOx_OUT |= 0x40000000;
+		pGPIOxReg->GPIOx_OUTENB &= ~0x40000000;
+		pGPIOxReg->GPIOx_ALTFN[1] &= ~0xFC000000;	// spi 0 gpio c 29 alt 0, 30 alt 0, 31 alt 0
+
+		pGPIOxReg->GPIOx_SLEW |= (1<<31 | 1<<30 | 1<<29);
+		pGPIOxReg->GPIOx_SLEW_DISABLE_DEFAULT |= (1<<31 | 1<<30 | 1<<29);
+		pGPIOxReg->GPIOx_DRV0 &= ~(1<<31 | 1<<30 | 1<<29);
+		pGPIOxReg->GPIOx_DRV0_DISABLE_DEFAULT |= (1<<31 | 1<<30 | 1<<29);
+		pGPIOxReg->GPIOx_DRV1 &= ~(1<<31 | 1<<30 | 1<<29);
+		pGPIOxReg->GPIOx_DRV1_DISABLE_DEFAULT |= (1<<31 | 1<<30 | 1<<29);
+		pGPIOxReg->GPIOx_PULLSEL &= ~(1<<31 | 1<<30 | 1<<29);
+		pGPIOxReg->GPIOx_PULLSEL_DISABLE_DEFAULT |= (1<<31 | 1<<30 | 1<<29);
+		pGPIOxReg->GPIOx_PULLENB &= ~(1<<31 | 1<<30 | 1<<29);
+		pGPIOxReg->GPIOx_PULLENB_DISABLE_DEFAULT |= (1<<31 | 1<<30 | 1<<29);
+
+		pGPIOxReg = (struct NX_GPIO_RegisterSet *)&pGPIOReg[GPIO_GROUP_D];
+		pGPIOxReg->GPIOx_ALTFN[0] &= ~0x00000003;	// spi 0 gpio d 0 alt 0
+	} else if (SPIPort == 1) {
+		register struct NX_GPIO_RegisterSet * pGPIOxReg =
+			(struct NX_GPIO_RegisterSet *)&pGPIOReg[GPIO_GROUP_E];
+
+		pGPIOxReg->GPIOx_OUT |= 0x00008000;
+		pGPIOxReg->GPIOx_OUTENB &= ~0x00008000;
+		pGPIOxReg->GPIOx_ALTFN[0] &= ~0xF0000000;	// spi 1 gpio e 14 alt 0, 15 alt 0
+
+		pGPIOxReg->GPIOx_ALTFN[1] &= ~0x000000F0;	// spi 1 gpio e 18 alt 0, 19 alt 0
+
+		pGPIOxReg->GPIOx_SLEW |= (1<<19 | 1<<15 | 1<<14);
+		pGPIOxReg->GPIOx_SLEW_DISABLE_DEFAULT |= (1<<19 | 1<<15 | 1<<14);
+		pGPIOxReg->GPIOx_DRV0 &= ~(1<<19 | 1<<15 | 1<<14);
+		pGPIOxReg->GPIOx_DRV0_DISABLE_DEFAULT |= (1<<19 | 1<<15 | 1<<14);
+		pGPIOxReg->GPIOx_DRV1 &= ~(1<<19 | 1<<15 | 1<<14);
+		pGPIOxReg->GPIOx_DRV1_DISABLE_DEFAULT |= (1<<19 | 1<<15 | 1<<14);
+		pGPIOxReg->GPIOx_PULLSEL &= ~(1<<19 | 1<<15 | 1<<14);
+		pGPIOxReg->GPIOx_PULLSEL_DISABLE_DEFAULT |= (1<<19 | 1<<15 | 1<<14);
+		pGPIOxReg->GPIOx_PULLENB &= ~(1<<19 | 1<<15 | 1<<14);
+		pGPIOxReg->GPIOx_PULLENB_DISABLE_DEFAULT |= (1<<19 | 1<<15 | 1<<14);
+	} else {
+		register struct NX_GPIO_RegisterSet * pGPIOxReg =
+			(struct NX_GPIO_RegisterSet *)&pGPIOReg[GPIO_GROUP_C];
+
+		pGPIOxReg->GPIOx_OUT |= 0x00000400;
+		pGPIOxReg->GPIOx_OUTENB &= ~0x00000400;
+		pGPIOxReg->GPIOx_ALTFN[0] &= ~(3<<(12*2) | 3<<(11*2) | 3<<(10*2) | 3<<(9*2));	// spi 2 gpio c 9, 10, 11, 12 alt 2
+
+		pGPIOxReg->GPIOx_SLEW |= (1<<12 | 1<<10 | 1<<9);
+		pGPIOxReg->GPIOx_SLEW_DISABLE_DEFAULT |= (1<<12 | 1<<10 | 1<<9);
+		pGPIOxReg->GPIOx_DRV0 &= ~(1<<12 | 1<<10 | 1<<9);
+		pGPIOxReg->GPIOx_DRV0_DISABLE_DEFAULT |= (1<<12 | 1<<10 | 1<<9);
+		pGPIOxReg->GPIOx_DRV1 &= ~(1<<12 | 1<<10 | 1<<9);
+		pGPIOxReg->GPIOx_DRV1_DISABLE_DEFAULT |= (1<<12 | 1<<10 | 1<<9);
+		pGPIOxReg->GPIOx_PULLSEL &= ~(1<<12 | 1<<10 | 1<<9);
+		pGPIOxReg->GPIOx_PULLSEL_DISABLE_DEFAULT |= (1<<12 | 1<<10 | 1<<9);
+		pGPIOxReg->GPIOx_PULLENB &= ~(1<<12 | 1<<10 | 1<<9);
+		pGPIOxReg->GPIOx_PULLENB_DISABLE_DEFAULT |= (1<<12 | 1<<10 | 1<<9);
+	}
+#endif
+
+#ifdef NXP5540
+	for (i = 0; i < 4; i++) {
+		GPIOSetAltFunction(&spipad[SPIPort][i].padi, CFALSE);
+		GPIOSetDrvSt(&spipad[SPIPort][i].padi, NX_GPIO_DRVSTRENGTH_3);
+		GPIOSetPullup(&spipad[SPIPort][i].padi, NX_GPIO_PULL_OFF);
+	}
+#endif
+}
+
+void SPIInit(U32 SPIPort, U32 option)
+{
 	register struct NX_SSP_RegisterSet * const pSSPSPIReg =
 						pgSSPSPIReg[SPIPort];
 #ifdef NXP5540
@@ -227,68 +352,6 @@ U32 iSPIBOOT(U32 option)
 	}
 #endif
 
-#ifdef NXP5430
-	if (SPIPort == 0) {
-		register struct NX_GPIO_RegisterSet * pGPIOxReg =
-			(struct NX_GPIO_RegisterSet *)&pGPIOReg[GPIO_GROUP_F];
-		pGPIOxReg->GPIOx_ALTFN[0] =
-			(pGPIOxReg->GPIOx_ALTFN[0] & ~0xF0000000) | 0x50000000; // spi 0 gpio f 15 alt 1, 14 alt 1
-		pGPIOxReg->GPIOx_ALTFN[1] =
-			(pGPIOxReg->GPIOx_ALTFN[1] & ~0x0000000F) | 0x00000005;	// spi 0 gpio f 17 alt 1, 16 alt 1
-
-		pGPIOxReg->GPIOx_SLEW &= ~(1<<17 | 1<<16 | 1<<14);                                  // txd, clk, frm
-		pGPIOxReg->GPIOx_SLEW_DISABLE_DEFAULT |= (1<<17 | 1<<16 | 1<<14);
-		pGPIOxReg->GPIOx_DRV0 |= (1<<17 | 1<<16 | 1<<14);
-		pGPIOxReg->GPIOx_DRV0_DISABLE_DEFAULT |= (1<<17 | 1<<16 | 1<<14);
-		pGPIOxReg->GPIOx_DRV1 |= (1<<17 | 1<<16 | 1<<14);
-		pGPIOxReg->GPIOx_DRV1_DISABLE_DEFAULT |= (1<<17 | 1<<16 | 1<<14);
-		pGPIOxReg->GPIOx_PULLSEL |= (1<<17 | 1<<16 | 1<<14);
-		pGPIOxReg->GPIOx_PULLSEL_DISABLE_DEFAULT |= (1<<17 | 1<<16 | 1<<14);
-		pGPIOxReg->GPIOx_PULLENB &= ~(1<<17 | 1<<16 | 1<<14);
-		pGPIOxReg->GPIOx_PULLENB_DISABLE_DEFAULT |= (1<<17 | 1<<16 | 1<<14);
-	} else if (SPIPort == 1) {
-		register struct NX_GPIO_RegisterSet * pGPIOxReg =
-			(struct NX_GPIO_RegisterSet *)&pGPIOReg[GPIO_GROUP_F];
-		pGPIOxReg->GPIOx_ALTFN[1] =
-			(pGPIOxReg->GPIOx_ALTFN[1] & ~0x00000FF0) | 0x00000550;	// spi 1 gpio f 21 alt 1, 20 alt 1, 19 alt 1, 18 alt 1
-
-		pGPIOxReg->GPIOx_SLEW &= ~(1<<21 | 1<<20 | 1<<18);                                  // txd, clk, frm
-		pGPIOxReg->GPIOx_SLEW_DISABLE_DEFAULT |= (1<<21 | 1<<20 | 1<<18);
-		pGPIOxReg->GPIOx_DRV0 |= (1<<21 | 1<<20 | 1<<18);
-		pGPIOxReg->GPIOx_DRV0_DISABLE_DEFAULT |= (1<<21 | 1<<20 | 1<<18);
-		pGPIOxReg->GPIOx_DRV1 |= (1<<21 | 1<<20 | 1<<18);
-		pGPIOxReg->GPIOx_DRV1_DISABLE_DEFAULT |= (1<<21 | 1<<20 | 1<<18);
-		pGPIOxReg->GPIOx_PULLSEL |= (1<<21 | 1<<20 | 1<<18);
-		pGPIOxReg->GPIOx_PULLSEL_DISABLE_DEFAULT |= (1<<21 | 1<<20 | 1<<18);
-		pGPIOxReg->GPIOx_PULLENB &= ~(1<<21 | 1<<20 | 1<<18);
-		pGPIOxReg->GPIOx_PULLENB_DISABLE_DEFAULT |= (1<<21 | 1<<20 | 1<<18);
-	} else {
-		register struct NX_GPIO_RegisterSet * pGPIOxReg =
-			(struct NX_GPIO_RegisterSet *)&pGPIOReg[GPIO_GROUP_F];
-		pGPIOxReg->GPIOx_ALTFN[1] =
-			(pGPIOxReg->GPIOx_ALTFN[1] & ~0x000FF000) | 0x00055000; // spi2 gpio f 25 alt 1, 24 alt 1, 23 alt 1, 22 alt 1
-
-		pGPIOxReg->GPIOx_SLEW &= ~(1<<25 | 1<<24 | 1<<22);							        // txd, clk, frm
-		pGPIOxReg->GPIOx_SLEW_DISABLE_DEFAULT |= (1<<25 | 1<<24 | 1<<22);
-		pGPIOxReg->GPIOx_DRV0 |= (1<<25 | 1<<24 | 1<<22);
-		pGPIOxReg->GPIOx_DRV0_DISABLE_DEFAULT |= (1<<25 | 1<<24 | 1<<22);
-		pGPIOxReg->GPIOx_DRV1 |= (1<<25 | 1<<24 | 1<<22);
-		pGPIOxReg->GPIOx_DRV1_DISABLE_DEFAULT |= (1<<25 | 1<<24 | 1<<22);
-		pGPIOxReg->GPIOx_PULLSEL |= (1<<25 | 1<<24 | 1<<22);
-		pGPIOxReg->GPIOx_PULLSEL_DISABLE_DEFAULT |= (1<<25 | 1<<24 | 1<<22);
-		pGPIOxReg->GPIOx_PULLENB &= ~(1<<25 | 1<<24 | 1<<22);
-		pGPIOxReg->GPIOx_PULLENB_DISABLE_DEFAULT |= (1<<25 | 1<<24 | 1<<22);
-	}
-#endif
-
-#ifdef NXP5540
-	U32 i;
-	for (i = 0; i < 4; i++) {
-		GPIOSetAltFunction(&spipad[SPIPort][i].padi, CTRUE);
-		GPIOSetDrvSt(&spipad[SPIPort][i].padi, NX_GPIO_DRVSTRENGTH_3);
-		GPIOSetPullup(&spipad[SPIPort][i].padi, NX_GPIO_PULL_OFF);
-	}
-#endif
 
 	if (option & 1 << SERIALFLASHSPEED)
 		pSSPSPIReg->CH_CFG =
@@ -320,7 +383,30 @@ U32 iSPIBOOT(U32 option)
 
 
 	pSSPSPIReg->SPI_INT_EN = 0;		// all interrupt disasble
+}
 
+U32 iSPIBOOT(U32 option)
+{
+	register struct NX_SecondBootInfo *pSBI;
+	register U8 *pdwBuffer = (U8*)BASEADDR_SRAM;
+	register U32 iRxSize = 0;
+	register U32 SPIPort = (option >> SELSPIPORT) & 0x1;
+	CBOOL ret = CFALSE;//, bHighSpeed = CFALSE;
+
+	if (option & 1 << SELSPIPORT1)
+		SPIPort += 2;
+
+	if (SPIPort >= 3) {
+		SPIPort = 0;
+//		bHighSpeed = CTRUE;     // ??
+	}
+	register struct NX_SSP_RegisterSet * const pSSPSPIReg =
+						pgSSPSPIReg[SPIPort];
+	printf("SPI Boot Port:%d\r\n", SPIPort);
+
+	SPIInit(SPIPort, option);
+
+	SPIPortInit(SPIPort);
 
 	pSSPSPIReg->CS_REG &= ~(1<<0);		// chip select state to active
 
@@ -390,81 +476,12 @@ U32 iSPIBOOT(U32 option)
 	while ((pSSPSPIReg->SPI_STATUS >> 15) & 0x1FF)	// while RX fifo is not empty
 		pSSPSPIReg->SPI_RX_DATA;		// RX data read
 
-	NX_DEBUG_MSG("Download completed!\n" );
+	printf("Download completed!\n");
 
 	pSSPSPIReg->CH_CFG &= ~(3 << 0);	// rx, tx channel off
-
 	pSSPSPIReg->CS_REG |= 1 << 0;		// chip select state to inactive
 
-#ifdef NXP5430
-	if (SPIPort == 0) {
-		register struct NX_GPIO_RegisterSet * pGPIOxReg =
-			(struct NX_GPIO_RegisterSet *)&pGPIOReg[GPIO_GROUP_C];
+	SPIPortDeinit(SPIPort);
 
-		pGPIOxReg->GPIOx_OUT |= 0x40000000;
-		pGPIOxReg->GPIOx_OUTENB &= ~0x40000000;
-		pGPIOxReg->GPIOx_ALTFN[1] &= ~0xFC000000;	// spi 0 gpio c 29 alt 0, 30 alt 0, 31 alt 0
-
-		pGPIOxReg->GPIOx_SLEW |= (1<<31 | 1<<30 | 1<<29);
-		pGPIOxReg->GPIOx_SLEW_DISABLE_DEFAULT |= (1<<31 | 1<<30 | 1<<29);
-		pGPIOxReg->GPIOx_DRV0 &= ~(1<<31 | 1<<30 | 1<<29);
-		pGPIOxReg->GPIOx_DRV0_DISABLE_DEFAULT |= (1<<31 | 1<<30 | 1<<29);
-		pGPIOxReg->GPIOx_DRV1 &= ~(1<<31 | 1<<30 | 1<<29);
-		pGPIOxReg->GPIOx_DRV1_DISABLE_DEFAULT |= (1<<31 | 1<<30 | 1<<29);
-		pGPIOxReg->GPIOx_PULLSEL &= ~(1<<31 | 1<<30 | 1<<29);
-		pGPIOxReg->GPIOx_PULLSEL_DISABLE_DEFAULT |= (1<<31 | 1<<30 | 1<<29);
-		pGPIOxReg->GPIOx_PULLENB &= ~(1<<31 | 1<<30 | 1<<29);
-		pGPIOxReg->GPIOx_PULLENB_DISABLE_DEFAULT |= (1<<31 | 1<<30 | 1<<29);
-
-		pGPIOxReg = (struct NX_GPIO_RegisterSet *)&pGPIOReg[GPIO_GROUP_D];
-		pGPIOxReg->GPIOx_ALTFN[0] &= ~0x00000003;	// spi 0 gpio d 0 alt 0
-	} else if (SPIPort == 1) {
-		register struct NX_GPIO_RegisterSet * pGPIOxReg =
-			(struct NX_GPIO_RegisterSet *)&pGPIOReg[GPIO_GROUP_E];
-
-		pGPIOxReg->GPIOx_OUT |= 0x00008000;
-		pGPIOxReg->GPIOx_OUTENB &= ~0x00008000;
-		pGPIOxReg->GPIOx_ALTFN[0] &= ~0xF0000000;	// spi 1 gpio e 14 alt 0, 15 alt 0
-
-		pGPIOxReg->GPIOx_ALTFN[1] &= ~0x000000F0;	// spi 1 gpio e 18 alt 0, 19 alt 0
-
-		pGPIOxReg->GPIOx_SLEW |= (1<<19 | 1<<15 | 1<<14);
-		pGPIOxReg->GPIOx_SLEW_DISABLE_DEFAULT |= (1<<19 | 1<<15 | 1<<14);
-		pGPIOxReg->GPIOx_DRV0 &= ~(1<<19 | 1<<15 | 1<<14);
-		pGPIOxReg->GPIOx_DRV0_DISABLE_DEFAULT |= (1<<19 | 1<<15 | 1<<14);
-		pGPIOxReg->GPIOx_DRV1 &= ~(1<<19 | 1<<15 | 1<<14);
-		pGPIOxReg->GPIOx_DRV1_DISABLE_DEFAULT |= (1<<19 | 1<<15 | 1<<14);
-		pGPIOxReg->GPIOx_PULLSEL &= ~(1<<19 | 1<<15 | 1<<14);
-		pGPIOxReg->GPIOx_PULLSEL_DISABLE_DEFAULT |= (1<<19 | 1<<15 | 1<<14);
-		pGPIOxReg->GPIOx_PULLENB &= ~(1<<19 | 1<<15 | 1<<14);
-		pGPIOxReg->GPIOx_PULLENB_DISABLE_DEFAULT |= (1<<19 | 1<<15 | 1<<14);
-	} else {
-		register struct NX_GPIO_RegisterSet * pGPIOxReg =
-			(struct NX_GPIO_RegisterSet *)&pGPIOReg[GPIO_GROUP_C];
-
-		pGPIOxReg->GPIOx_OUT |= 0x00000400;
-		pGPIOxReg->GPIOx_OUTENB &= ~0x00000400;
-		pGPIOxReg->GPIOx_ALTFN[0] &= ~(3<<(12*2) | 3<<(11*2) | 3<<(10*2) | 3<<(9*2) );	// spi 2 gpio c 9, 10, 11, 12 alt 2
-
-		pGPIOxReg->GPIOx_SLEW |= (1<<12 | 1<<10 | 1<<9);
-		pGPIOxReg->GPIOx_SLEW_DISABLE_DEFAULT |= (1<<12 | 1<<10 | 1<<9);
-		pGPIOxReg->GPIOx_DRV0 &= ~(1<<12 | 1<<10 | 1<<9);
-		pGPIOxReg->GPIOx_DRV0_DISABLE_DEFAULT |= (1<<12 | 1<<10 | 1<<9);
-		pGPIOxReg->GPIOx_DRV1 &= ~(1<<12 | 1<<10 | 1<<9);
-		pGPIOxReg->GPIOx_DRV1_DISABLE_DEFAULT |= (1<<12 | 1<<10 | 1<<9);
-		pGPIOxReg->GPIOx_PULLSEL &= ~(1<<12 | 1<<10 | 1<<9);
-		pGPIOxReg->GPIOx_PULLSEL_DISABLE_DEFAULT |= (1<<12 | 1<<10 | 1<<9);
-		pGPIOxReg->GPIOx_PULLENB &= ~(1<<12 | 1<<10 | 1<<9);
-		pGPIOxReg->GPIOx_PULLENB_DISABLE_DEFAULT |= (1<<12 | 1<<10 | 1<<9);
-	}
-#endif
-
-#ifdef NXP5540
-	for (i = 0; i < 4; i++) {
-		GPIOSetAltFunction(&spipad[SPIPort][i].padi, CFALSE);
-		GPIOSetDrvSt(&spipad[SPIPort][i].padi, NX_GPIO_DRVSTRENGTH_3);
-		GPIOSetPullup(&spipad[SPIPort][i].padi, NX_GPIO_PULL_OFF);
-	}
-#endif
 	return ret;
 }

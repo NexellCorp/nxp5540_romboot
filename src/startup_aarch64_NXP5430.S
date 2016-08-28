@@ -26,6 +26,7 @@
 //;==================================================================
 .global Startup
 Startup:
+//	b	.
 	mrs	x0, SCTLR_EL3
 	bic	x0, x0, #(SCTLR_EE_BIT)		//; little endian
 	msr	SCTLR_EL3, x0
@@ -42,27 +43,18 @@ primary_cold_start:
 
 	msr	DAIFSet, #(I_Bit|F_Bit|A_Bit)	//; disable interrupt & fast interrupt and Abort
 
-	bl	GetCPUID
-	mov	x29, x0
 
 	bl	remap_vectors
 
 //;==================================================================
-//; Clear SRAM
+//; Get Boot Config
 //;==================================================================
-	//; Clear area of global data.
-	ldr	x1, =__bss_start__		// this is auto-relocated!
-	ldr	x2, =__bss_end__		// this is auto-relocated!
-clbss_l:
-	cmp	x1, x2				// while not at end of BSS
-	b.hs	clbss_e				// higher or same
-	str	xzr, [x1], #8			// clear 64-bit BSS word
-	b.lo	clbss_l
-clbss_e:
-
+	MOV	x0, #0xFE50		//; nsih virtual register address
+	MOVk	x0, #0x4FFF, lsl #16	//; syscon address
+	LDR	w29, [x0]		//; Get Boot Config
 
 //;==================================================================
-//; Setup stacks
+//; Setup System Coprocessor
 //;==================================================================
 
 	mrs	x0, SCR_EL3
@@ -71,7 +63,7 @@ clbss_e:
 	bic	x0, x0, #(1<<8)			// disable HVC. to be NOP
 	bic	x0, x0, #(1<<7)			// 0: SMC is enabled at EL1, EL2, or EL3    1: SMC is undefined at all exception level
 	orr	x0, x0, #(3<<4)			// RES1
-	orr	x0, x0, #(1<<2)			// 1: route fiq to EL3
+//;	orr	x0, x0, #(1<<2)			// 1: route fiq to EL3
 	bic	x0, x0, #(1<<0)			// 0: secure mode
 	msr	SCR_EL3, x0
 
@@ -86,12 +78,34 @@ clbss_e:
 	orr	x0, x0, #(3<<20)		//; access fpu is not traped EL0, EL1
 	msr	CPACR_EL1, x0
 
+	mrs	x0, CPTR_EL3
+	bic	w0, w0, #TCPAC_BIT
+	bic	w0, w0, #TTA_BIT
+	bic	w0, w0, #TFP_BIT
+	msr	CPTR_EL3, x0
+
+
+#if 0	// not need
 	mrs	x0, SCTLR_EL3
 	orr	x0, x0, #(1<<29 | 1<<28)	//; SBO
 	orr	x0, x0, #(1<<23 | 1<<22)	//; SBO
 	bic	x0, x0, #(1<<12)		//; icache disable
 	orr	x0, x0, #(1<<11)		//; SBO
 	msr	SCTLR_EL3, x0
+#endif
+	
+//;=============================================================================
+//; boot delay for cache auto initialize 10000ns
+//;=============================================================================
+	MOV	x0, 0x113C
+	MOVK	x0, #0xC001, lsl #16	//; ARM efuse status register address
+	MOV	x2, #0x3<<16
+EfuseInitRecheck:
+	LDR	w1, [x0]
+	AND	w1, w1, w2	//; 16: ARMTOP Efuse Initial Done, 17: ARMTOP_P1 Efuse Initial Done
+	CMP	w1, w2
+	B.ne	EfuseInitRecheck
+
 	ic	ialluis				//; invalidate icache all
 	isb	sy
 	mrs	x0, SCTLR_EL3
@@ -104,22 +118,26 @@ clbss_e:
 
 	mov	sp, x0
 
-	mov	x0, x29
-	bl	remap_vectors
-
-	mrs	x0, CPTR_EL3
-	bic	w0, w0, #TCPAC_BIT
-	bic	w0, w0, #TTA_BIT
-	bic	w0, w0, #TFP_BIT
-	msr	CPTR_EL3, x0
 #if 0
 	ldr	x0, = __bss_start__
 	ldr	x1, = __bss_end__
 	bl	Dcache_flush_range
 #endif
-	MOV	x0, #0x027c
-	MOVk	x0, #0xC001, lsl #16	//; syscon address
-	LDR	x11, [x0]		//; Get Boot Config
+
+//;==================================================================
+//; Clear SRAM
+//;==================================================================
+	//; Clear area of global data.
+	ldr	x1, =__bss_start__		// this is auto-relocated!
+	ldr	x2, =__bss_end__		// this is auto-relocated!
+clbss_l:
+	cmp	x1, x2				// while not at end of BSS
+	b.hs	clbss_e				// higher or same
+	str	xzr, [x1], #8			// clear 64-bit BSS word
+	b.lo	clbss_l
+clbss_e:
+
+	mov	x0, x29
 
 	bl	iROMBOOT		//; save this in register for possible long jump
 	b	.

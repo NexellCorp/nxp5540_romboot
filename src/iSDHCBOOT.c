@@ -21,6 +21,7 @@
 #include <nx_type.h>
 #include "nx_etacarinae_bootheader.h"
 #include <nx_debug2.h>
+#include "printf.h"
 
 
 #include <nx_gpio.h>
@@ -91,15 +92,17 @@ static CBOOL NX_SDMMC_SetClock(SDXCBOOTSTATUS *pSDXCBootStatus,
 
 	#if defined(VERBOSE)
 	NX_DEBUG_MSG("NX_SDMMC_SetClock : divider = ");
-	NX_DEBUG_DEC( divider );
+	NX_DEBUG_DEC(divider);
 	NX_DEBUG_MSG("\n");
 	#endif
 
 	//--------------------------------------------------------------------------
 	// 1. Confirm that no card is engaged in any transaction.
 	//	If there's a transaction, wait until it has been finished.
-//	while( NX_SDXC_IsDataTransferBusy() );
-//	while( NX_SDXC_IsCardDataBusy() );
+//	while(NX_SDXC_IsDataTransferBusy())
+//		;
+//	while(NX_SDXC_IsCardDataBusy())
+//		;
 
 	#if defined(NX_DEBUG)
 	if (pSDXCReg->STATUS & (NX_SDXC_STATUS_DATABUSY |
@@ -145,7 +148,8 @@ static CBOOL NX_SDMMC_SetClock(SDXCBOOTSTATUS *pSDXCBootStatus,
 		nx_cpuif_reg_write_one(CMUI_SDMMC_0_CORE_grp_clk_src, SDXC_CLKSRC);
 		// sdmmc core clock divider value
 		nx_cpuif_reg_write_one(CMUI_SDMMC_0_CORE_dy_div_val, (divider - 1));
-		while (1 == nx_cpuif_reg_read_one(CMUI_SDMMC_0_CORE_dy_div_busy_st, &regval));
+		while (1 == nx_cpuif_reg_read_one(CMUI_SDMMC_0_CORE_dy_div_busy_st, &regval))
+			;
 		// sdmmc core clock enable
 		//nx_cpuif_reg_write_one(CMUI_SDMMC_0_CORE_clk_enb, 1);
 
@@ -161,7 +165,8 @@ static CBOOL NX_SDMMC_SetClock(SDXCBOOTSTATUS *pSDXCBootStatus,
 		nx_cpuif_reg_write_one(CMUI_SDMMC_1_CORE_grp_clk_src, SDXC_CLKSRC);
 		// sdmmc core clock divider value
 		nx_cpuif_reg_write_one(CMUI_SDMMC_1_CORE_dy_div_val, (divider - 1));
-		while (1 == nx_cpuif_reg_read_one(CMUI_SDMMC_1_CORE_dy_div_busy_st, &regval));
+		while (1 == nx_cpuif_reg_read_one(CMUI_SDMMC_1_CORE_dy_div_busy_st, &regval))
+			;
 		// sdmmc core clock enable
 		//nx_cpuif_reg_write_one(CMUI_SDMMC_1_CORE_clk_enb, 1);
 
@@ -177,7 +182,8 @@ static CBOOL NX_SDMMC_SetClock(SDXCBOOTSTATUS *pSDXCBootStatus,
 		nx_cpuif_reg_write_one(CMUI_SDMMC_2_CORE_grp_clk_src, SDXC_CLKSRC);
 		// sdmmc core clock divider value
 		nx_cpuif_reg_write_one(CMUI_SDMMC_2_CORE_dy_div_val, (divider - 1));
-		while( 1 == nx_cpuif_reg_read_one(CMUI_SDMMC_2_CORE_dy_div_busy_st, &regval));
+		while( 1 == nx_cpuif_reg_read_one(CMUI_SDMMC_2_CORE_dy_div_busy_st, &regval))
+			;
 		// sdmmc core clock enable
 		//nx_cpuif_reg_write_one(CMUI_SDMMC_2_CORE_clk_enb, 1);
 		// sdmmc bus clock enable
@@ -858,9 +864,11 @@ CBOOL NX_SDMMC_Init(SDXCBOOTSTATUS *pSDXCBootStatus)
 			  | (SDXC_CLKSRC << 2)		// set clock source
 			  | (0UL << 1);			// set clock invert
  	pSDClkGenReg->CLKENB |= 0x1UL << 2;		// clock generation enable
+	printf("SD Clock Generator Enabled\r\n");
 
  	ResetCon(SDResetNum[pSDXCBootStatus->SDPort], CTRUE);	// reset on
  	ResetCon(SDResetNum[pSDXCBootStatus->SDPort], CFALSE);	// reset negate
+	printf("SD Reset Done\r\n");
 #endif
 
 #ifdef NXP5540
@@ -876,7 +884,8 @@ CBOOL NX_SDMMC_Init(SDXCBOOTSTATUS *pSDXCBootStatus)
 		nx_cpuif_reg_write_one(CMUI_SDMMC_0_CORE_grp_clk_src, SDXC_CLKSRC);
 		// sdmmc core clock divider value
 		nx_cpuif_reg_write_one(CMUI_SDMMC_0_CORE_dy_div_val, (SDXC_CLKDIV_LOW - 1));
-		while (1 == nx_cpuif_reg_read_one(CMUI_SDMMC_0_CORE_dy_div_busy_st, &regval));
+		while (1 == nx_cpuif_reg_read_one(CMUI_SDMMC_0_CORE_dy_div_busy_st, &regval))
+			;
 		// sdmmc core clock enable
 		nx_cpuif_reg_write_one(CMUI_SDMMC_0_CORE_clk_enb, 1);
 
@@ -886,7 +895,8 @@ CBOOL NX_SDMMC_Init(SDXCBOOTSTATUS *pSDXCBootStatus)
 		U32 regval;
 		nx_cpuif_reg_write_one(CMUI_SDMMC_1_CORE_grp_clk_src, SDXC_CLKSRC);                    // sdmmc core clock source select
 		nx_cpuif_reg_write_one(CMUI_SDMMC_1_CORE_dy_div_val, (SDXC_CLKDIV_LOW - 1));         // sdmmc core clock divider value
-		while (1 == nx_cpuif_reg_read_one( CMUI_SDMMC_1_CORE_dy_div_busy_st, &regval));
+		while (1 == nx_cpuif_reg_read_one( CMUI_SDMMC_1_CORE_dy_div_busy_st, &regval))
+			;
 		nx_cpuif_reg_write_one(CMUI_SDMMC_1_CORE_clk_enb, 1);                                    // sdmmc core clock enable
 
 		nx_cpuif_reg_write_one(CMUI_SDMMC_1_AXI_clk_enb, 1);             // sdmmc bus clock enable
@@ -896,7 +906,8 @@ CBOOL NX_SDMMC_Init(SDXCBOOTSTATUS *pSDXCBootStatus)
 		U32 regval;
 		nx_cpuif_reg_write_one(CMUI_SDMMC_2_CORE_grp_clk_src, SDXC_CLKSRC);                    // sdmmc core clock source select
 		nx_cpuif_reg_write_one(CMUI_SDMMC_2_CORE_dy_div_val, (SDXC_CLKDIV_LOW - 1));         // sdmmc core clock divider value
-		while (1 == nx_cpuif_reg_read_one(CMUI_SDMMC_2_CORE_dy_div_busy_st, &regval));
+		while (1 == nx_cpuif_reg_read_one(CMUI_SDMMC_2_CORE_dy_div_busy_st, &regval))
+			;
 		nx_cpuif_reg_write_one(CMUI_SDMMC_2_CORE_clk_enb, 1);                                    // sdmmc core clock enable
 
 		nx_cpuif_reg_write_one(CMUI_SDMMC_2_AXI_clk_enb, 1);             // sdmmc bus clock enable
@@ -929,7 +940,8 @@ CBOOL NX_SDMMC_Init(SDXCBOOTSTATUS *pSDXCBootStatus)
 			NX_SDXC_CTRL_CTRLRST;
 	while (pSDXCReg->CTRL & (NX_SDXC_CTRL_DMARST |
 				NX_SDXC_CTRL_FIFORST |
-				NX_SDXC_CTRL_CTRLRST));
+				NX_SDXC_CTRL_CTRLRST))
+		;
 
 	pSDXCReg->PWREN = 0x1 << 0;	// Set Power Enable
 
@@ -971,7 +983,8 @@ CBOOL NX_SDMMC_Terminate(SDXCBOOTSTATUS *pSDXCBootStatus)
 			NX_SDXC_CTRL_CTRLRST;
 	while (pSDXCReg->CTRL & (NX_SDXC_CTRL_DMARST |
 				NX_SDXC_CTRL_FIFORST |
-				NX_SDXC_CTRL_CTRLRST));
+				NX_SDXC_CTRL_CTRLRST))
+		;
 
 #ifdef NXP5430
 	// Disable CLKGEN
@@ -1024,9 +1037,8 @@ CBOOL NX_SDMMC_Open(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 	NX_SDMMC_SetBusWidth(pSDXCBootStatus, 4);
 
 	// Select Boot Partiton for eSD and eMMC
-	if (option & (1 << SDXCPARTITION)) {
+	if (option & (1 << SDXCPARTITION))
 		NX_SDMMC_SelectPartition(pSDXCBootStatus, 1);
-	}
 
 	return CTRUE;
 }
@@ -1058,7 +1070,8 @@ static CBOOL NX_SDMMC_ReadSectorData(
 		 || (pSDXCReg->RINTSTS & NX_SDXC_RINTSTS_DTO)) {
 			U32 FSize, Timeout = NX_SDMMC_TIMEOUT;
 			while ((pSDXCReg->STATUS & NX_SDXC_STATUS_FIFOEMPTY) &&
-					Timeout--);
+					Timeout--)
+				;
 			if (0 == Timeout)
 				break;
 			FSize = (pSDXCReg->STATUS &
@@ -1132,7 +1145,8 @@ CBOOL NX_SDMMC_ReadSectors(SDXCBOOTSTATUS *pSDXCBootStatus,
 
 	NX_ASSERT( 0 == ((U32)pdwBuffer & 3) );
 
-	while (pSDXCReg->STATUS & (1 << 9 | 1 << 10));		// wait while data busy or data transfer busy
+	while (pSDXCReg->STATUS & (1 << 9 | 1 << 10))		// wait while data busy or data transfer busy
+		;
 
 	//--------------------------------------------------------------------------
 	// wait until 'Ready for data' is set and card is in transfer state.
@@ -1193,7 +1207,8 @@ CBOOL NX_SDMMC_ReadSectors(SDXCBOOTSTATUS *pSDXCBootStatus,
 
 		if (numberOfSector > 1) {
 			// Wait until the Auto-stop command has been finished.
-			while (0 == (pSDXCReg->RINTSTS & NX_SDXC_RINTSTS_ACD));
+			while (0 == (pSDXCReg->RINTSTS & NX_SDXC_RINTSTS_ACD))
+				;
 
 			NX_ASSERT(0 == (pSDXCReg->STATUS &
 						NX_SDXC_STATUS_FSMBUSY));
@@ -1224,8 +1239,9 @@ End:
 		NX_SDMMC_SendCommandInternal(pSDXCBootStatus, &cmd);
 
 		if (0 == (pSDXCReg->STATUS & NX_SDXC_STATUS_FIFOEMPTY)) {
-			pSDXCReg->CTRL = NX_SDXC_CTRL_FIFORST;			// Reest the FIFO.
-			while (pSDXCReg->CTRL & NX_SDXC_CTRL_FIFORST);		// Wait until the FIFO reset is completed.
+			pSDXCReg->CTRL = NX_SDXC_CTRL_FIFORST;
+			while (pSDXCReg->CTRL & NX_SDXC_CTRL_FIFORST)
+				;
 		}
 	}
 
@@ -1246,11 +1262,13 @@ static CBOOL eMMCBoot(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 	else
 		SDSpeed = SDXC_CLKDIV_LOW;
 
-	pSDXCReg->CTYPE		= 1;	// Data Bus Width : 0(1-bit), 1(4-bit)
-	pSDXCReg->BYTCNT	= 0;	// unspecified data size
+	pSDXCReg->CTYPE		= 1;	/* Data Bus Width : 0(1-bit), 1(4-bit) */
+	pSDXCReg->BYTCNT	= 0;	/* unspecified data size */
 
-	if (CFALSE == NX_SDMMC_SetClock(pSDXCBootStatus, CTRUE, SDSpeed))
+	if (CFALSE == NX_SDMMC_SetClock(pSDXCBootStatus, CTRUE, SDSpeed)) {
+		printf("clock init fail\r\n");
 		return CFALSE;
+	}
 
 #if 0
 	cmd.cmdidx	= GO_IDLE_STATE;
@@ -1259,62 +1277,67 @@ static CBOOL eMMCBoot(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 			NX_SDXC_CMDFLAG_SENDINIT |
 			NX_SDXC_CMDFLAG_STOPABORT;
 
-	NX_SDMMC_SendCommand( &cmd );
+	NX_SDMMC_SendCommand(&cmd);
 #endif
 
 	//--------------------------------------------------------------------------
 	//	Send Alternative boot command
 	cmd.cmdidx	= GO_IDLE_STATE;
-	cmd.arg		= 0xFFFFFFFA;		// Alternative boot mode
+	cmd.arg		= 0xFFFFFFFA;		/* Alternative boot mode */
 	cmd.flag	= NX_SDXC_CMDFLAG_STARTCMD | NX_SDXC_CMDFLAG_SENDINIT |
-				NX_SDXC_CMDFLAG_BLOCK | NX_SDXC_CMDFLAG_RXDATA;
-#if 0
-	cmd.flag	|= NX_SDXC_CMDFLAG_EXPECTBOOTACK;	// not supported boot ack
+			  NX_SDXC_CMDFLAG_BLOCK | NX_SDXC_CMDFLAG_RXDATA;
+#if 0	/* not supported boot ack */
+	cmd.flag	|= NX_SDXC_CMDFLAG_EXPECTBOOTACK;
 #endif
 
 	if (option & 1 << eMMCBOOT)
-		cmd.flag	|= NX_SDXC_CMDFLAG_ENABLE_BOOT;
+		cmd.flag |= NX_SDXC_CMDFLAG_ENABLE_BOOT;
 
-	if (NX_SDMMC_STATUS_NOERROR ==
+	if (NX_SDMMC_STATUS_NOERROR !=
 			NX_SDMMC_SendCommandInternal(pSDXCBootStatus, &cmd)) {
-		struct NX_SecondBootInfo *pSBI =
-			(struct NX_SecondBootInfo *)BASEADDR_SRAM;
-		// read dummy 512 bytes
-		if (NX_SDMMC_ReadSectorData( pSDXCBootStatus, 1, (U32 *)pSBI)) {
-// 			if(option & 1<< DECRYPT)
-// 				Decrypt((U32*)BASEADDR_SRAM, (U32*)BASEADDR_SRAM,
-//						sizeof(struct NX_SecondBootInfo));
+		printf("Send Command Internal Error\r\n");
+		goto error;
+	}
+	struct NX_SecondBootInfo *pSBI =
+		(struct NX_SecondBootInfo *)BASEADDR_SRAM;
 
-			if (pSBI->SIGNATURE == HEADER_ID) {
-				U32 	BootSize;
-				NX_DEBUG_MSG("Load Addr :");
-				NX_DEBUG_HEX(pSBI->LOADADDR);
-				NX_DEBUG_MSG("  Load Size :");
-				NX_DEBUG_HEX(pSBI->LOADSIZE);
-				NX_DEBUG_MSG("  Launch Addr :");
-				NX_DEBUG_HEX(pSBI->LAUNCHADDR);
-				NX_DEBUG_MSG("\r\n");
+	// read dummy 512 bytes
+	if (NX_SDMMC_ReadSectorData(pSDXCBootStatus, 1, (U32 *)pSBI)
+			== CFALSE) { 
+		printf("Cannot Read Boot Header\r\n");
+		goto error;
+	}
+// 	if (option & 1 << DECRYPT)
+// 		Decrypt((U32*)BASEADDR_SRAM, (U32*)BASEADDR_SRAM,
+//				sizeof(struct NX_SecondBootInfo));
 
-				BootSize = pSBI->LOADSIZE;
+	if (pSBI->SIGNATURE != HEADER_ID) {
+		printf("boot header error (%04X)\r\n", pSBI->SIGNATURE);
+		goto error;
+	}
 
-				if (BootSize > INTERNAL_SRAM_SIZE - SECONDBOOT_STACK)
-					BootSize = INTERNAL_SRAM_SIZE - SECONDBOOT_STACK;
+	printf("Load Addr: %x, Load Size: %x, Launch Addr :%x\r\n",
+			pSBI->LOADADDR, pSBI->LOADSIZE,
+			pSBI->LAUNCHADDR);
 
-				//------------------------------------------------------------------
-				//	Read Data
-				result = NX_SDMMC_ReadSectorData(pSDXCBootStatus,
-							(BootSize + BLOCK_LENGTH - 1) / BLOCK_LENGTH,
-							(U32 *)(BASEADDR_SRAM + sizeof(struct NX_SecondBootInfo)));
+	U32 BootSize = pSBI->LOADSIZE;
+
+	if (BootSize > INTERNAL_SRAM_SIZE - SECONDBOOT_STACK)
+		BootSize = INTERNAL_SRAM_SIZE - SECONDBOOT_STACK;
+
+	//	Read Data
+	result = NX_SDMMC_ReadSectorData(pSDXCBootStatus,
+			(BootSize + BLOCK_LENGTH - 1) / BLOCK_LENGTH,
+			(U32 *)(BASEADDR_SRAM + sizeof(struct NX_SecondBootInfo)));
 
 #ifdef NXP5430
-				if (option & 1 << DECRYPT)
-					Decrypt((U32*)(BASEADDR_SRAM + sizeof(struct NX_SecondBootInfo)),
-						(U32*)(BASEADDR_SRAM + sizeof(struct NX_SecondBootInfo)),
-						BootSize);
+	if (option & 1 << DECRYPT)
+		Decrypt((U32*)(BASEADDR_SRAM + sizeof(struct NX_SecondBootInfo)),
+			(U32*)(BASEADDR_SRAM + sizeof(struct NX_SecondBootInfo)),
+			BootSize);
 #endif
-			}
-		}
-	}
+
+error:
 
 	//--------------------------------------------------------------------------
 	cmd.cmdidx	= GO_IDLE_STATE;
@@ -1325,9 +1348,9 @@ static CBOOL eMMCBoot(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 	NX_SDMMC_SendCommandInternal(pSDXCBootStatus, &cmd);
 
 	if (0 == (pSDXCReg->STATUS & NX_SDXC_STATUS_FIFOEMPTY)) {
-		NX_DEBUG_MSG( "FIFO Reset!!!\n" );
-		pSDXCReg->CTRL = NX_SDXC_CTRL_FIFORST;			// Reset the FIFO.
-		while (pSDXCReg->CTRL & NX_SDXC_CTRL_FIFORST);		// Wait until the FIFO reset is completed.
+		pSDXCReg->CTRL = NX_SDXC_CTRL_FIFORST;
+		while (pSDXCReg->CTRL & NX_SDXC_CTRL_FIFORST)
+			;
 	}
 
 	return result;
@@ -1340,74 +1363,55 @@ static CBOOL SDMMCBOOT(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 	struct NX_SDMMC_RegisterSet * const pSDXCReg =
 				pgSDXCReg[pSDXCBootStatus->SDPort];
 
-	if (CTRUE == NX_SDMMC_Open(pSDXCBootStatus, option)) {
-		struct NX_SecondBootInfo *pSBI =
-			(struct NX_SecondBootInfo *)BASEADDR_SRAM;
-		if (0 == (pSDXCReg->STATUS & NX_SDXC_STATUS_FIFOEMPTY)) {
-			volatile U32 tempcount = 0x100000;
-			NX_DEBUG_MSG( "FIFO Reset!!!\n" );
-			pSDXCReg->CTRL = NX_SDXC_CTRL_FIFORST;
-			/* Wait until the FIFO reset is completed. */
-			while ((pSDXCReg->CTRL & NX_SDXC_CTRL_FIFORST) &&
-					tempcount--);
-		}
-
-		if (NX_SDMMC_ReadSectors(pSDXCBootStatus, 1, 1, (U32 *)pSBI)) {
-// 			if (option & 1<< DECRYPT)
-// 				Decrypt((U32*)BASEADDR_SRAM,
-//					(U32*)BASEADDR_SRAM,
-//					sizeof(struct NX_SecondBootInfo));
-
-			if (pSBI->SIGNATURE == HEADER_ID) {
-				U32 BootSize;
-				NX_DEBUG_MSG("Load Addr :");
-				NX_DEBUG_HEX(pSBI->LOADADDR);
-				NX_DEBUG_MSG("  Load Size :");
-				NX_DEBUG_HEX(pSBI->LOADSIZE);
-				NX_DEBUG_MSG("  Launch Addr :");
-				NX_DEBUG_HEX(pSBI->LAUNCHADDR);
-				NX_DEBUG_MSG("\r\n");
-
-				BootSize = pSBI->LOADSIZE;
-				if (BootSize > INTERNAL_SRAM_SIZE -
-						SECONDBOOT_STACK)
-					BootSize = INTERNAL_SRAM_SIZE -
-						SECONDBOOT_STACK;
-
-				result = NX_SDMMC_ReadSectors(pSDXCBootStatus, 2,
-						(BootSize + BLOCK_LENGTH - 1) / BLOCK_LENGTH,
-						(U32 *)(BASEADDR_SRAM + sizeof(struct NX_SecondBootInfo)));
-
-// 				if (option & 1<< DECRYPT)
-// 					Decrypt((U32*)(BASEADDR_SRAM+sizeof(struct NX_SecondBootInfo)),
-//						(U32 *)(BASEADDR_SRAM+sizeof(struct NX_SecondBootInfo)),
-//						BootSize);
-			} else {
-				NX_DEBUG_MSG("3rd boot Sinature is wrong! SDMMC boot failure\r\n");
-			}
-		} else {
-			NX_DEBUG_MSG("cannot read boot header! SDMMC boot failure\r\n");
-		}
+	if (CTRUE != NX_SDMMC_Open(pSDXCBootStatus, option)) {
+		printf("SD open fail\r\n");
+		goto error;
 	}
+	struct NX_SecondBootInfo *pSBI =
+		(struct NX_SecondBootInfo *)BASEADDR_SRAM;
+	if (0 == (pSDXCReg->STATUS & NX_SDXC_STATUS_FIFOEMPTY)) {
+		volatile U32 tempcount = 0x100000;
+		pSDXCReg->CTRL = NX_SDXC_CTRL_FIFORST;
+		/* Wait until the FIFO reset is completed. */
+		while ((pSDXCReg->CTRL & NX_SDXC_CTRL_FIFORST) &&
+				tempcount--)
+			;
+	}
+
+	if (NX_SDMMC_ReadSectors(pSDXCBootStatus, 1, 1, (U32 *)pSBI) == CFALSE) {
+		printf("cannot read boot header\r\n");
+		goto error;
+	}
+// 	if (option & 1<< DECRYPT)
+// 		Decrypt((U32*)BASEADDR_SRAM,
+//			(U32*)BASEADDR_SRAM,
+//			sizeof(struct NX_SecondBootInfo));
+
+	if (pSBI->SIGNATURE != HEADER_ID) {
+		printf("wrong boot Sinature(%04x)\r\n", pSBI->SIGNATURE);
+		goto error;
+	}
+	U32 BootSize;
+	printf("Load Addr :%x  Load Size :%x  Launch Addr :%x\r\n",
+		pSBI->LOADADDR, pSBI->LOADSIZE, pSBI->LAUNCHADDR);
+
+	BootSize = pSBI->LOADSIZE;
+	if (BootSize > INTERNAL_SRAM_SIZE - SECONDBOOT_STACK)
+		BootSize = INTERNAL_SRAM_SIZE - SECONDBOOT_STACK;
+
+	result = NX_SDMMC_ReadSectors(pSDXCBootStatus, 2,
+			(BootSize + BLOCK_LENGTH - 1) / BLOCK_LENGTH,
+			(U32 *)(BASEADDR_SRAM + sizeof(struct NX_SecondBootInfo)));
+
+// 	if (option & 1<< DECRYPT)
+// 		Decrypt((U32*)(BASEADDR_SRAM+sizeof(struct NX_SecondBootInfo)),
+//			(U32 *)(BASEADDR_SRAM+sizeof(struct NX_SecondBootInfo)),
+//			BootSize);
+error:
 
 	return result;
 }
 
-/*
-sdmmc 0                   sdmmc 1                   sdmmc 2
-
-dat0 c 27 1 gpio:0        dat0 d 06 1 gpio:0        dat0 d 17 2 gpio:0
-dat1 c 28 1 gpio:0        dat1 d 07 1 gpio:0        dat1 d 18 2 gpio:0
-dat2 c 29 1 gpio:0        dat2 d 08 1 gpio:0        dat2 d 19 2 gpio:0
-dat3 c 30 1 gpio:0        dat3 d 09 1 gpio:0        dat3 d 20 2 gpio:0
-dat4 c 31 1 gpio:0        dat3 d 10 1 gpio:0        dat3 d 21 2 gpio:0
-dat5 d 00 1 gpio:0        dat3 d 11 1 gpio:0        dat3 d 22 2 gpio:0
-dat6 d 01 1 gpio:0        dat3 d 12 1 gpio:0        dat3 d 23 2 gpio:0
-dat7 d 02 1 gpio:0        dat3 d 13 1 gpio:0        dat3 d 24 2 gpio:0
-clk  d 03 1 gpio:0        clk  d 14 1 gpio:0        clk  d 25 2 gpio:0
-cmd  d 04 1 gpio:0        cmd  d 15 1 gpio:0        cmd  d 26 2 gpio:0
-strb d 05 1 gpio:0        strb d 16 1 gpio:0        strb d 27 2 gpio:0
-*/
 #ifdef NXP5540
 static const union nxpad sdmmcpad[3][6] = {
 {
@@ -1606,14 +1610,15 @@ U32 iSDXCBOOT(U32 option)
 		pSDXCBootStatus->bHighSpeed = CTRUE;
 	} else
 		pSDXCBootStatus->bHighSpeed = CFALSE;
-
+	pSDXCBootStatus->SDPort = 2;
+	printf("SD Boot with Port %d\r\n", pSDXCBootStatus->SDPort);
 	NX_SDPADSetALT(pSDXCBootStatus->SDPort);
 
 	NX_SDMMC_Init(pSDXCBootStatus);
 
 	//--------------------------------------------------------------------------
 	// eMMC or MMC ver 4.3+
-	//if( option & (1U << eMMCBOOTMODE) )
+	//if (option & (1U << eMMCBOOTMODE))
 	if ((option & 0x7) == 0) {
 		result = eMMCBoot(pSDXCBootStatus, option);
 	}

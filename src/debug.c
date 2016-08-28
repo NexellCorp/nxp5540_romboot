@@ -37,7 +37,6 @@
 #define SOURCE_DIVID	(4UL)
 #define BAUD_RATE	(115200)
 
-static struct NX_UART_RegisterSet * pReg_Uart;
 
 #ifdef NXP5430
 const U32 UARTBASEADDR[] =
@@ -108,6 +107,7 @@ const U32 UARTSMC[] =
 #ifdef NXP5430
 static struct NX_TIEOFF_RegisterSet * const pReg_Tieoff =
 	(struct NX_TIEOFF_RegisterSet *)PHY_BASEADDR_TIEOFF_MODULE;
+static struct NX_UART_RegisterSet * pReg_Uart;
 #endif
 
 #ifdef NXP5540
@@ -122,6 +122,8 @@ static struct NX_TIEOFF_RegisterSet * const pReg_Tieoff =
 #endif
 
 #define PADI_UART0_TXD			((1 << 16) | (4 << 8) | (24 << 3) | 1)
+static struct NX_UART_RegisterSet * const pReg_Uart =
+		(struct NX_UART_RegisterSet *)PHY_BASEADDR_UART0_MODULE;
 #endif
 //------------------------------------------------------------------------------
 

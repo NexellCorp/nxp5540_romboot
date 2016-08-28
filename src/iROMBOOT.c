@@ -28,6 +28,7 @@
 #endif
 #ifdef NXP5540
 #include <nx_chip_sfr.h>
+#include <nx_ecid.h>
 #endif
 #include <nx_clkpwr.h>
 #include <nx_alive.h>
@@ -45,6 +46,11 @@ struct NX_GPIO_RegisterSet (* const pGPIOReg)[1] =
 struct NX_ALIVE_RegisterSet * const pALIVEReg =
 	(struct NX_ALIVE_RegisterSet *)PHY_BASEADDR_ALIVE_MODULE;
 
+extern CBOOL iSDXCFSBOOT(U32 option);
+extern CBOOL iUSBBOOT(U32 option);
+extern CBOOL iSPIBOOT(U32 option);
+extern CBOOL iSDXCBOOT(U32 option);
+extern CBOOL iNANDBOOTEC(U32 option);
 //------------------------------------------------------------------------------
 void iROMBOOT(U32 OrgBootOption)
 {
@@ -74,13 +80,12 @@ void iROMBOOT(U32 OrgBootOption)
 	//--------------------------------------------------------------------------
 	DebugInit(3);
 
-	printf(
-"\r\n\n"
-"-------------------------------------------------------------------------------\r\n"
-" iROMBOOT by Nexell Co. : Built on %s %s\r\n"
-"-------------------------------------------------------------------------------\r\n\n",
-__DATE__, __TIME__);
+	printf("\r\n\n iROMBOOT by Nexell Co. : Built on %s %s\r\n",
+			__DATE__, __TIME__);
+	printf("Boot Option: %02X\r\n", option);
 
+	if (((option >> BOOTMODE) & 0x7) == 1)
+		iUSBBOOT(option);
 
 	do {
 //--------------------------------------------------------------------------
@@ -88,43 +93,28 @@ __DATE__, __TIME__);
 //--------------------------------------------------------------------------
 		switch ((option >> BOOTMODE) & 0x7) {
 		case SDFSBOOT :	// iSDHCFSBOOT (SD/MMC/eSD/eMMC)
-		{
-			extern CBOOL iSDXCFSBOOT(U32 option);
 			Result = iSDXCFSBOOT(option);
 			break;
-		}
 		default:
 		case USBBOOT :	// iUSBBOOT
-		{
-			extern CBOOL iUSBBOOT(U32 option);
 			Result = iUSBBOOT(option);
 			break;
-		}
 		case SPIBOOT :	// iSPIBOOT (Serial Flash memory)
-		{
-			extern CBOOL iSPIBOOT(U32 option);
 			Result = iSPIBOOT(option);
 			break;
-		}
 		case SDBOOT :	// iSDHCBOOT (SD/MMC/eSD/eMMC)
-		case EMMCBOOT :	// iSDHCBOOT (SD/MMC/eSD/eMMC)
-		{
-			extern CBOOL iSDXCBOOT(U32 option);
+		case EMMCBOOT :
 			Result = iSDXCBOOT(option);
 			break;
-		}
-		case NANDECBOOT :	// iNANDBOOT with Error Correction
-		{
-			extern CBOOL iNANDBOOTEC(U32 option);
-
+		case NANDECBOOT :
 			Result = iNANDBOOTEC(option);
 			break;
-		}
 		}
 
 		if (Result)
 			break;
 
+		while(1);
 		option = OrgBootOption & ~0x7UL;
 		if (BootState != 0) {
 			option |= USBBOOT;

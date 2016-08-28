@@ -17,10 +17,10 @@
 ###########################################################################
 # Build Environment
 ###########################################################################
-DEBUG			= y
+DEBUG			= n
 
-#EMUL_CPU		= NXP5430
-EMUL_CPU		= NXP5540
+EMUL_CPU		= NXP5430
+#EMUL_CPU		= NXP5540
 
 #OPMODE			= aarch32
 OPMODE			= aarch64

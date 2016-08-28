@@ -23,6 +23,7 @@ LDFLAGS		= -Bstatic						\
 		-Wl,--start-group					\
 		-L$src/$(DIR_OBJOUTPUT)					\
 		-Wl,--end-group						\
+		-Wl,--build-id=none					\
 		-nostdlib
 
 SYS_OBJS	 = 	startup_$(OPMODE)_$(EMUL_CPU).o iROMBOOT.o CRYPTO.o libplat.o printf.o debug.o

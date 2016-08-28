@@ -45,17 +45,6 @@ primary_cold_start:
 	msr	DAIFSet, #(I_Bit|F_Bit|A_Bit)	//; disable interrupt & fast interrupt and Abort
 
 
-//;=============================================================================
-//; boot delay for cache auto initialize 10000ns
-//;=============================================================================
-	MOV	x0, xzr
-	MOVK	x0, #0x202C, lsl #16	//; ARM efuse status register address
-EfuseInitRecheck:
-	LDR	x1, [x0, #(1*4)]
-	AND	x1, x1, #(1<<24)	//; 16: ARMTOP Efuse Initial Done, 17: ARMTOP_P1 Efuse Initial Done
-	CMP	x1, xzr
-	B.eq	EfuseInitRecheck
-
 	bl	remap_vectors
 
 
@@ -157,16 +146,25 @@ EfuseInitRecheck:
 	bic	x0, x0, #(1<<12)		//; icache disable
 	orr	x0, x0, #(1<<11)		//; SBO
 	msr	SCTLR_EL3, x0
+
+//;=============================================================================
+//; boot delay for cache auto initialize 10000ns
+//;=============================================================================
+	MOV	x0, xzr
+	MOVK	x0, #0x202C, lsl #16	//; ARM efuse status register address
+EfuseInitRecheck:
+	LDR	x1, [x0, #(1*4)]
+	AND	x1, x1, #(1<<24)	//; 16: ARMTOP Efuse Initial Done, 17: ARMTOP_P1 Efuse Initial Done
+	CMP	x1, xzr
+	B.eq	EfuseInitRecheck
+
 	ic	ialluis				//; invalidate icache all
 	isb	sy
 	mrs	x0, SCTLR_EL3
 	orr	x0, x0, #(1<<12)
 	msr	SCTLR_EL3, x0			//; icache enable
 
-
-	mov	x0, #0x0830			//; RES1
-	movk	x0, #0x30C5, lsl #16		//; RES1
-	msr	sctlr_el2, x0			//; MMU off, I and C bit off, Align bit off, little endian, execute never
+#if 0	// need lds file modify
 //;==================================================================
 //; Clear SRAM
 //;==================================================================
@@ -179,6 +177,7 @@ clbss_l:
 	str	xzr, [x1], #8			// clear 64-bit BSS word
 	b.lo	clbss_l
 clbss_e:
+#endif
 
 //;==================================================================
 //; Setup stacks
@@ -188,6 +187,7 @@ clbss_e:
 
 	mov	sp, x0
 
+	mov	w0, w29		//; restore boot config
 
 	bl	iROMBOOT	//; save this in register for possible long jump
 	b	.

@@ -94,97 +94,97 @@ extern "C"
 //------------------------------------------------------------------------------
 /// @name   Module Interface
 //@{
-CBOOL   NX_ECID_Initialize( void );
-U32     NX_ECID_GetNumberOfModule( void );
+CBOOL   NX_ECID_Initialize(void);
+U32     NX_ECID_GetNumberOfModule(void);
 //@}
 
 //------------------------------------------------------------------------------
 /// @name   Basic Interface
 //@{
-U32     NX_ECID_GetPhysicalAddress( void );
-U32     NX_ECID_GetSecurePhysicalAddress( void );
-U32     NX_ECID_GetSizeOfRegisterSet( void );
-void    NX_ECID_SetBaseAddress( U32 BaseAddress );
-void	NX_ECID_SetSecureBaseAddress( U32 BaseAddress );
-U32     NX_ECID_GetBaseAddress( void );
-U32		NX_ECID_GetSecureBaseAddress( void );
-CBOOL   NX_ECID_OpenModule( void );
-CBOOL   NX_ECID_CloseModule( void );
-CBOOL   NX_ECID_CheckBusy( void );
-CBOOL   NX_ECID_CanPowerDown( void );
+U32     NX_ECID_GetPhysicalAddress(void);
+U32     NX_ECID_GetSecurePhysicalAddress(void);
+U32     NX_ECID_GetSizeOfRegisterSet(void);
+void    NX_ECID_SetBaseAddress(U32 BaseAddress);
+void	NX_ECID_SetSecureBaseAddress(U32 BaseAddress);
+U32     NX_ECID_GetBaseAddress(void);
+U32	NX_ECID_GetSecureBaseAddress(void);
+CBOOL   NX_ECID_OpenModule(void);
+CBOOL   NX_ECID_CloseModule(void);
+CBOOL   NX_ECID_CheckBusy(void);
+CBOOL   NX_ECID_CanPowerDown(void);
 //@}
 
 //------------------------------------------------------------------------------
 /// @name Clock Control Interface
-//U32     NX_ECID_GetClockNumber( void );
-//U32     NX_ECID_GetResetNumber( void );
+//U32     NX_ECID_GetClockNumber(void);
+//U32     NX_ECID_GetResetNumber(void);
 
 //------------------------------------------------------------------------------
 /// @name   Module Interface
 //@{
 
-void    NX_ECID_GetECID( U32 ECID[4] );
-void    NX_ECID_GetSJTAG( U32 SJTAG[4] );
-void    NX_ECID_GetBJTAG( U32 BJTAG[4] );
-void    NX_ECID_GetSECCFG( U32 SECCFG[4] );
-//void    NX_ECID_GetSJTAG( U32 BJTAG[4] );
-void    NX_ECID_GetChipName( U8 ChipName[64] );
-void    NX_ECID_GetGUID( NX_GUID *guid );
-U32     NX_ECID_GetRSTCFG( void );
+void    NX_ECID_GetECID(U32 ECID[4]);
+void    NX_ECID_GetSJTAG(U32 SJTAG[4]);
+void    NX_ECID_GetBJTAG(U32 BJTAG[4]);
+void    NX_ECID_GetSECCFG(U32 SECCFG[4]);
+//void    NX_ECID_GetSJTAG(U32 BJTAG[4]);
+void    NX_ECID_GetChipName(U8 ChipName[64]);
+void    NX_ECID_GetGUID(NX_GUID *guid);
+U32     NX_ECID_GetRSTCFG(void);
 
 
-//void    NX_ECID_SetA( U32 Addr );
-//U32     NX_ECID_GetA( void );
-//void    NX_ECID_SetCS( CBOOL Enable );
-//CBOOL   NX_ECID_GetCS( void );
-//void    NX_ECID_SetSIGDEV( CBOOL Enable );
-//CBOOL   NX_ECID_GetSIGDEV( void );
-//void    NX_ECID_SetFSET( CBOOL Enable );
-//CBOOL   NX_ECID_GetFSET( void );
-//void    NX_ECID_SetPRCHG( CBOOL Enable );
-//CBOOL   NX_ECID_GetPRCHG( void );
-U32     NX_ECID_GetBondingID( void );
+//void    NX_ECID_SetA(U32 Addr);
+//U32     NX_ECID_GetA(void);
+//void    NX_ECID_SetCS(CBOOL Enable);
+//CBOOL   NX_ECID_GetCS(void);
+//void    NX_ECID_SetSIGDEV(CBOOL Enable);
+//CBOOL   NX_ECID_GetSIGDEV(void);
+//void    NX_ECID_SetFSET(CBOOL Enable);
+//CBOOL   NX_ECID_GetFSET(void);
+//void    NX_ECID_SetPRCHG(CBOOL Enable);
+//CBOOL   NX_ECID_GetPRCHG(void);
+U32     NX_ECID_GetBondingID(void);
 
-//void    NX_ECID_SetPROG( CBOOL Enable );
-//CBOOL   NX_ECID_GetPROG( void );
-//void    NX_ECID_SetSCK( CBOOL Enable );
-//CBOOL   NX_ECID_GetSCK( void );
-//void    NX_ECID_SetSDI( CBOOL Enable );
-//CBOOL   NX_ECID_GetSDI( void );
+//void    NX_ECID_SetPROG(CBOOL Enable);
+//CBOOL   NX_ECID_GetPROG(void);
+//void    NX_ECID_SetSCK(CBOOL Enable);
+//CBOOL   NX_ECID_GetSCK(void);
+//void    NX_ECID_SetSDI(CBOOL Enable);
+//CBOOL   NX_ECID_GetSDI(void);
 
-CBOOL   NX_ECID_GetKeyReady( void );
-void    NX_ECID_SetHdcpEfuseSel( CBOOL Enable );
-CBOOL   NX_ECID_GetHdcpEfuseSel( void );
-void    NX_ECID_SetSelectFlowingBank( U32 Sel );
-U32     NX_ECID_GetSelectFlowingBank( void );
+CBOOL   NX_ECID_GetKeyReady(void);
+void    NX_ECID_SetHdcpEfuseSel(CBOOL Enable);
+CBOOL   NX_ECID_GetHdcpEfuseSel(void);
+void    NX_ECID_SetSelectFlowingBank(U32 Sel);
+U32     NX_ECID_GetSelectFlowingBank(void);
 
-//void    NX_ECID_SetBONDINGID( CBOOL set_cs, CBOOL set_sigdev, CBOOL set_fset, CBOOL set_prchg);
-U32     NX_ECID_GetBONDINGID ( void );
+//void    NX_ECID_SetBONDINGID(CBOOL set_cs, CBOOL set_sigdev, CBOOL set_fset, CBOOL set_prchg);
+U32     NX_ECID_GetBONDINGID (void);
 
-void    NX_ECID_SetBlowInit( void );
-CBOOL   NX_ECID_GetBlowInitDone( void );
-void    NX_ECID_SetBlowStart( void );
-CBOOL   NX_ECID_GetBlowDone( void );
+void    NX_ECID_SetBlowInit(void);
+CBOOL   NX_ECID_GetBlowInitDone(void);
+void    NX_ECID_SetBlowStart(void);
+CBOOL   NX_ECID_GetBlowDone(void);
 
-void    NX_ECID_SetBitCycle( U8 cycle );
-U32     NX_ECID_GetBitCycle( void );
-void    NX_ECID_SetClkCycle( U8 cycle );
-U32     NX_ECID_GetClkCycle( void );
-void    NX_ECID_SetPrwCycle( U16 cycle );
-U32     NX_ECID_GetPrwCycle( void );
-void    NX_ECID_SetFsrCycle( U16 cycle );
-U32     NX_ECID_GetFsrCycle( void );
+void    NX_ECID_SetBitCycle(U8 cycle);
+U32     NX_ECID_GetBitCycle(void);
+void    NX_ECID_SetClkCycle(U8 cycle);
+U32     NX_ECID_GetClkCycle(void);
+void    NX_ECID_SetPrwCycle(U16 cycle);
+U32     NX_ECID_GetPrwCycle(void);
+void    NX_ECID_SetFsrCycle(U16 cycle);
+U32     NX_ECID_GetFsrCycle(void);
 
-void    NX_ECID_SetBlowData( const U32 BlowData[4] );
-void    NX_ECID_GetBlowData( U32 BlowData[4] );
+void    NX_ECID_SetBlowData(const U32 BlowData[4]);
+void    NX_ECID_GetBlowData(U32 BlowData[4]);
 
-void    NX_ECID_SetSenseInit( void );
+void    NX_ECID_SetSenseInit(void);
 
-void    NX_ECID_SetSelectCompSBOOT( U32 selVal );
-U32     NX_ECID_GetSelectCompSBOOT( void );
-U32     NX_ECID_GetCompResultSBOOT( void );
-void    NX_ECID_SetCompSBOOT( const U32 secKey[8] );
-void    NX_ECID_SetCRAESKEY( const U32 secKey[4] );
+void    NX_ECID_SetSelectCompSBOOT(U32 selVal);
+U32     NX_ECID_GetSelectCompSBOOT(void);
+U32     NX_ECID_GetCompResultSBOOT(void);
+void    NX_ECID_SetCompSBOOT(const U32 secKey[8]);
+void    NX_ECID_SetCRAESKEY(const U32 secKey[4]);
 //@}
 
 #ifdef  __cplusplus
