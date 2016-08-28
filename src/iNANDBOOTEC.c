@@ -521,9 +521,9 @@ CBOOL iNANDBOOTEC(U32 option)
 	U32 dwBinAddr, dwBinAddr_Save, BootSize;
 	S32 iBinSecLeft;
 	NANDBOOTECSTATUS BootStatus, *pBootStatus;
-	struct NX_SecondBootInfo *pSBI;
+	struct nx_bootinfo *pSBI;
 
-	pSBI = (struct NX_SecondBootInfo *)BASEADDR_SRAM;
+	pSBI = (struct nx_bootinfo *)BASEADDR_SRAM;
 	pBootStatus = &BootStatus;
 
 	register U32 regtemp = 0x77;		// nNSCS0, nNSCS1 bus timing set
@@ -574,10 +574,10 @@ CBOOL iNANDBOOTEC(U32 option)
 		Decrypt((U32*)pSBI, (U32*)pSBI,
 				pBootStatus->dwSectorSize);
 
-	if (pSBI->SIGNATURE != HEADER_ID)
+	if (pSBI->signature != HEADER_ID)
 		goto errexit;
 
-	BootSize = pSBI->LOADSIZE;
+	BootSize = pSBI->LoadSize;
 
 	if (BootSize > INTERNAL_SRAM_SIZE - SECONDBOOT_STACK)
 		BootSize = INTERNAL_SRAM_SIZE - SECONDBOOT_STACK;

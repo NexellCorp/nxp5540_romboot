@@ -23,16 +23,16 @@
 //#define VERBOSE
 
 #ifdef NXP5430
-#define SDXC_CLKSRC			(2)	/* PLL7 = 200 MHz */
-#define SDXC_CLKDIV_LOW			(2)	/* PLL7 / 2 / 4 = 25 MHz */
-#define SDXC_CLKDIV_HIGH		(1)	/* PLL2 / 1 / 4 = 50 MHz */
-#define	SDXC_DIVIDER_400KHZ		(120)	/* PLL2 / 125 / 4 = 400KHz */
+#define SDXC_CLKSRC			(2)	/* PLL2 = 96 MHz */
+#define SDXC_CLKDIV_LOW			(2)	/* PLL2 / 2 / 4 = 12 MHz */
+#define SDXC_CLKDIV_HIGH		(1)	/* PLL2 / 1 / 4 = 24 MHz */
+#define	SDXC_DIVIDER_400KHZ		(60)	/* PLL2 / 60 / 4 = 400KHz */
 #endif
 #ifdef NXP5540
 #define SDXC_CLKSRC			(7)	/* PLL7 = 200 MHz */
 #define SDXC_CLKDIV_LOW			(2)	/* PLL7 / 2 / 4 = 25 MHz */
-#define SDXC_CLKDIV_HIGH		(1)	/* PLL2 / 1 / 4 = 50 MHz */
-#define	SDXC_DIVIDER_400KHZ		(125)	/* PLL2 / 125 / 4 = 400KHz */
+#define SDXC_CLKDIV_HIGH		(1)	/* PLL7 / 1 / 4 = 50 MHz */
+#define	SDXC_DIVIDER_400KHZ		(125)	/* PLL7 / 125 / 4 = 400KHz */
 #endif
 #define	SDCLK_DIVIDER			(1)	/* fix to bypass */
 

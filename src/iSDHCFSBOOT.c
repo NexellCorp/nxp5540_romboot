@@ -19,6 +19,7 @@
 #include "nx_etacarinae_bootoption.h"
 #include <nx_type.h>
 #include <nx_debug2.h>
+#include "printf.h"
 
 #ifdef NXP5430
 #include <nx_chip.h>
@@ -46,9 +47,7 @@ CBOOL ProcessNSIH(FIL *file, U8 *pOutData, U32 option)
 	S32 writesize = 0, skipline = 0, bytesize = 0, line = 0;
 	U32 writeval = 0, FSize = file->fsize;
 
-	NX_DEBUG_MSG("file size: ");
-	NX_DEBUG_DEC(file->fsize);
-	NX_DEBUG_MSG("\r\n");
+	printf("header file size: %d\r\n", file->fsize);
 
 	if (FSize > 32 * 1024)
 		FSize = 32 * 1024;
@@ -100,9 +99,8 @@ CBOOL ProcessNSIH(FIL *file, U8 *pOutData, U32 option)
 					}
 				} else {
 					if (writesize != 0) {
-						NX_DEBUG_MSG("ProcessNSIH : Error at ");
-						NX_DEBUG_DEC(line + 1);
-						NX_DEBUG_MSG(" line.\r\n");
+						printf("ProcessNSIH : Error at "
+						"%d line.\r\n", line + 1);
 						return CFALSE;
 					}
 				}
@@ -113,57 +111,67 @@ CBOOL ProcessNSIH(FIL *file, U8 *pOutData, U32 option)
 		}
 	}
 
-	NX_DEBUG_MSG("ProcessNSIH : ");
-	NX_DEBUG_DEC(line + 1);
-	NX_DEBUG_MSG(" line, ");
-	NX_DEBUG_DEC(bytesize);
-	NX_DEBUG_MSG(" bytes generated.\r\n");
+	printf("ProcessNSIH : %d line, %d bytes generated.\r\n",
+			line + 1, bytesize);
 
 	return bytesize;
 }
 
-static CBOOL FSBoot(U32 option)
+static CBOOL FSBoot(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 {
 	CBOOL Ret = CFALSE;
 	FATFS FATFS;	/* Pointer to the file system objects (logical drives) */
-	struct NX_SecondBootInfo *pSBI =
-		(struct NX_SecondBootInfo *)BASEADDR_SRAM;
+	struct nx_bootinfo *pSBI =
+		(struct nx_bootinfo *)BASEADDR_SRAM;
 	const char *diskname = "0:";
 
-	NX_DEBUG_MSG("mount to disk 0\r\n");
+	printf("mount to disk 0\r\n");
 	FATFS.fs_type = 0;
 	FATFS.id = 0;
-	if (FR_OK != f_mount(&diskname, &FATFS, 0))
+	FATFS.diskhandle = (U32*)pSDXCBootStatus;
+
+	if (FR_OK != f_mount(&diskname, &FATFS, 0)) {
+		printf("disk mount fail\r\n");
 		return Ret;
-	const char *headerfilename = "NXBTINFO.SBH";
+	}
+	const char *headerfilename = "nxbtinfo.sbh";
 	FIL hfile;
 
-	if (FR_OK != f_open(&hfile, headerfilename, FA_READ, &FATFS))
+	if (FR_OK != f_open(&hfile, headerfilename, FA_READ, &FATFS)) {
+		printf("%s file open fail\r\n", headerfilename);
 		return Ret;
+	}
 
 	if (CFALSE == ProcessNSIH(&hfile, (U8*)pSBI, option))
 		goto errexith;
 
-	if (pSBI->SIGNATURE == HEADER_ID)
+	if (pSBI->signature == HEADER_ID) {
+		printf("cannot found boot signature (%04X)\r\n",
+				pSBI->signature);
 		goto errexith;
+	}
 
-	const char *loaderfilename = "NXDATA.SBL";
+	const char *loaderfilename = pSBI->dbi[0].sdfsbi.filename;
 	FIL lfile;
 
-	if (FR_OK != f_open(&lfile, loaderfilename, FA_READ, &FATFS))
+	if (FR_OK != f_open(&lfile, loaderfilename, FA_READ, &FATFS)) {
+		printf("cannot open boot file %s\r\n", loaderfilename);
 		goto errexith;
+	}
 	U32 RSize, BootSize = lfile.fsize;
 
 	if (BootSize > INTERNAL_SRAM_SIZE - SECONDBOOT_STACK)
 		BootSize = INTERNAL_SRAM_SIZE - SECONDBOOT_STACK;
 
 	if (FR_OK == f_read(&lfile, (void*)(BASEADDR_SRAM +
-					sizeof(struct NX_SecondBootInfo)),
-				BootSize, &RSize))
+					sizeof(struct nx_bootinfo)),
+				BootSize, &RSize)) {
+		printf("cannot read boot file %d\r\n", RSize);
 		goto errexitl;
-	if (option & 1<< DECRYPT)
-		Decrypt((U32*)(BASEADDR_SRAM + sizeof(struct NX_SecondBootInfo)),
-			(U32*)(BASEADDR_SRAM + sizeof(struct NX_SecondBootInfo)),
+	}
+	if (option & 1 << DECRYPT)
+		Decrypt((U32*)(BASEADDR_SRAM + sizeof(struct nx_bootinfo)),
+			(U32*)(BASEADDR_SRAM + sizeof(struct nx_bootinfo)),
 			BootSize);
 	Ret = CTRUE;
 
@@ -192,7 +200,7 @@ static CBOOL SDMMCFSBOOT(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 			while ((pSDXCReg->CTRL & NX_SDXC_CTRL_FIFORST) && tempcount--);
 		}
 
-		result = FSBoot(option);
+		result = FSBoot(pSDXCBootStatus, option);
 	}
 	NX_SDMMC_Close(pSDXCBootStatus);
 

@@ -590,17 +590,17 @@ static CBOOL NX_SDMMC_IdentifyCard(SDXCBOOTSTATUS *pSDXCBootStatus)
 			}
 
 			if (timeout-- <= 0) {
-				NX_DEBUG_MSG("NX_SDMMC_IdentifyCard : ERROR - Time-Out to wait power up for SD.\n");
+				printf("Time-Out to wait power up for SD.\r\n");
 				return CFALSE;
 			}
 		}
 
-		#if defined(VERBOSE)
-		NX_DEBUG_MSG("--> Found SD Memory Card.\n");
+		printf("Found SD Memory Card.\r\n");
+#if 0
 		NX_DEBUG_MSG("--> SD_SEND_OP_COND Response = 0x");
 		NX_DEBUG_HEX(cmd.response[0]);
 		NX_DEBUG_MSG("\n");
-		#endif
+#endif
 
 		CardType	= NX_SDMMC_CARDTYPE_SDMEM;
 		RCA		= 0;
@@ -628,14 +628,14 @@ static CBOOL NX_SDMMC_IdentifyCard(SDXCBOOTSTATUS *pSDXCBootStatus)
 			}
 
 			if (timeout-- <= 0) {
-				NX_DEBUG_MSG("NX_SDMMC_IdentifyCard : ERROR - Time-Out to wait power-up for MMC.\n");
+				NX_DEBUG_MSG("Time-Out to wait power-up for MMC\r\n");
 				return CFALSE;
 			}
 		/* Wait until card has finished the power up routine */
 		} while (0==(cmd.response[0] & (1UL << 31)));
 
+		printf("Found MMC Memory Card.\r\n");
 		#if defined(VERBOSE)
-		NX_DEBUG_MSG("--> Found MMC Memory Card.\n");
 		NX_DEBUG_MSG("--> SEND_OP_COND Response = 0x");
 		NX_DEBUG_HEX(cmd.response[0]);
 		NX_DEBUG_MSG("\n");
@@ -649,10 +649,8 @@ static CBOOL NX_SDMMC_IdentifyCard(SDXCBOOTSTATUS *pSDXCBootStatus)
 	pSDXCBootStatus->bHighCapacity =
 		(cmd.response[0] & (1 << 30)) ? CTRUE : CFALSE;
 
-	#if defined(NX_DEBUG)
 	if (pSDXCBootStatus->bHighCapacity)
-		NX_DEBUG_MSG("--> High Capacity Memory Card.\n");
-	#endif
+		printf("High Capacity Memory Card.\r\n");
 
 	//--------------------------------------------------------------------------
 	// Get CID
@@ -864,11 +862,9 @@ CBOOL NX_SDMMC_Init(SDXCBOOTSTATUS *pSDXCBootStatus)
 			  | (SDXC_CLKSRC << 2)		// set clock source
 			  | (0UL << 1);			// set clock invert
  	pSDClkGenReg->CLKENB |= 0x1UL << 2;		// clock generation enable
-	printf("SD Clock Generator Enabled\r\n");
 
  	ResetCon(SDResetNum[pSDXCBootStatus->SDPort], CTRUE);	// reset on
  	ResetCon(SDResetNum[pSDXCBootStatus->SDPort], CFALSE);	// reset negate
-	printf("SD Reset Done\r\n");
 #endif
 
 #ifdef NXP5540
@@ -1015,15 +1011,20 @@ CBOOL NX_SDMMC_Open(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 	//--------------------------------------------------------------------------
 	// card identification mode : Identify & Initialize
 	if (CFALSE == NX_SDMMC_IdentifyCard(pSDXCBootStatus)) {
+		printf("Identify Fail\r\n");
 		return CFALSE;
 	}
 
 	//--------------------------------------------------------------------------
 	// data transfer mode : Stand-by state
-	if (CFALSE == NX_SDMMC_SetClock(pSDXCBootStatus, CTRUE, SDSpeed))
+	if (CFALSE == NX_SDMMC_SetClock(pSDXCBootStatus, CTRUE, SDSpeed)) {
+		printf("Card Clock reset fail\r\n");
 		return CFALSE;
-	if (CFALSE == NX_SDMMC_SelectCard(pSDXCBootStatus))
+	}
+	if (CFALSE == NX_SDMMC_SelectCard(pSDXCBootStatus)) {
+		printf("Card Select Fail\r\n");
 		return CFALSE;
+	}
 
 	//--------------------------------------------------------------------------
 	// data transfer mode : Transfer state
@@ -1031,8 +1032,10 @@ CBOOL NX_SDMMC_Open(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 		NX_SDMMC_SetCardDetectPullUp(pSDXCBootStatus, CFALSE);
 	}
 
-	if (CFALSE == NX_SDMMC_SetBlockLength(pSDXCBootStatus, BLOCK_LENGTH))
+	if (CFALSE == NX_SDMMC_SetBlockLength(pSDXCBootStatus, BLOCK_LENGTH)) {
+		printf("Set Block Length Fail\r\n");
 		return CFALSE;
+	}
 
 	NX_SDMMC_SetBusWidth(pSDXCBootStatus, 4);
 
@@ -1298,29 +1301,29 @@ static CBOOL eMMCBoot(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 		printf("Send Command Internal Error\r\n");
 		goto error;
 	}
-	struct NX_SecondBootInfo *pSBI =
-		(struct NX_SecondBootInfo *)BASEADDR_SRAM;
+	struct nx_bootinfo *pSBI =
+		(struct nx_bootinfo *)BASEADDR_SRAM;
 
-	// read dummy 512 bytes
-	if (NX_SDMMC_ReadSectorData(pSDXCBootStatus, 1, (U32 *)pSBI)
+	// read bootheader 1024 bytes
+	if (NX_SDMMC_ReadSectorData(pSDXCBootStatus, 2, (U32 *)pSBI)
 			== CFALSE) { 
 		printf("Cannot Read Boot Header\r\n");
 		goto error;
 	}
-// 	if (option & 1 << DECRYPT)
-// 		Decrypt((U32*)BASEADDR_SRAM, (U32*)BASEADDR_SRAM,
-//				sizeof(struct NX_SecondBootInfo));
+ 	if (option & 1 << DECRYPT)
+ 		Decrypt((U32*)BASEADDR_SRAM, (U32*)BASEADDR_SRAM,
+				sizeof(struct nx_bootheader));
 
-	if (pSBI->SIGNATURE != HEADER_ID) {
-		printf("boot header error (%04X)\r\n", pSBI->SIGNATURE);
+	if (pSBI->signature != HEADER_ID) {
+		printf("boot header error (%04X)\r\n", pSBI->signature);
 		goto error;
 	}
 
 	printf("Load Addr: %x, Load Size: %x, Launch Addr :%x\r\n",
-			pSBI->LOADADDR, pSBI->LOADSIZE,
-			pSBI->LAUNCHADDR);
+			pSBI->LoadAddr, pSBI->LoadSize,
+			pSBI->StartAddr);
 
-	U32 BootSize = pSBI->LOADSIZE;
+	U32 BootSize = pSBI->LoadSize;
 
 	if (BootSize > INTERNAL_SRAM_SIZE - SECONDBOOT_STACK)
 		BootSize = INTERNAL_SRAM_SIZE - SECONDBOOT_STACK;
@@ -1328,14 +1331,12 @@ static CBOOL eMMCBoot(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 	//	Read Data
 	result = NX_SDMMC_ReadSectorData(pSDXCBootStatus,
 			(BootSize + BLOCK_LENGTH - 1) / BLOCK_LENGTH,
-			(U32 *)(BASEADDR_SRAM + sizeof(struct NX_SecondBootInfo)));
+			(U32 *)(BASEADDR_SRAM + sizeof(struct nx_bootheader)));
 
-#ifdef NXP5430
 	if (option & 1 << DECRYPT)
-		Decrypt((U32*)(BASEADDR_SRAM + sizeof(struct NX_SecondBootInfo)),
-			(U32*)(BASEADDR_SRAM + sizeof(struct NX_SecondBootInfo)),
+		Decrypt((U32*)(BASEADDR_SRAM + sizeof(struct nx_bootheader)),
+			(U32*)(BASEADDR_SRAM + sizeof(struct nx_bootheader)),
 			BootSize);
-#endif
 
 error:
 
@@ -1367,8 +1368,8 @@ static CBOOL SDMMCBOOT(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 		printf("SD open fail\r\n");
 		goto error;
 	}
-	struct NX_SecondBootInfo *pSBI =
-		(struct NX_SecondBootInfo *)BASEADDR_SRAM;
+	struct nx_bootinfo *pSBI =
+		(struct nx_bootinfo *)BASEADDR_SRAM;
 	if (0 == (pSDXCReg->STATUS & NX_SDXC_STATUS_FIFOEMPTY)) {
 		volatile U32 tempcount = 0x100000;
 		pSDXCReg->CTRL = NX_SDXC_CTRL_FIFORST;
@@ -1377,36 +1378,43 @@ static CBOOL SDMMCBOOT(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 				tempcount--)
 			;
 	}
-
-	if (NX_SDMMC_ReadSectors(pSDXCBootStatus, 1, 1, (U32 *)pSBI) == CFALSE) {
+#ifdef NXP5430
+	if (NX_SDMMC_ReadSectors(pSDXCBootStatus, 0x81, 2, (U32 *)pSBI) == CFALSE) {
 		printf("cannot read boot header\r\n");
 		goto error;
 	}
-// 	if (option & 1<< DECRYPT)
-// 		Decrypt((U32*)BASEADDR_SRAM,
-//			(U32*)BASEADDR_SRAM,
-//			sizeof(struct NX_SecondBootInfo));
+#endif
+#ifdef NXP5540
+	if (NX_SDMMC_ReadSectors(pSDXCBootStatus, 1, 2, (U32 *)pSBI) == CFALSE) {
+		printf("cannot read boot header\r\n");
+		goto error;
+	}
+#endif
+ 	if (option & 1 << DECRYPT)
+ 		Decrypt((U32*)BASEADDR_SRAM,
+			(U32*)BASEADDR_SRAM,
+			sizeof(struct nx_bootheader));
 
-	if (pSBI->SIGNATURE != HEADER_ID) {
-		printf("wrong boot Sinature(%04x)\r\n", pSBI->SIGNATURE);
+	if (pSBI->signature != HEADER_ID) {
+		printf("wrong boot Sinature(%04x)\r\n", pSBI->signature);
 		goto error;
 	}
 	U32 BootSize;
 	printf("Load Addr :%x  Load Size :%x  Launch Addr :%x\r\n",
-		pSBI->LOADADDR, pSBI->LOADSIZE, pSBI->LAUNCHADDR);
+		pSBI->LoadAddr, pSBI->LoadSize, pSBI->StartAddr);
 
-	BootSize = pSBI->LOADSIZE;
+	BootSize = pSBI->LoadSize;
 	if (BootSize > INTERNAL_SRAM_SIZE - SECONDBOOT_STACK)
 		BootSize = INTERNAL_SRAM_SIZE - SECONDBOOT_STACK;
 
-	result = NX_SDMMC_ReadSectors(pSDXCBootStatus, 2,
+	result = NX_SDMMC_ReadSectors(pSDXCBootStatus, 3,
 			(BootSize + BLOCK_LENGTH - 1) / BLOCK_LENGTH,
-			(U32 *)(BASEADDR_SRAM + sizeof(struct NX_SecondBootInfo)));
+			(U32 *)(BASEADDR_SRAM + sizeof(struct nx_bootheader)));
 
-// 	if (option & 1<< DECRYPT)
-// 		Decrypt((U32*)(BASEADDR_SRAM+sizeof(struct NX_SecondBootInfo)),
-//			(U32 *)(BASEADDR_SRAM+sizeof(struct NX_SecondBootInfo)),
-//			BootSize);
+ 	if (option & 1 << DECRYPT)
+ 		Decrypt((U32*)(BASEADDR_SRAM + sizeof(struct nx_bootheader)),
+			(U32*)(BASEADDR_SRAM + sizeof(struct nx_bootheader)),
+			BootSize);
 error:
 
 	return result;
@@ -1444,64 +1452,61 @@ void NX_SDPADSetALT(U32 PortNum)
 #ifdef NXP5430
 	if (PortNum == 0) {
 		register U32 *pGPIOARegA1 =
-			(U32 *)&pGPIOReg[GPIO_GROUP_C]->GPIOx_ALTFN[1];	// c31, c30, c29, c28, c27
+			(U32 *)&pGPIOReg[GPIO_GROUP_A]->GPIOx_ALTFN[1];	// c31, c30, c29, c28, c27
 		register U32 *pGPIOBRegA0 =
-			(U32 *)&pGPIOReg[GPIO_GROUP_D]->GPIOx_ALTFN[0];	// d05, d04, d03, d02, d01, d00
-		*pGPIOARegA1 = (*pGPIOARegA1 & ~0xFFC00000) | 0x55400000;	// all alt is 1
-		*pGPIOBRegA0 = (*pGPIOBRegA0 & ~0x00000FFF) | 0x00000555;	// all alt is 1
+			(U32 *)&pGPIOReg[GPIO_GROUP_B]->GPIOx_ALTFN[0];	// d05, d04, d03, d02, d01, d00
+		*pGPIOARegA1 = (*pGPIOARegA1 & ~0xCC000000) | 0x44000000;	// all alt is 1
+		*pGPIOBRegA0 = (*pGPIOBRegA0 & ~0x0000CCCC) | 0x00004444;	// all alt is 1
 
-		pGPIOReg[GPIO_GROUP_C]->GPIOx_SLEW &= ~(0x1F << 27);
-		pGPIOReg[GPIO_GROUP_C]->GPIOx_SLEW_DISABLE_DEFAULT |= 0x1F << 27;
-		pGPIOReg[GPIO_GROUP_C]->GPIOx_DRV0 |= 0x1F << 27;
-		pGPIOReg[GPIO_GROUP_C]->GPIOx_DRV0_DISABLE_DEFAULT |= 0x1F << 27;
-		pGPIOReg[GPIO_GROUP_C]->GPIOx_DRV1 |= 0x1F << 27;
-		pGPIOReg[GPIO_GROUP_C]->GPIOx_DRV1_DISABLE_DEFAULT |= 0x1F << 27;
-		pGPIOReg[GPIO_GROUP_C]->GPIOx_PULLSEL |= 0x1F << 27;
-		pGPIOReg[GPIO_GROUP_C]->GPIOx_PULLSEL_DISABLE_DEFAULT |= 0x1F << 27;
-		pGPIOReg[GPIO_GROUP_C]->GPIOx_PULLENB |= 0x1F << 29;
-		pGPIOReg[GPIO_GROUP_C]->GPIOx_PULLENB_DISABLE_DEFAULT |= 0x1F << 29;
+		pGPIOReg[GPIO_GROUP_C]->GPIOx_SLEW			&= ~(0x5 << 29);
+		pGPIOReg[GPIO_GROUP_C]->GPIOx_SLEW_DISABLE_DEFAULT	|=   0x5 << 29;
+		pGPIOReg[GPIO_GROUP_C]->GPIOx_DRV0			|=   0x5 << 29;
+		pGPIOReg[GPIO_GROUP_C]->GPIOx_DRV0_DISABLE_DEFAULT	|=   0x5 << 29;
+		pGPIOReg[GPIO_GROUP_C]->GPIOx_DRV1			|=   0x5 << 29;
+		pGPIOReg[GPIO_GROUP_C]->GPIOx_DRV1_DISABLE_DEFAULT	|=   0x5 << 29;
+		pGPIOReg[GPIO_GROUP_C]->GPIOx_PULLSEL			|=   0x5 << 29;
+		pGPIOReg[GPIO_GROUP_C]->GPIOx_PULLSEL_DISABLE_DEFAULT	|=   0x5 << 29;
+		pGPIOReg[GPIO_GROUP_C]->GPIOx_PULLENB			|=   0x4 << 29;
+		pGPIOReg[GPIO_GROUP_C]->GPIOx_PULLENB_DISABLE_DEFAULT	|=   0x5 << 29;
 
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_SLEW &= ~(0x3F << 0);
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_SLEW_DISABLE_DEFAULT |= 0x3F << 0;
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_DRV0 |= 0x3F << 0;
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_DRV0_DISABLE_DEFAULT |= 0x3F << 0;
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_DRV1 |= 0x3F << 0;
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_DRV1_DISABLE_DEFAULT |= 0x3F << 0;
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_PULLSEL |= 0x3F << 0;
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_PULLSEL_DISABLE_DEFAULT |= 0x3F << 0;
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_PULLENB |= 0x17 << 0;
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_PULLENB_DISABLE_DEFAULT |= 0x3F << 0;
+		pGPIOReg[GPIO_GROUP_D]->GPIOx_SLEW			&= ~(0x55 << 1);
+		pGPIOReg[GPIO_GROUP_D]->GPIOx_SLEW_DISABLE_DEFAULT	|=   0x55 << 1;
+		pGPIOReg[GPIO_GROUP_D]->GPIOx_DRV0			|=   0x55 << 1;
+		pGPIOReg[GPIO_GROUP_D]->GPIOx_DRV0_DISABLE_DEFAULT	|=   0x55 << 1;
+		pGPIOReg[GPIO_GROUP_D]->GPIOx_DRV1			|=   0x55 << 1;
+		pGPIOReg[GPIO_GROUP_D]->GPIOx_DRV1_DISABLE_DEFAULT	|=   0x55 << 1;
+		pGPIOReg[GPIO_GROUP_D]->GPIOx_PULLSEL			|=   0x55 << 1;
+		pGPIOReg[GPIO_GROUP_D]->GPIOx_PULLSEL_DISABLE_DEFAULT	|=   0x55 << 1;
+		pGPIOReg[GPIO_GROUP_D]->GPIOx_PULLENB			|=   0x55 << 1;
+		pGPIOReg[GPIO_GROUP_D]->GPIOx_PULLENB_DISABLE_DEFAULT	|=   0x55 << 1;
 	} else if(PortNum == 1) {
 		register U32 *pGPIODRegA1 =
 			(U32 *)&pGPIOReg[GPIO_GROUP_D]->GPIOx_ALTFN[1];	// d16
-		register U32 *pGPIODRegA0 =
-			(U32 *)&pGPIOReg[GPIO_GROUP_D]->GPIOx_ALTFN[0];	// d15, d14, d13, d12, d11, d10, d09, d08, d07, d06
-		*pGPIODRegA1 = (*pGPIODRegA1 & ~0x00000003) | 0x00000001;	// all alt is 1
-		*pGPIODRegA0 = (*pGPIODRegA1 & ~0xFFFFF000) | 0x55555000;	// all alt is 1
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_SLEW &= ~(0x7FF << 6);
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_SLEW_DISABLE_DEFAULT |= 0x7FF << 6;
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_DRV0 |= 0x7FF << 6;
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_DRV0_DISABLE_DEFAULT |= 0x7FF << 6;
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_DRV1 |= 0x7FF << 6;
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_DRV1_DISABLE_DEFAULT |= 0x7FF << 6;
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_PULLSEL |= 0x7FF << 6;
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_PULLSEL_DISABLE_DEFAULT |= 0x7FF << 6;
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_PULLENB |= 0x2FF << 6;
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_PULLENB_DISABLE_DEFAULT |= 0x7FF << 6;
+		*pGPIODRegA1 = (*pGPIODRegA1 & ~0x00FFF000) | 0x00555000;	// all alt is 1
+		pGPIOReg[GPIO_GROUP_D]->GPIOx_SLEW			&= ~(0x3F << 22);
+		pGPIOReg[GPIO_GROUP_D]->GPIOx_SLEW_DISABLE_DEFAULT	|=   0x3F << 22;
+		pGPIOReg[GPIO_GROUP_D]->GPIOx_DRV0			|=   0x3F << 22;
+		pGPIOReg[GPIO_GROUP_D]->GPIOx_DRV0_DISABLE_DEFAULT	|=   0x3F << 22;
+		pGPIOReg[GPIO_GROUP_D]->GPIOx_DRV1			|=   0x3F << 22;
+		pGPIOReg[GPIO_GROUP_D]->GPIOx_DRV1_DISABLE_DEFAULT	|=   0x3F << 22;
+		pGPIOReg[GPIO_GROUP_D]->GPIOx_PULLSEL			|=   0x3F << 22;
+		pGPIOReg[GPIO_GROUP_D]->GPIOx_PULLSEL_DISABLE_DEFAULT	|=   0x3F << 22;
+		pGPIOReg[GPIO_GROUP_D]->GPIOx_PULLENB			|=   0x3E << 22;
+		pGPIOReg[GPIO_GROUP_D]->GPIOx_PULLENB_DISABLE_DEFAULT	|=   0x3F << 22;
 	} else {   // PortNum == 2
 		register U32 *pGPIOCRegA1 =
-			(U32 *)&pGPIOReg[GPIO_GROUP_D]->GPIOx_ALTFN[1];	// d27, d26, d25, d24, d23, d22, d21, d20, d19, d18, d17
-		*pGPIOCRegA1 = (*pGPIOCRegA1 & ~0x00FFFFF7) | 0x00555554;	// all alt is 1
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_SLEW &= ~(0x7FF << 17);
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_SLEW_DISABLE_DEFAULT |= 0x7FF << 17;
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_DRV0 |= 0x7FF << 17;
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_DRV0_DISABLE_DEFAULT |= 0x7FF << 17;
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_DRV1 |= 0x7FF << 17;
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_DRV1_DISABLE_DEFAULT |= 0x7FF << 17;
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_PULLSEL |= 0x7FF << 17;
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_PULLSEL_DISABLE_DEFAULT |= 0x7FF << 17;
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_PULLENB |= 0x2FF << 17;
-		pGPIOReg[GPIO_GROUP_D]->GPIOx_PULLENB_DISABLE_DEFAULT |= 0x7FF << 17;
+			(U32 *)&pGPIOReg[GPIO_GROUP_C]->GPIOx_ALTFN[1];
+		*pGPIOCRegA1 = (*pGPIOCRegA1 & ~0x0000FFF0) | 0x000AAA0;	// all alt is 1
+		pGPIOReg[GPIO_GROUP_C]->GPIOx_SLEW			&= ~(0x3F << 18);
+		pGPIOReg[GPIO_GROUP_C]->GPIOx_SLEW_DISABLE_DEFAULT	|=   0x3F << 18;
+		pGPIOReg[GPIO_GROUP_C]->GPIOx_DRV0			|=   0x3F << 18;
+		pGPIOReg[GPIO_GROUP_C]->GPIOx_DRV0_DISABLE_DEFAULT	|=   0x3F << 18;
+		pGPIOReg[GPIO_GROUP_C]->GPIOx_DRV1			|=   0x3F << 18;
+		pGPIOReg[GPIO_GROUP_C]->GPIOx_DRV1_DISABLE_DEFAULT	|=   0x3F << 18;
+		pGPIOReg[GPIO_GROUP_C]->GPIOx_PULLSEL			|=   0x3F << 18;
+		pGPIOReg[GPIO_GROUP_C]->GPIOx_PULLSEL_DISABLE_DEFAULT	|=   0x3F << 18;
+		pGPIOReg[GPIO_GROUP_C]->GPIOx_PULLENB			|=   0x3E << 18;
+		pGPIOReg[GPIO_GROUP_C]->GPIOx_PULLENB_DISABLE_DEFAULT	|=   0x3F << 18;
 	}
 #endif
 
@@ -1610,7 +1615,7 @@ U32 iSDXCBOOT(U32 option)
 		pSDXCBootStatus->bHighSpeed = CTRUE;
 	} else
 		pSDXCBootStatus->bHighSpeed = CFALSE;
-	pSDXCBootStatus->SDPort = 2;
+	pSDXCBootStatus->SDPort = 0;
 	printf("SD Boot with Port %d\r\n", pSDXCBootStatus->SDPort);
 	NX_SDPADSetALT(pSDXCBootStatus->SDPort);
 
@@ -1620,12 +1625,14 @@ U32 iSDXCBOOT(U32 option)
 	// eMMC or MMC ver 4.3+
 	//if (option & (1U << eMMCBOOTMODE))
 	if ((option & 0x7) == 0) {
+		printf("eMMC boot start\r\n");
 		result = eMMCBoot(pSDXCBootStatus, option);
 	}
 
 	//--------------------------------------------------------------------------
 	// Normal SD(eSD)/MMC ver 4.2 boot
 	if (CFALSE == result) {
+		printf("SD boot start\r\n");
 		result = SDMMCBOOT(pSDXCBootStatus, option);
 	}
 

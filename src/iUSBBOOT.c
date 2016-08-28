@@ -496,19 +496,19 @@ static void nx_usb_int_bulkout(USBBOOTSTATUS *pUSBBootStatus,
 		}
 
 		if (512 <= pUSBBootStatus->iRxHeaderSize) {
-			struct NX_SecondBootInfo *pSBI =
-				(struct NX_SecondBootInfo *)pdwBuffer;
+			struct nx_bootinfo *pSBI =
+				(struct nx_bootinfo *)pdwBuffer;
 
 			if (option & 1 << DECRYPT)
 				Decrypt((U32*)pdwBuffer, (U32*)pdwBuffer, 512);
 
-			if (pSBI->SIGNATURE == HEADER_ID) {
+			if (pSBI->signature == HEADER_ID) {
 				pUSBBootStatus->bHeaderReceived = CTRUE;
 				pUSBBootStatus->RxBuffAddr	=
 					(U8*)pdwBuffer+pUSBBootStatus->iRxHeaderSize;
 				pUSBBootStatus->RxBuffAddr_save	=
 					(U8*)pdwBuffer+pUSBBootStatus->iRxHeaderSize;
-				pUSBBootStatus->iRxSize = pSBI->LOADSIZE;
+				pUSBBootStatus->iRxSize = pSBI->LoadSize;
 
 				if (pUSBBootStatus->iRxSize >
 					(INTERNAL_SRAM_SIZE - SECONDBOOT_STACK))
