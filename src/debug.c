@@ -33,7 +33,7 @@
 #include <nx_resetcontrol_def.h>
 #endif
 
-#define NX_CLKSRC_UART 0
+#define NX_CLKSRC_UART 1
 #define SOURCE_DIVID	(4UL)
 #define BAUD_RATE	(115200)
 
@@ -129,7 +129,7 @@ static struct NX_UART_RegisterSet * const pReg_Uart =
 
 CBOOL DebugInit(U32 port)
 {
-	U32 SOURCE_CLOCK = 550000000;
+	U32 SOURCE_CLOCK = 147456000;
 #ifdef NXP5430
 	pReg_Uart = (struct NX_UART_RegisterSet *)((MPTRS)UARTBASEADDR[port]);
 	struct NX_CLKGEN_RegisterSet * const pReg_UartClkGen =
