@@ -25,7 +25,10 @@
 
 #define ADDR_SPACE_SIZE                 (1ull << 32)
 #define NUM_L1_ENTRIES	(ADDR_SPACE_SIZE >> L1_XLAT_ADDRESS_SHIFT)
-#if 0
+
+//#define GEN_PG
+
+#ifdef GEN_PG
 static uint64_t l1_xlation_table[NUM_L1_ENTRIES]
 			__aligned(NUM_L1_ENTRIES * sizeof(uint64_t));
 static uint64_t xlat_tables[MAX_XLAT_TABLES][XLAT_TABLE_ENTRIES]
@@ -45,16 +48,14 @@ static mmap_region_t mmap[MAX_MMAP_REGIONS + 1];
 
 static void print_mmap(void)
 {
-#ifdef DEBUG_XLAT_TABLE
-	debug_print("mmap:\n");
+	printf("mmap:\n");
 	mmap_region_t *mm = mmap;
 	while (mm->size) {
-		printf(" %010lx %010lx %10lx %x\n", mm->base_va,
+		printf(" %016x %016x %16x %x\n", mm->base_va,
 				mm->base_pa, mm->size, mm->attr);
 		++mm;
 	};
 	printf("\n");
-#endif
 }
 /*
  *  * Copy @len bytes from @src to @dst
@@ -276,7 +277,8 @@ static unsigned int calc_physical_addr_size_bits(unsigned long max_addr)
 
 	return TCR_PS_BITS_4GB;
 }
-#endif
+#endif	// #ifdef GEN_PG
+
 #ifdef NXP5430
 extern const U64 l2t0[], l2t1[];
 const U64 l1t[4] __attribute__((__aligned__(0x20))) = {
@@ -291,18 +293,19 @@ const U64 l1t[4] __attribute__((__aligned__(0x20))) = {
 #ifdef NXP5540
 extern const U64 l2t0[], l2t1[];
 const U64 l1t[4] __attribute__((__aligned__(0x20))) = {
-	0x0000000000007003,
+	0x0000000000007003,	/* <============== must be checked by last */
 //	((U64)l2t0) | 0x3,
 	0x0000000000000000, 
 	0x0000000000000000, 
 	0x0000000000000000 
 };
 #endif
+
+#ifdef GEN_PG
 void init_xlat_tables(void)
 {
-//	print_mmap();
-//	init_xlation_table(mmap, 0, l1_xlation_table, 1);
-#if 0
+	print_mmap();
+	init_xlation_table(mmap, 0, l1_xlation_table, 1);
 #ifdef NXP5430
 	l1t[1] = ((U64)l2t0) | 0x3;
 	l1t[3] = ((U64)l2t1) | 0x3;
@@ -312,11 +315,40 @@ void init_xlat_tables(void)
 	l1t[0] = ((U64)l2t0) | 0x3;
 	printf("pt l2t0: %x\r\n", l2t0);
 #endif
-#endif
-//	printf("max_pa: %x\r\n", max_pa);
-//	tcr_ps_bits = calc_physical_addr_size_bits(max_pa);
-//	tcr_ps_bits = TCR_PS_BITS_4GB;
+	printf("max_pa: %x\r\n", max_pa);
+	tcr_ps_bits = calc_physical_addr_size_bits(max_pa);
 }
+#if def NXP5430
+#define PREI_MAP_DEVICE		MAP_REGION_FLAT(		\
+				0xC0000000,			\
+				0x3FE00000,			\
+				MT_DEVICE | MT_RW | MT_SECURE)
+const mmap_region_t plat_arm_mmap[] = {
+	PREI_MAP_DEVICE,
+	{0}
+};
+#endif
+#if def NXP5540
+#define ROM_MAP_MEMORY		MAP_REGION_FLAT(		\
+				0x00000000,			\
+				0x00200000,			\
+				MT_MEMORY | MT_RO | MT_SECURE)
+#define SRAM_MAP_MEMORY		MAP_REGION_FLAT(		\
+				0x10000000,			\
+				0x00200000,			\
+				MT_MEMORY | MT_RW | MT_SECURE)
+#define PREI_MAP_DEVICE		MAP_REGION_FLAT(		\
+				0x20000000,			\
+				0x08000000,			\
+				MT_DEVICE | MT_RW | MT_SECURE)
+const mmap_region_t plat_arm_mmap[] = {
+	ROM_MAP_MEMORY,
+	SRAM_MAP_MEMORY,
+	PREI_MAP_DEVICE,
+	{0}
+};
+#endif
+#endif
 void enable_mmu_el3(uint32_t flags)
 {
 	uint64_t mair, tcr, ttbr;
@@ -363,49 +395,18 @@ void enable_mmu_el3(uint32_t flags)
 	/* Ensure the MMU enable takes effect immediately */
 	isb();
 }
-#if 0
-#if 0//def NXP5430
-#define PREI_MAP_DEVICE		MAP_REGION_FLAT(	\
-				0xC0000000,		\
-				0x3FE00000,		\
-				MT_DEVICE | MT_RW | MT_SECURE)
-const mmap_region_t plat_arm_mmap[] = {
-	PREI_MAP_DEVICE,
-	{0}
-};
-#endif
-#if 1//def NXP5540
-#define ROM_MAP_MEMORY		MAP_REGION_FLAT(	\
-				0x00000000,		\
-				0x00200000,		\
-				MT_MEMORY | MT_RO | MT_SECURE)
-#define SRAM_MAP_MEMORY		MAP_REGION_FLAT(	\
-				0x10000000,		\
-				0x00200000,		\
-				MT_MEMORY | MT_RW | MT_SECURE)
-#define PREI_MAP_DEVICE		MAP_REGION_FLAT(	\
-				0x20000000,		\
-				0x08000000,		\
-				MT_DEVICE | MT_RW | MT_SECURE)
-const mmap_region_t plat_arm_mmap[] = {
-	ROM_MAP_MEMORY,
-	SRAM_MAP_MEMORY,
-	PREI_MAP_DEVICE,
-	{0}
-};
-#endif
-#endif
+#ifdef GEN_PG
 void arm_configure_mmu_el3(unsigned long total_base,
 			unsigned long total_size,
 			unsigned long ro_start,
 			unsigned long ro_limit)
 {
-#if 0
 	int i, j;
 	next_xlat = 0;
 	max_pa = 0;
 	max_va = 0;
 	tcr_ps_bits = 0;
+
 	for (i = 0; i < NUM_L1_ENTRIES; i++)
 		l1_xlation_table[i] = 0;
 
@@ -419,10 +420,6 @@ void arm_configure_mmu_el3(unsigned long total_base,
 		mmap[i].size = 0;
 		mmap[i].attr = 0;
 	}
-	total_base = 0;
-	total_size = 0x100000000;
-	ro_start = 0;
-	ro_limit = 0x00200000;
 	mmap_add_region(total_base, total_base,
 			total_size,
 			MT_MEMORY | MT_RW | MT_SECURE);
@@ -432,8 +429,8 @@ void arm_configure_mmu_el3(unsigned long total_base,
 	mmap_add(plat_arm_mmap);
 	init_xlat_tables();
 
-#endif
 	enable_mmu_el3(0);
 }
 
+#endif
 
