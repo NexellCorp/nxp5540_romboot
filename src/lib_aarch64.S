@@ -115,6 +115,52 @@ GetSMCCodeFromAArch64:
 	ubfx	w0, w0, #5, #16		//; aarch64 smc get imm16 [20:5]
 	ret
 
+.global SetMAIR_EL3
+SetMAIR_EL3:
+	msr	MAIR_EL3, x0
+	ret
+
+.global SetSCTLR_EL3
+SetSCTLR_EL3:
+	b	.
+	MSR     SCTLR_EL3, x0
+	isb	sy
+	RET
+
+.global GetSCTLR_EL3
+GetSCTLR_EL3:
+	MRS     x0, SCTLR_EL3
+	RET
+
+.global SetTCR_EL3
+SetTCR_EL3:
+	MSR     TCR_EL3, x0
+	RET
+
+.global GetTCR_EL3
+GetTCR_EL3:
+	MRS     x0, TCR_EL3
+	RET
+
+.global SetTTBR0_EL3
+SetTTBR0_EL3:
+	MSR     TTBR0_EL3, x0
+	RET
+
+.global InvalidateTLB_All
+InvalidateTLB_All:
+	TLBI    ALLE3		// All stage 1 TLB at EL1
+	MOV     x0, #0
+	TLBI    VAE3, x0
+	TLBI    VAE3IS, x0
+	RET
+
+.global InvalidateIcache_All
+InvalidateIcache_All:
+	IC      IALLU
+	isb     sy
+	RET
+
 .global EnterLowLevel
 //; void EnterLowLevel(unsigned int *EL1Start, unsigned int rSPSR);
 EnterLowLevel:

@@ -44,4 +44,12 @@ U32 GetISR_EL1(void);
 CBOOL GetSavedAArchMode(void);
 unsigned int GetSMCCodeFromAArch32(void);
 unsigned int GetSMCCodeFromAArch64(void);
+void SetMAIR_EL3(U64 val);
+void SetSCTLR_EL3(U64 val);
+U64 GetSCTLR_EL3(void);
+void SetTCR_EL3(U32 val);
+U64 GetTCR_EL3(void);
+void SetTTBR0_EL3(U64 TTB);
+void InvalidateTLB_All(void);
+void InvalidateIcache_All(void);
 #endif

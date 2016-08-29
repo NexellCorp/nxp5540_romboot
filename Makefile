@@ -26,7 +26,8 @@ LDFLAGS		= -Bstatic						\
 		-Wl,--build-id=none					\
 		-nostdlib
 
-SYS_OBJS	 = 	startup_$(OPMODE)_$(EMUL_CPU).o iROMBOOT.o CRYPTO.o libplat.o printf.o debug.o
+SYS_OBJS	 = 	startup_$(OPMODE)_$(EMUL_CPU).o iROMBOOT.o CRYPTO.o	\
+			libplat.o printf.o debug.o
 SYS_OBJS	+= 	iSDHCBOOT.o
 SYS_OBJS	+= 	iUSBBOOT.o
 SYS_OBJS	+= 	iSPIBOOT.o
@@ -35,7 +36,10 @@ SYS_OBJS	+= 	iSDHCFSBOOT.o fatfs.o diskio.o
 SYS_OBJS	+= 	libarm.o lib_$(OPMODE).o
 
 ifeq ($(OPMODE), aarch64)
-SYS_OBJS	+=	aarch64_exception_handler.o
+#SYS_OBJS	+=	mmu_$(OPMODE).o
+SYS_OBJS	+=	atf_mmu_$(OPMODE).o
+SYS_OBJS	+=	$(OPMODE)_exception_handler.o
+SYS_OBJS	+=	$(EMUL_CPU)_pagetable.o
 endif
 ifeq ($(EMUL_CPU), NXP5540)
 SYS_OBJS	+= 	cpuif_regmap_framework.o

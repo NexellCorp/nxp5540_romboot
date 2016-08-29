@@ -51,6 +51,10 @@ extern CBOOL iUSBBOOT(U32 option);
 extern CBOOL iSPIBOOT(U32 option);
 extern CBOOL iSDXCBOOT(U32 option);
 extern CBOOL iNANDBOOTEC(U32 option);
+void arm_configure_mmu_el3(unsigned long total_base,
+			unsigned long total_size,
+			unsigned long ro_start,
+			unsigned long ro_limit);
 //------------------------------------------------------------------------------
 void iROMBOOT(U32 OrgBootOption)
 {
@@ -74,6 +78,10 @@ void iROMBOOT(U32 OrgBootOption)
 #ifdef NXP5540
 
 #endif
+#if 0
+	SetMMUTableDefault();
+	StartMMUnCache(CTRUE, CTRUE, CTRUE);
+#endif
 
 	//--------------------------------------------------------------------------
 	// Debug Console
@@ -82,6 +90,9 @@ void iROMBOOT(U32 OrgBootOption)
 
 	printf("\r\n\n iROMBOOT by Nexell Co. : Built on %s %s\r\n",
 			__DATE__, __TIME__);
+#if 1
+	arm_configure_mmu_el3(0x40000000, 0x40000000, 0x50000000, 0x50200000);
+#endif
 	printf("Boot Option: %02X\r\n", option);
 
 	if (((option >> BOOTMODE) & 0x7) == 1)
