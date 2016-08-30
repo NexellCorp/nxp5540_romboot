@@ -59,15 +59,35 @@ U32 const SDResetNum[3] =
 #endif
 
 #ifdef NXP5540
-#if 0
-CMUI_SDMMC_0_CORE_clk_enb
-CMUI_SDMMC_0_CORE_grp_clk_src
-CMUI_SDMMC_0_CORE_dy_div_val
-CMUI_SDMMC_0_CORE_dy_div_busy_st
-CMUI_SDMMC_0_CORE_clk_enb
-CMUI_SDMMC_0_AXI_clk_enb
-RSTI_sdmmc_0_axi_rst
-#endif
+static _nx_cpuif_sym_ cpuif[3][7] = {
+	{
+	CMUI_SDMMC_0_CORE_grp_clk_src,
+	CMUI_SDMMC_0_CORE_dy_div_val,
+	CMUI_SDMMC_0_CORE_dy_div_busy_st,
+	CMUI_SDMMC_0_AXI_clk_enb,
+	CMUI_SDMMC_0_CORE_clk_enb,
+	RSTM_sdmmc_0_axi_rst,
+	RSTI_sdmmc_0_axi_rst
+	},
+	{
+	CMUI_SDMMC_1_CORE_grp_clk_src,
+	CMUI_SDMMC_1_CORE_dy_div_val,
+	CMUI_SDMMC_1_CORE_dy_div_busy_st,
+	CMUI_SDMMC_1_AXI_clk_enb,
+	CMUI_SDMMC_1_CORE_clk_enb,
+	RSTM_sdmmc_1_axi_rst,
+	RSTI_sdmmc_1_axi_rst
+	},
+	{
+	CMUI_SDMMC_2_CORE_grp_clk_src,
+	CMUI_SDMMC_2_CORE_dy_div_val,
+	CMUI_SDMMC_2_CORE_dy_div_busy_st,
+	CMUI_SDMMC_2_AXI_clk_enb,
+	CMUI_SDMMC_2_CORE_clk_enb,
+	RSTM_sdmmc_2_axi_rst,
+	RSTI_sdmmc_2_axi_rst
+	},
+};
 #endif
 struct NX_SDMMC_RegisterSet * const pgSDXCReg[3] =
 {
@@ -82,11 +102,12 @@ static CBOOL NX_SDMMC_SetClock(SDXCBOOTSTATUS *pSDXCBootStatus,
 				CBOOL enb, U32 divider)
 {
 	volatile U32 timeout;
+	U32 i = pSDXCBootStatus->SDPort;
 	register struct NX_SDMMC_RegisterSet * const pSDXCReg =
-					pgSDXCReg[pSDXCBootStatus->SDPort];
+					pgSDXCReg[i];
 #ifdef NXP5430
 	register struct NX_CLKGEN_RegisterSet * const pSDClkGenReg =
-					pgSDClkGenReg[pSDXCBootStatus->SDPort];
+					pgSDClkGenReg[i];
 #endif
 
 
@@ -140,57 +161,29 @@ static CBOOL NX_SDMMC_SetClock(SDXCBOOTSTATUS *pSDXCBootStatus,
 #endif
 
 #ifdef NXP5540
-	if (pSDXCBootStatus->SDPort == 0) {
-		U32 regval;
-		// sdmmc core clock disable
-		//nx_cpuif_reg_write_one(CMUI_SDMMC_0_CORE_clk_enb, 0);
-		// sdmmc core clock source select
-		nx_cpuif_reg_write_one(CMUI_SDMMC_0_CORE_grp_clk_src, SDXC_CLKSRC);
-		// sdmmc core clock divider value
-		nx_cpuif_reg_write_one(CMUI_SDMMC_0_CORE_dy_div_val, (divider - 1));
-		while (1 == nx_cpuif_reg_read_one(CMUI_SDMMC_0_CORE_dy_div_busy_st, &regval))
-			;
-		// sdmmc core clock enable
-		//nx_cpuif_reg_write_one(CMUI_SDMMC_0_CORE_clk_enb, 1);
+	U32 regval;
+	// sdmmc core clock source select
+	nx_cpuif_reg_write_one(cpuif[i][0], SDXC_CLKSRC);
+	// sdmmc core clock divider value
+	nx_cpuif_reg_write_one(cpuif[i][1], (SDXC_CLKDIV_LOW - 1));
+	while (1 == nx_cpuif_reg_read_one(cpuif[i][2], &regval))
+		;
+	/////////////////////////////////////
+	// s/w stop and go 
+	/////////////////////////////////////
+	// sdmmc bus clock disable
+	nx_cpuif_reg_write_one(cpuif[i][3], 0);
+	nx_cpuif_reg_write_one(cpuif[i][4], 0);
 
-		// sdmmc bus clock enable
-		nx_cpuif_reg_write_one(CMUI_SDMMC_0_AXI_clk_enb, 1);
-		// sdmmc reset enable
-		nx_cpuif_reg_write_one(RSTI_sdmmc_0_axi_rst, 1);
-	} else if (pSDXCBootStatus->SDPort == 1) {
-		U32 regval;
-		// sdmmc core clock enable
-		//nx_cpuif_reg_write_one(CMUI_SDMMC_1_CORE_clk_enb, 0);
-		// sdmmc core clock source select
-		nx_cpuif_reg_write_one(CMUI_SDMMC_1_CORE_grp_clk_src, SDXC_CLKSRC);
-		// sdmmc core clock divider value
-		nx_cpuif_reg_write_one(CMUI_SDMMC_1_CORE_dy_div_val, (divider - 1));
-		while (1 == nx_cpuif_reg_read_one(CMUI_SDMMC_1_CORE_dy_div_busy_st, &regval))
-			;
-		// sdmmc core clock enable
-		//nx_cpuif_reg_write_one(CMUI_SDMMC_1_CORE_clk_enb, 1);
+	// sdmmc reset mode
+	nx_cpuif_reg_write_one(cpuif[i][5], 1);
 
-		// sdmmc bus clock enable
-		nx_cpuif_reg_write_one(CMUI_SDMMC_1_AXI_clk_enb, 1);
-		// sdmmc reset enable
-		nx_cpuif_reg_write_one(RSTI_sdmmc_1_axi_rst, 1);
-	} else if (pSDXCBootStatus->SDPort == 2) {
-		U32 regval;
-		// sdmmc core clock enable
-		//nx_cpuif_reg_write_one(CMUI_SDMMC_2_CORE_clk_enb, 0);
-		// sdmmc core clock source select
-		nx_cpuif_reg_write_one(CMUI_SDMMC_2_CORE_grp_clk_src, SDXC_CLKSRC);
-		// sdmmc core clock divider value
-		nx_cpuif_reg_write_one(CMUI_SDMMC_2_CORE_dy_div_val, (divider - 1));
-		while( 1 == nx_cpuif_reg_read_one(CMUI_SDMMC_2_CORE_dy_div_busy_st, &regval))
-			;
-		// sdmmc core clock enable
-		//nx_cpuif_reg_write_one(CMUI_SDMMC_2_CORE_clk_enb, 1);
-		// sdmmc bus clock enable
-		nx_cpuif_reg_write_one(CMUI_SDMMC_2_AXI_clk_enb, 1);
-		// sdmmc reset enable
-		nx_cpuif_reg_write_one(RSTI_sdmmc_2_axi_rst, 1);
-	}
+	// sdmmc reset release
+	nx_cpuif_reg_write_one(cpuif[i][6], 1);
+
+	// sdmmc bus clock enable
+	nx_cpuif_reg_write_one(cpuif[i][3], 1);
+	nx_cpuif_reg_write_one(cpuif[i][4], 1);
 #endif
 
 	pSDXCReg->CLKENA &= ~NX_SDXC_CLKENA_LOWPWR;	// low power mode & clock disable
@@ -849,11 +842,12 @@ static CBOOL NX_SDMMC_SelectPartition(SDXCBOOTSTATUS *pSDXCBootStatus,
 //------------------------------------------------------------------------------
 CBOOL NX_SDMMC_Init(SDXCBOOTSTATUS *pSDXCBootStatus)
 {
+	U32 i = pSDXCBootStatus->SDPort;
 	register struct NX_SDMMC_RegisterSet * const pSDXCReg =
-					pgSDXCReg[pSDXCBootStatus->SDPort];
+					pgSDXCReg[i];
 #ifdef NXP5430
  	register struct NX_CLKGEN_RegisterSet * const pSDClkGenReg =
-					pgSDClkGenReg[pSDXCBootStatus->SDPort];
+					pgSDClkGenReg[i];
 
  	pSDClkGenReg->CLKENB = NX_PCLKMODE_ALWAYS << 3 | NX_BCLKMODE_DYNAMIC << 0;
  	pSDClkGenReg->CLKGEN[0] =
@@ -863,8 +857,8 @@ CBOOL NX_SDMMC_Init(SDXCBOOTSTATUS *pSDXCBootStatus)
 			  | (0UL << 1);			// set clock invert
  	pSDClkGenReg->CLKENB |= 0x1UL << 2;		// clock generation enable
 
- 	ResetCon(SDResetNum[pSDXCBootStatus->SDPort], CTRUE);	// reset on
- 	ResetCon(SDResetNum[pSDXCBootStatus->SDPort], CFALSE);	// reset negate
+ 	ResetCon(SDResetNum[i], CTRUE);	// reset on
+ 	ResetCon(SDResetNum[i], CFALSE);	// reset negate
 #endif
 
 #ifdef NXP5540
@@ -874,41 +868,29 @@ CBOOL NX_SDMMC_Init(SDXCBOOTSTATUS *pSDXCBootStatus)
     // pll5 : 147 Mhz
     // pll6 :  96 Mhz
     // pll7 : 200 Mhz
-	if (pSDXCBootStatus->SDPort == 0) {
-		U32 regval;
-		// sdmmc core clock source select
-		nx_cpuif_reg_write_one(CMUI_SDMMC_0_CORE_grp_clk_src, SDXC_CLKSRC);
-		// sdmmc core clock divider value
-		nx_cpuif_reg_write_one(CMUI_SDMMC_0_CORE_dy_div_val, (SDXC_CLKDIV_LOW - 1));
-		while (1 == nx_cpuif_reg_read_one(CMUI_SDMMC_0_CORE_dy_div_busy_st, &regval))
-			;
-		// sdmmc core clock enable
-		nx_cpuif_reg_write_one(CMUI_SDMMC_0_CORE_clk_enb, 1);
+	U32 regval;
+	// sdmmc core clock source select
+	nx_cpuif_reg_write_one(cpuif[i][0], SDXC_CLKSRC);
+	// sdmmc core clock divider value
+	nx_cpuif_reg_write_one(cpuif[i][1], (SDXC_CLKDIV_LOW - 1));
+	while (1 == nx_cpuif_reg_read_one(cpuif[i][2], &regval))
+		;
+	/////////////////////////////////////
+	// s/w stop and go 
+	/////////////////////////////////////
+	// sdmmc bus clock disable
+	nx_cpuif_reg_write_one(cpuif[i][3], 0);
+	nx_cpuif_reg_write_one(cpuif[i][4], 0);
 
-		nx_cpuif_reg_write_one(CMUI_SDMMC_0_AXI_clk_enb, 1);                                     // sdmmc bus clock enable
-		nx_cpuif_reg_write_one(RSTI_sdmmc_0_axi_rst, 1);                                                 // sdmmc reset enable
-	} else if (pSDXCBootStatus->SDPort == 1) {
-		U32 regval;
-		nx_cpuif_reg_write_one(CMUI_SDMMC_1_CORE_grp_clk_src, SDXC_CLKSRC);                    // sdmmc core clock source select
-		nx_cpuif_reg_write_one(CMUI_SDMMC_1_CORE_dy_div_val, (SDXC_CLKDIV_LOW - 1));         // sdmmc core clock divider value
-		while (1 == nx_cpuif_reg_read_one( CMUI_SDMMC_1_CORE_dy_div_busy_st, &regval))
-			;
-		nx_cpuif_reg_write_one(CMUI_SDMMC_1_CORE_clk_enb, 1);                                    // sdmmc core clock enable
+	// sdmmc reset mode
+	nx_cpuif_reg_write_one(cpuif[i][5], 1);
 
-		nx_cpuif_reg_write_one(CMUI_SDMMC_1_AXI_clk_enb, 1);             // sdmmc bus clock enable
-		nx_cpuif_reg_write_one(RSTI_sdmmc_1_axi_rst, 1);                         // sdmmc reset enable
-	}
-	else if (pSDXCBootStatus->SDPort == 2) {
-		U32 regval;
-		nx_cpuif_reg_write_one(CMUI_SDMMC_2_CORE_grp_clk_src, SDXC_CLKSRC);                    // sdmmc core clock source select
-		nx_cpuif_reg_write_one(CMUI_SDMMC_2_CORE_dy_div_val, (SDXC_CLKDIV_LOW - 1));         // sdmmc core clock divider value
-		while (1 == nx_cpuif_reg_read_one(CMUI_SDMMC_2_CORE_dy_div_busy_st, &regval))
-			;
-		nx_cpuif_reg_write_one(CMUI_SDMMC_2_CORE_clk_enb, 1);                                    // sdmmc core clock enable
+	// sdmmc reset release
+	nx_cpuif_reg_write_one(cpuif[i][6], 1);
 
-		nx_cpuif_reg_write_one(CMUI_SDMMC_2_AXI_clk_enb, 1);             // sdmmc bus clock enable
-		nx_cpuif_reg_write_one(RSTI_sdmmc_2_axi_rst, 1);                         // sdmmc reset enable
-	}
+	// sdmmc bus clock enable
+	nx_cpuif_reg_write_one(cpuif[i][3], 1);
+	nx_cpuif_reg_write_one(cpuif[i][4], 1);
 #endif
 
 	pSDXCReg->PWREN = 0 << 0;	// Set Power Disable
@@ -1615,8 +1597,8 @@ U32 iSDXCBOOT(U32 option)
 		pSDXCBootStatus->bHighSpeed = CTRUE;
 	} else
 		pSDXCBootStatus->bHighSpeed = CFALSE;
-	pSDXCBootStatus->SDPort = 0;
-	printf("SD Boot with Port %d\r\n", pSDXCBootStatus->SDPort);
+//	pSDXCBootStatus->SDPort = 0;
+//	printf("SD Boot with Port %d\r\n", pSDXCBootStatus->SDPort);
 	NX_SDPADSetALT(pSDXCBootStatus->SDPort);
 
 	NX_SDMMC_Init(pSDXCBootStatus);

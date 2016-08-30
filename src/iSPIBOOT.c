@@ -362,7 +362,7 @@ void SPIPortDeinit(U32 SPIPort)
 #endif
 }
 #ifdef NXP5540
-_nx_cpuif_sym_ cpuif[3][7] = {
+static _nx_cpuif_sym_ cpuif[3][7] = {
 	{
 	CMUI_SPI_0_CORE_dy_div_val,
 	CMUI_SPI_0_CORE_dy_div_busy_st,

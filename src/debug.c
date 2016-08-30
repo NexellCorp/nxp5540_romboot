@@ -111,16 +111,6 @@ static struct NX_UART_RegisterSet * pReg_Uart;
 #endif
 
 #ifdef NXP5540
-#if 0
-#define PHY_BASEADDR_CMU_BBUS_MODULE		0x20130000
-#define CMUI_UART_0_CORE_grp_clk_src	{PHY_BASEADDR_CMU_BBUS_MODULE, 0x400, 0, 32}
-#define CMUI_UART_0_CORE_dy_div_val	{PHY_BASEADDR_CMU_BBUS_MODULE, 0x448, 0, 32}
-#define CMUI_UART_0_CORE_dy_div_busy_st	{PHY_BASEADDR_CMU_BBUS_MODULE, 0x450, 0, 32}
-#define CMUI_UART_0_CORE_clk_enb	{PHY_BASEADDR_CMU_BBUS_MODULE, 0x40c, 0, 1}
-#define CMUI_UART_0_APB_clk_enb		{PHY_BASEADDR_CMU_BBUS_MODULE, 0x20c, 3, 1}
-#define RSTI_uart_0_core_rst		{PHY_BASEADDR_CMU_BBUS_MODULE, ((1 << 15)|0x0), 20, 1}
-#endif
-
 #define PADI_UART0_TXD			((1 << 16) | (4 << 8) | (24 << 3) | 1)
 static struct NX_UART_RegisterSet * const pReg_Uart =
 		(struct NX_UART_RegisterSet *)PHY_BASEADDR_UART0_MODULE;
@@ -162,13 +152,22 @@ CBOOL DebugInit(U32 port)
 	// sdmmc core clock divider value
 	nx_cpuif_reg_write_one(CMUI_UART_0_CORE_dy_div_val, (SOURCE_DIVID - 1));
 	while (1 == nx_cpuif_reg_read_one(CMUI_UART_0_CORE_dy_div_busy_st, &regval));
-	// sdmmc core clock enable
-	nx_cpuif_reg_write_one(CMUI_UART_0_CORE_clk_enb, 1);
 
-	// sdmmc bus clock enable
-	nx_cpuif_reg_write_one(CMUI_UART_0_APB_clk_enb, 1);
-	// sdmmc reset enable
+	// UART clock disable
+	nx_cpuif_reg_write_one(CMUI_UART_0_CORE_clk_enb, 0);
+	nx_cpuif_reg_write_one(CMUI_UART_0_APB_clk_enb , 0);
+
+	// UART reset mode config
+	nx_cpuif_reg_write_one(RSTM_uart_0_core_rst, 1);
+	nx_cpuif_reg_write_one(RSTM_uart_0_apb_rst , 1);
+
+	// UART reset release
 	nx_cpuif_reg_write_one(RSTI_uart_0_core_rst, 1);
+	nx_cpuif_reg_write_one(RSTI_uart_0_apb_rst , 1);
+
+	// UART clock enable
+	nx_cpuif_reg_write_one(CMUI_UART_0_CORE_clk_enb, 1);
+	nx_cpuif_reg_write_one(CMUI_UART_0_APB_clk_enb , 1);
 #endif
 
 	//--------------------------------------------------------------------------

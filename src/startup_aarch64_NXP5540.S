@@ -154,7 +154,7 @@ primary_cold_start:
 	MOVK	x0, #0x202C, lsl #16	//; ARM efuse status register address
 EfuseInitRecheck:
 	LDR	x1, [x0, #(1*4)]
-	AND	x1, x1, #(1<<24)	//; 16: ARMTOP Efuse Initial Done, 17: ARMTOP_P1 Efuse Initial Done
+	AND	x1, x1, #(1<<24)	//; 24: ARMTOP Efuse Initial Done
 	CMP	x1, xzr
 	B.eq	EfuseInitRecheck
 

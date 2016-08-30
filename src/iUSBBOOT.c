@@ -868,6 +868,7 @@ CBOOL iUSBBOOT(U32 option)
 			PID = (ID >>  0) & 0xFFFF;
 		}
 	}
+	printf("USB VID:%04X, PID:%04X\r\n", VID, PID);
 
 
 	for(i = 0; i < sizeof(USBBOOTSTATUS); i++);
@@ -893,16 +894,41 @@ CBOOL iUSBBOOT(U32 option)
 #endif
 
 #ifdef NXP5540
-	nx_cpuif_reg_write_one(CMUI_USB_CMU_0_CLK_clk_enb, 1);	// usb cmu clock enable
-	nx_cpuif_reg_write_one(RSTI_usb_cmu_0_rst, 1);	// usb cmu reset release
+	// usb cmu clock enable
+	nx_cpuif_reg_write_one(CMUI_USB_CMU_0_CLK_clk_enb, 1);
+	// usb cmu reset release
+	nx_cpuif_reg_write_one(RSTI_usb_cmu_0_rst, 1);
 
-	nx_cpuif_reg_write_one(CMUI_OTG_SYS_0_AHB_clk_enb, 1);	// usb otg ahb clock enable
-	nx_cpuif_reg_write_one(RSTI_otg_sys_0_ahb_rst, 1);	// usb otg ahb reset release
-	nx_cpuif_reg_write_one(CMUI_OTG_SYS_0_APB_clk_enb, 1);	// usb otg apb clock enable
-	nx_cpuif_reg_write_one(RSTI_otg_sys_0_apb_rst, 1);	// usb otg apb reset release
+	/////////////////////////////////////
+	// s/w stop and go 
+	/////////////////////////////////////
+	// USB all clock disable first 
+	nx_cpuif_reg_write_one(CMUI_USB_0_AXI_clk_enb, 0);
+	nx_cpuif_reg_write_one(CMUI_USB_0_AHB_clk_enb, 0);
+	nx_cpuif_reg_write_one(CMUI_USB_0_APB_clk_enb, 0);
+	nx_cpuif_reg_write_one(CMUI_OTG_SYS_0_AHB_clk_enb, 0);
+	nx_cpuif_reg_write_one(CMUI_OTG_SYS_0_APB_clk_enb, 0);
 
-	nx_cpuif_reg_write_one(CMUI_USB_0_AXI_clk_enb, 1);	// usb bus axi clock enable
-	nx_cpuif_reg_write_one(RSTI_usb_0_axi_rst, 1);	// usb bus axi reset release
+	// USB all clock reset mode to 1
+	nx_cpuif_reg_write_one(RSTM_usb_0_axi_rst, 1);
+	nx_cpuif_reg_write_one(RSTM_usb_0_ahb_rst, 1);
+	nx_cpuif_reg_write_one(RSTM_usb_0_apb_rst, 1);
+	nx_cpuif_reg_write_one(RSTM_otg_sys_0_ahb_rst, 1);
+	nx_cpuif_reg_write_one(RSTM_otg_sys_0_apb_rst, 1);
+
+	// USB all reset release
+	nx_cpuif_reg_write_one(RSTI_usb_0_axi_rst, 1);
+	nx_cpuif_reg_write_one(RSTI_usb_0_ahb_rst, 1);
+	nx_cpuif_reg_write_one(RSTI_usb_0_apb_rst, 1);
+	nx_cpuif_reg_write_one(RSTI_otg_sys_0_ahb_rst, 1);
+	nx_cpuif_reg_write_one(RSTI_otg_sys_0_apb_rst, 1);
+
+	// last USB all clock enable
+	nx_cpuif_reg_write_one(CMUI_USB_0_AXI_clk_enb, 1);
+	nx_cpuif_reg_write_one(CMUI_USB_0_AHB_clk_enb, 1);
+	nx_cpuif_reg_write_one(CMUI_USB_0_APB_clk_enb, 1);
+	nx_cpuif_reg_write_one(CMUI_OTG_SYS_0_AHB_clk_enb, 1);
+	nx_cpuif_reg_write_one(CMUI_OTG_SYS_0_APB_clk_enb, 1);
 #endif
 
 	/* 29: enable, 30:phy word interface (0: 8 bit, 1: 16 bit) */

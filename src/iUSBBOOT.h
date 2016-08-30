@@ -364,6 +364,10 @@ typedef struct __attribute__((aligned(sizeof(U8*)))) tag_USBBOOTSTATUS {
 	U8		*RxBuffAddr_save;
 	const U8	* DeviceDescriptor;
 	const U8	* ConfigDescriptor;
+
+	U8*		Current_ptr;
+	U8*		up_ptr;
+
 	volatile CBOOL	bDownLoading;
 	CBOOL		bHeaderReceived;
 	S32		iRxSize;
@@ -376,13 +380,11 @@ typedef struct __attribute__((aligned(sizeof(U8*)))) tag_USBBOOTSTATUS {
 	U32		bulkin_max_pktsize;
 	U32		bulkout_max_pktsize;
 
-	U8*		Current_ptr;
 	U32		Current_Fifo_Size;
 	U32		Remain_size;
 
 	U32		up_addr;
 	U32		up_size;
-	U8*		up_ptr;
 
 	U8		CurConfig;
 	U8		CurInterface;
