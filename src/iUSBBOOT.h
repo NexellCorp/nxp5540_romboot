@@ -359,11 +359,13 @@ enum EP0_STATE {
 	EP0_STATE_GET_STATUS		= 4
 };
 
-typedef struct __attribute__((aligned(4))) tag_USBBOOTSTATUS {
-	volatile CBOOL	bDownLoading;
-	CBOOL		bHeaderReceived;
+typedef struct __attribute__((aligned(sizeof(U8*)))) tag_USBBOOTSTATUS {
 	U8		*RxBuffAddr;
 	U8		*RxBuffAddr_save;
+	const U8	* DeviceDescriptor;
+	const U8	* ConfigDescriptor;
+	volatile CBOOL	bDownLoading;
+	CBOOL		bHeaderReceived;
 	S32		iRxSize;
 	S32		iRxSize_save;
 	S32		iRxHeaderSize;
@@ -387,8 +389,10 @@ typedef struct __attribute__((aligned(4))) tag_USBBOOTSTATUS {
 	U8		CurSetting;
 	U8		__Reserved;
 
-	const U8	* DeviceDescriptor;
-	const U8	* ConfigDescriptor;
+	U8	HSDeviceDescriptor[DEVICE_DESCRIPTOR_SIZE];
+	U8	__Reserved1[2];
+	U8	FSDeviceDescriptor[DEVICE_DESCRIPTOR_SIZE];
+
 } USBBOOTSTATUS;
 
 CBOOL iUSBBOOT(U32 option);

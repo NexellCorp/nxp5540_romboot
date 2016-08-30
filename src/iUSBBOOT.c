@@ -14,6 +14,7 @@
 //	Description	:
 //	Author		: Hans
 //	History		: 2010.08.03
+//				Hans 2016.08.29 modify for nxp5540
 //				Hans 2013.08.24 phy power off add when disconnected
 //				Hans 2013.01.10 create
 //
@@ -42,8 +43,11 @@
 #include "nx_chip_sfr.h"
 #endif
 
+#include <nx_ecid.h>
+
 #include "libarm.h"
 #include "libplat.h"
+#include "printf.h"
 
 #ifdef NXP5430
 static struct NX_TIEOFF_RegisterSet * const pTieoffreg =
@@ -61,17 +65,17 @@ static struct NX_USB_OTG_RegisterSet * const pUOReg =
 static const U8 __attribute__ ((aligned(4)))
 	gs_DeviceDescriptorFS[DEVICE_DESCRIPTOR_SIZE] =
 {
-	18,				//	0 desc size
-	(U8)(DESCRIPTORTYPE_DEVICE),	//	1 desc type (DEVICE)
-	(U8)(FULL_USB_VER % 0x100),	//	2 USB release
-	(U8)(FULL_USB_VER / 0x100),	//	3 => 1.00
-	0xFF,				//	4 class
-	0xFF,				//	5 subclass
-	0xFF,				//	6 protocol
-	(U8)FULL_MAX_PKT_SIZE_EP0,	//	7 max pack size
-	(U8)(VENDORID % 0x100),		//	8 vendor ID LSB
-	(U8)(VENDORID / 0x100),		//	9 vendor ID MSB
-	(U8)(PRODUCTID % 0x100),	// 10 product ID LSB	(second product)
+	18,				//  0 desc size
+	(U8)(DESCRIPTORTYPE_DEVICE),	//  1 desc type (DEVICE)
+	(U8)(FULL_USB_VER % 0x100),	//  2 USB release
+	(U8)(FULL_USB_VER / 0x100),	//  3 => 1.00
+	0xFF,				//  4 class
+	0xFF,				//  5 subclass
+	0xFF,				//  6 protocol
+	(U8)FULL_MAX_PKT_SIZE_EP0,	//  7 max pack size
+	(U8)(VENDORID % 0x100),		//  8 vendor ID LSB
+	(U8)(VENDORID / 0x100),		//  9 vendor ID MSB
+	(U8)(PRODUCTID % 0x100),	// 10 product ID LSB (second product)
 	(U8)(PRODUCTID / 0x100),	// 11 product ID MSB
 	0x00,				// 12 device release LSB
 	0x00,				// 13 device release MSB
@@ -84,16 +88,16 @@ static const U8 __attribute__ ((aligned(4)))
 static const U8 __attribute__ ((aligned(4)))
 	gs_DeviceDescriptorHS[DEVICE_DESCRIPTOR_SIZE] =
 {
-	18,				//	0 desc size
-	(U8)(DESCRIPTORTYPE_DEVICE),	//	1 desc type (DEVICE)
-	(U8)(HIGH_USB_VER % 0x100),	//	2 USB release
-	(U8)(HIGH_USB_VER / 0x100),	//	3 => 1.00
-	0xFF,				//	4 class
-	0xFF,				//	5 subclass
-	0xFF,				//	6 protocol
-	(U8)HIGH_MAX_PKT_SIZE_EP0,	//	7 max pack size
-	(U8)(VENDORID	% 0x100),	//	8 vendor ID LSB
-	(U8)(VENDORID	/ 0x100),	//	9 vendor ID MSB
+	18,				//  0 desc size
+	(U8)(DESCRIPTORTYPE_DEVICE),	//  1 desc type (DEVICE)
+	(U8)(HIGH_USB_VER % 0x100),	//  2 USB release
+	(U8)(HIGH_USB_VER / 0x100),	//  3 => 1.00
+	0xFF,				//  4 class
+	0xFF,				//  5 subclass
+	0xFF,				//  6 protocol
+	(U8)HIGH_MAX_PKT_SIZE_EP0,	//  7 max pack size
+	(U8)(VENDORID	% 0x100),	//  8 vendor ID LSB
+	(U8)(VENDORID	/ 0x100),	//  9 vendor ID MSB
 	(U8)(PRODUCTID % 0x100),	// 10 product ID LSB	(second product)
 	(U8)(PRODUCTID / 0x100),	// 11 product ID MSB
 	0x00,				// 12 device release LSB
@@ -225,127 +229,128 @@ static void nx_usb_ep0_int_hndlr(USBBOOTSTATUS *pUSBBootStatus)
 
 	NX_DEBUG_MSG("Event EP0\r\n");
 
-	if (pUSBBootStatus->ep0_state == EP0_STATE_INIT) {
+	if (pUSBBootStatus->ep0_state != EP0_STATE_INIT) 
+		goto noinit;
 
-		buf[0] = pUOReg->EPFifo[CONTROL_EP][0];
-		buf[1] = pUOReg->EPFifo[CONTROL_EP][0];
+	buf[0] = pUOReg->EPFifo[CONTROL_EP][0];
+	buf[1] = pUOReg->EPFifo[CONTROL_EP][0];
 
-		NX_DEBUG_MSG("Req:");
-		NX_DEBUG_BYTE(pSetupPacket->bmRequestType);
-		NX_DEBUG_MSG(" ");
-		NX_DEBUG_BYTE(pSetupPacket->bRequest);
-		NX_DEBUG_MSG(" ");
-		NX_DEBUG_WORD(pSetupPacket->wValue);
-		NX_DEBUG_MSG(" ");
-		NX_DEBUG_WORD(pSetupPacket->wIndex);
-		NX_DEBUG_MSG(" ");
-		NX_DEBUG_WORD(pSetupPacket->wLength);
+	NX_DEBUG_MSG("Req:");
+	NX_DEBUG_BYTE(pSetupPacket->bmRequestType);
+	NX_DEBUG_MSG(" ");
+	NX_DEBUG_BYTE(pSetupPacket->bRequest);
+	NX_DEBUG_MSG(" ");
+	NX_DEBUG_WORD(pSetupPacket->wValue);
+	NX_DEBUG_MSG(" ");
+	NX_DEBUG_WORD(pSetupPacket->wIndex);
+	NX_DEBUG_MSG(" ");
+	NX_DEBUG_WORD(pSetupPacket->wLength);
+	NX_DEBUG_MSG("\r\n");
+	switch (pSetupPacket->bRequest) {
+	case STANDARD_SET_ADDRESS:
+		/* Set Address Update bit */
+		NX_DEBUG_MSG("STANDARD_SET_ADDRESS:");
+		addr = (pSetupPacket->wValue & 0xFF);
+		NX_DEBUG_BYTE(addr);
 		NX_DEBUG_MSG("\r\n");
-		switch (pSetupPacket->bRequest) {
-		case STANDARD_SET_ADDRESS:
-			/* Set Address Update bit */
-			NX_DEBUG_MSG("STANDARD_SET_ADDRESS:");
-			addr = (pSetupPacket->wValue & 0xFF);
-			NX_DEBUG_BYTE(addr);
-			NX_DEBUG_MSG("\r\n");
-			pUOReg->DCSR.DCFG =	1 << 18 |
-						addr << 4 |
-						pUSBBootStatus->speed << 0;
-			pUSBBootStatus->ep0_state = EP0_STATE_INIT;
+		pUOReg->DCSR.DCFG =	1 << 18 |
+					addr << 4 |
+					pUSBBootStatus->speed << 0;
+		pUSBBootStatus->ep0_state = EP0_STATE_INIT;
+		break;
+
+	case STANDARD_SET_DESCRIPTOR:
+		NX_DEBUG_MSG("STANDARD_SET_DESCRIPTOR\r\n");
+		break;
+
+	case STANDARD_SET_CONFIGURATION:
+		NX_DEBUG_MSG("STANDARD_SET_CONFIGURATION\r\n");
+		/* Configuration value in configuration descriptor */
+		pUSBBootStatus->CurConfig = pSetupPacket->wValue;
+		pUSBBootStatus->ep0_state = EP0_STATE_INIT;
+		break;
+
+	case STANDARD_GET_CONFIGURATION:
+		NX_DEBUG_MSG("STANDARD_GET_CONFIGURATION\r\n");
+		pUOReg->DCSR.DEPIR[CONTROL_EP].DIEPTSIZ = (1 << 19) | (1 << 0);
+		/*ep0 enable, clear nak, next ep0, 8byte */
+		pUOReg->DCSR.DEPIR[CONTROL_EP].DIEPCTL = EPEN_CNAK_EP0_8;
+		pUOReg->EPFifo[CONTROL_EP][0] = pUSBBootStatus->CurConfig;
+		pUSBBootStatus->ep0_state = EP0_STATE_INIT;
+		break;
+
+	case STANDARD_GET_DESCRIPTOR:
+		NX_DEBUG_MSG("STANDARD_GET_DESCRIPTOR :");
+		pUSBBootStatus->Remain_size = (U32)pSetupPacket->wLength;
+		switch (pSetupPacket->wValue>>8) {
+		case DESCRIPTORTYPE_DEVICE:
+			pUSBBootStatus->Current_ptr =
+				(U8*)pUSBBootStatus->DeviceDescriptor;
+			pUSBBootStatus->Current_Fifo_Size =
+				pUSBBootStatus->ctrl_max_pktsize;
+			if (pUSBBootStatus->Remain_size >
+					DEVICE_DESCRIPTOR_SIZE)
+				pUSBBootStatus->Remain_size =
+					DEVICE_DESCRIPTOR_SIZE;
+			pUSBBootStatus->ep0_state = EP0_STATE_GET_DSCPT;
 			break;
 
-		case STANDARD_SET_DESCRIPTOR:
-			NX_DEBUG_MSG("STANDARD_SET_DESCRIPTOR\r\n");
+		case DESCRIPTORTYPE_CONFIGURATION:
+			pUSBBootStatus->Current_ptr =
+				(U8*)pUSBBootStatus->ConfigDescriptor;
+			pUSBBootStatus->Current_Fifo_Size =
+				pUSBBootStatus->ctrl_max_pktsize;
+			if (pUSBBootStatus->Remain_size >
+					CONFIG_DESCRIPTOR_SIZE)
+				pUSBBootStatus->Remain_size =
+					CONFIG_DESCRIPTOR_SIZE;
+			pUSBBootStatus->ep0_state = EP0_STATE_GET_DSCPT;
 			break;
 
-		case STANDARD_SET_CONFIGURATION:
-			NX_DEBUG_MSG("STANDARD_SET_CONFIGURATION\r\n");
-			/* Configuration value in configuration descriptor */
-			pUSBBootStatus->CurConfig = pSetupPacket->wValue;
-			pUSBBootStatus->ep0_state = EP0_STATE_INIT;
-			break;
-
-		case STANDARD_GET_CONFIGURATION:
-			NX_DEBUG_MSG("STANDARD_GET_CONFIGURATION\r\n");
-			pUOReg->DCSR.DEPIR[CONTROL_EP].DIEPTSIZ = (1 << 19) |
-								(1 << 0);
-			/*ep0 enable, clear nak, next ep0, 8byte */
-			pUOReg->DCSR.DEPIR[CONTROL_EP].DIEPCTL = EPEN_CNAK_EP0_8;
-			pUOReg->EPFifo[CONTROL_EP][0] = pUSBBootStatus->CurConfig;
-			pUSBBootStatus->ep0_state = EP0_STATE_INIT;
-			break;
-
-		case STANDARD_GET_DESCRIPTOR:
-			NX_DEBUG_MSG("STANDARD_GET_DESCRIPTOR :");
-			pUSBBootStatus->Remain_size = (U32)pSetupPacket->wLength;
-			switch (pSetupPacket->wValue>>8) {
-			case DESCRIPTORTYPE_DEVICE:
-				pUSBBootStatus->Current_ptr =
-					(U8*)pUSBBootStatus->DeviceDescriptor;
-				pUSBBootStatus->Current_Fifo_Size =
-					pUSBBootStatus->ctrl_max_pktsize;
-				if (pUSBBootStatus->Remain_size >
-						DEVICE_DESCRIPTOR_SIZE)
-					pUSBBootStatus->Remain_size =
-						DEVICE_DESCRIPTOR_SIZE;
-				pUSBBootStatus->ep0_state = EP0_STATE_GET_DSCPT;
-				break;
-
-			case DESCRIPTORTYPE_CONFIGURATION:
-				pUSBBootStatus->Current_ptr =
-					(U8*)pUSBBootStatus->ConfigDescriptor;
-				pUSBBootStatus->Current_Fifo_Size =
-					pUSBBootStatus->ctrl_max_pktsize;
-				if (pUSBBootStatus->Remain_size >
-						CONFIG_DESCRIPTOR_SIZE)
-					pUSBBootStatus->Remain_size =
-						CONFIG_DESCRIPTOR_SIZE;
-				pUSBBootStatus->ep0_state = EP0_STATE_GET_DSCPT;
-				break;
-
-		//	case DESCRIPTORTYPE_STRING :
-		//	case DESCRIPTORTYPE_INTERFACE:
-		//	case DESCRIPTORTYPE_ENDPOINT:
-			default:
-				pUOReg->DCSR.DEPIR[0].DIEPCTL |= DEPCTL_STALL;
-				break;
-			}
-			break;
-
-		case STANDARD_CLEAR_FEATURE:
-			NX_DEBUG_MSG("STANDARD_CLEAR_FEATURE :");
-			break;
-
-		case STANDARD_SET_FEATURE:
-			NX_DEBUG_MSG("STANDARD_SET_FEATURE :");
-			break;
-
-		case STANDARD_GET_STATUS:
-			NX_DEBUG_MSG("STANDARD_GET_STATUS :");
-			pUSBBootStatus->ep0_state = EP0_STATE_GET_STATUS;
-			break;
-
-		case STANDARD_GET_INTERFACE:
-			NX_DEBUG_MSG("STANDARD_GET_INTERFACE\r\n");
-			pUSBBootStatus->ep0_state = EP0_STATE_GET_INTERFACE;
-			break;
-
-		case STANDARD_SET_INTERFACE:
-			NX_DEBUG_MSG("STANDARD_SET_INTERFACE\r\n");
-			pUSBBootStatus->CurInterface= pSetupPacket->wValue;
-			pUSBBootStatus->CurSetting = pSetupPacket->wValue;
-			pUSBBootStatus->ep0_state = EP0_STATE_INIT;
-			break;
-
-		case STANDARD_SYNCH_FRAME:
-			NX_DEBUG_MSG("STANDARD_SYNCH_FRAME\r\n");
-			pUSBBootStatus->ep0_state = EP0_STATE_INIT;
-			break;
-
+	//	case DESCRIPTORTYPE_STRING :
+	//	case DESCRIPTORTYPE_INTERFACE:
+	//	case DESCRIPTORTYPE_ENDPOINT:
 		default:
+			pUOReg->DCSR.DEPIR[0].DIEPCTL |= DEPCTL_STALL;
 			break;
 		}
+		break;
+
+	case STANDARD_CLEAR_FEATURE:
+		NX_DEBUG_MSG("STANDARD_CLEAR_FEATURE :");
+		break;
+
+	case STANDARD_SET_FEATURE:
+		NX_DEBUG_MSG("STANDARD_SET_FEATURE :");
+		break;
+
+	case STANDARD_GET_STATUS:
+		NX_DEBUG_MSG("STANDARD_GET_STATUS :");
+		pUSBBootStatus->ep0_state = EP0_STATE_GET_STATUS;
+		break;
+
+	case STANDARD_GET_INTERFACE:
+		NX_DEBUG_MSG("STANDARD_GET_INTERFACE\r\n");
+		pUSBBootStatus->ep0_state = EP0_STATE_GET_INTERFACE;
+		break;
+
+	case STANDARD_SET_INTERFACE:
+		NX_DEBUG_MSG("STANDARD_SET_INTERFACE\r\n");
+		pUSBBootStatus->CurInterface= pSetupPacket->wValue;
+		pUSBBootStatus->CurSetting = pSetupPacket->wValue;
+		pUSBBootStatus->ep0_state = EP0_STATE_INIT;
+		break;
+
+	case STANDARD_SYNCH_FRAME:
+		NX_DEBUG_MSG("STANDARD_SYNCH_FRAME\r\n");
+		pUSBBootStatus->ep0_state = EP0_STATE_INIT;
+		break;
+
+	default:
+		break;
 	}
+
+noinit:
 
 	pUOReg->DCSR.DEPIR[CONTROL_EP].DIEPTSIZ = (1 << 19) |
 			(pUSBBootStatus->ctrl_max_pktsize << 0);
@@ -491,7 +496,8 @@ static void nx_usb_int_bulkout(USBBOOTSTATUS *pUSBBootStatus,
 		if ((fifo_cnt_byte & 3) == 0) {
 			pUSBBootStatus->iRxHeaderSize += fifo_cnt_byte;
 		} else {
-			NX_DEBUG_MSG("ERROR : Header Packet Size must be aligned on 32-bits.\r\n");
+			printf("ERROR : Header Packet Size must be "
+					"aligned on 32-bits.\r\n");
 			pUOReg->DCSR.DEPOR[BULK_OUT_EP].DOEPCTL |= DEPCTL_STALL;
 		}
 
@@ -519,11 +525,9 @@ static void nx_usb_int_bulkout(USBBOOTSTATUS *pUSBBootStatus,
 				pUSBBootStatus->iRxSize_save =
 					pUSBBootStatus->iRxSize;
 
-				NX_DEBUG_MSG("USB Load Address = ");
-				NX_DEBUG_HEX((S32)pUSBBootStatus->RxBuffAddr);
-				NX_DEBUG_MSG(", ");
-				NX_DEBUG_DEC(pUSBBootStatus->iRxSize);
-				NX_DEBUG_MSG("\r\n");
+				printf("USB Load Address = %x, %x\r\n",
+						(MPTRS)pUSBBootStatus->RxBuffAddr,
+						pUSBBootStatus->iRxSize);
 			} else {
 				pUSBBootStatus->iRxHeaderSize = 0;
 				pUOReg->DCSR.DEPOR[BULK_OUT_EP].DOEPCTL |=
@@ -551,7 +555,7 @@ static void nx_usb_int_bulkout(USBBOOTSTATUS *pUSBBootStatus,
 		pUSBBootStatus->iRxSize	-= fifo_cnt_byte;
 
 		if (pUSBBootStatus->iRxSize <= 0) {
-			NX_DEBUG_MSG("Download completed!\r\n");
+			printf("Download completed!\r\n");
 
 			pUSBBootStatus->bDownLoading	= CFALSE;
 			pUSBBootStatus->bHeaderReceived = CFALSE;
@@ -612,12 +616,12 @@ static S32 nx_usb_set_init(USBBOOTSTATUS *pUSBBootStatus)
 	/* Set if Device is High speed or Full speed */
 	if (((status & 0x6) >> 1) == USB_HIGH) {
 		pUSBBootStatus->speed = USB_HIGH;
-		NX_DEBUG_MSG("High Speed Detection\r\n");
+		printf("High Speed Detection\r\n");
 	} else if (((status & 0x6) >> 1) == USB_FULL) {
 		pUSBBootStatus->speed = USB_FULL;
-		NX_DEBUG_MSG("Full Speed Detection\r\n");
+		printf("Full Speed Detection\r\n");
 	} else {
-		NX_DEBUG_MSG("**** Error:Neither High_Speed nor Full_Speed\r\n");
+		printf("**** Error:Neither High_Speed nor Full_Speed\r\n");
 		return CFALSE;
 	}
 
@@ -728,7 +732,8 @@ static void nx_usb_transfer(USBBOOTSTATUS *pUSBBootStatus)
 		if (ep_int_status & INTKN_TXFEMP) {
 
 			while ((pUOReg->GCSR.GNPTXSTS & 0xFFFF) <
-					pUSBBootStatus->ctrl_max_pktsize);
+					pUSBBootStatus->ctrl_max_pktsize)
+				;
 
 			nx_usb_transfer_ep0(pUSBBootStatus);
 		}
@@ -750,8 +755,8 @@ static void nx_usb_transfer(USBBOOTSTATUS *pUSBBootStatus)
 
 	if (ep_int & (1 << BULK_IN_EP)) {
 		ep_int_status = pUOReg->DCSR.DEPIR[BULK_IN_EP].DIEPINT;
-
-		pUOReg->DCSR.DEPIR[BULK_IN_EP].DIEPINT = ep_int_status; /* Interrupt Clear */
+		/* Interrupt Clear */
+		pUOReg->DCSR.DEPIR[BULK_IN_EP].DIEPINT = ep_int_status;
 
 		if (ep_int_status & INTKN_TXFEMP)
 			nx_usb_int_bulkin(pUSBBootStatus);
@@ -759,7 +764,8 @@ static void nx_usb_transfer(USBBOOTSTATUS *pUSBBootStatus)
 
 	if (ep_int & ((1 << BULK_OUT_EP) << 16)) {
 		ep_int_status = pUOReg->DCSR.DEPOR[BULK_OUT_EP].DOEPINT;
-		pUOReg->DCSR.DEPOR[BULK_OUT_EP].DOEPINT = ep_int_status; /* Interrupt Clear */
+		/* Interrupt Clear */
+		pUOReg->DCSR.DEPOR[BULK_OUT_EP].DOEPINT = ep_int_status;
 	}
 }
 
@@ -816,65 +822,112 @@ static void nx_udc_int_hndlr(USBBOOTSTATUS *pUSBBootStatus, U32 option)
 	}
 	pUOReg->GCSR.GINTSTS = int_status; /* Interrupt Clear */
 }
+#define SIM_TEST
 void udelay(U32 utime)
 {
 	register volatile U32 i;
 	for( ; utime>0 ; utime--)
+#ifdef SIM_TEST
+		for(i = 6; i > 0; i--);
+#else
 		for(i = 106; i > 0; i--);
+#endif
 }
 
+
+extern struct NX_ECID_RegisterSet * const pECIDReg;
 CBOOL iUSBBOOT(U32 option)
 {
 	USBBOOTSTATUS USBBootStatus, *pUSBBootStatus;
-	U32 i;
+	U32 i, delay;
 	U8 *ptr;
+	U16 VID, PID;
 
 	pUSBBootStatus = &USBBootStatus;
 	ptr = (U8*)pUSBBootStatus;
 
+	delay = 0x10000000;
+#ifdef NXP5430
+	while ((!(pECIDReg->EC[2] & 1 << 15)) && delay--)
+		;
+#endif
+#ifdef NXP5540
+	while ((!(pECIDReg->EC[2] & 1 << 15)) && delay--)
+		;
+#endif
+	if (delay == 0) {
+		VID = VENDORID;
+		PID = PRODUCTID;
+	} else {
+		U32 ID = pECIDReg->ECID[3];
+		if (ID == 0) {	// ECID is not burned
+			VID = VENDORID;
+			PID = PRODUCTID;
+		} else {
+			VID = (ID >> 16) & 0xFFFF;
+			PID = (ID >>  0) & 0xFFFF;
+		}
+	}
+
+
 	for(i = 0; i < sizeof(USBBOOTSTATUS); i++);
 		ptr[i] = 0;
+	for(i = 0; i < DEVICE_DESCRIPTOR_SIZE; i++)
+	{
+		pUSBBootStatus->HSDeviceDescriptor[i] = gs_DeviceDescriptorHS[i];
+		pUSBBootStatus->FSDeviceDescriptor[i] = gs_DeviceDescriptorFS[i];
+	}
+
+	pUSBBootStatus->HSDeviceDescriptor[ 8] = (VID >> 0) & 0xFF;
+	pUSBBootStatus->HSDeviceDescriptor[ 9] = (VID >> 8) & 0xFF;
+	pUSBBootStatus->HSDeviceDescriptor[10] = (PID >> 0) & 0xFF;
+	pUSBBootStatus->HSDeviceDescriptor[11] = (PID >> 8) & 0xFF;
+	pUSBBootStatus->FSDeviceDescriptor[ 8] = (VID >> 0) & 0xFF;
+	pUSBBootStatus->FSDeviceDescriptor[ 9] = (VID >> 8) & 0xFF;
+	pUSBBootStatus->FSDeviceDescriptor[10] = (PID >> 0) & 0xFF;
+	pUSBBootStatus->FSDeviceDescriptor[11] = (PID >> 8) & 0xFF;
+
 #ifdef NXP5430
 	ResetCon(RESETINDEX_OF_USB20OTG_MODULE_i_nRST, CTRUE);  // reset on
 	ResetCon(RESETINDEX_OF_USB20OTG_MODULE_i_nRST, CFALSE); // reset negate
 #endif
 
 #ifdef NXP5540
-    nx_cpuif_reg_write_one(CMUI_USB_CMU_0_CLK_clk_enb, 1);	// usb cmu clock enable
-    nx_cpuif_reg_write_one(RSTI_usb_cmu_0_rst, 1);	// usb cmu reset release
+	nx_cpuif_reg_write_one(CMUI_USB_CMU_0_CLK_clk_enb, 1);	// usb cmu clock enable
+	nx_cpuif_reg_write_one(RSTI_usb_cmu_0_rst, 1);	// usb cmu reset release
 
-    nx_cpuif_reg_write_one(CMUI_OTG_SYS_0_AHB_clk_enb, 1);	// usb otg ahb clock enable
-    nx_cpuif_reg_write_one(RSTI_otg_sys_0_ahb_rst, 1);	// usb otg ahb reset release
-    nx_cpuif_reg_write_one(CMUI_OTG_SYS_0_APB_clk_enb, 1);	// usb otg apb clock enable
-    nx_cpuif_reg_write_one(RSTI_otg_sys_0_apb_rst, 1);	// usb otg apb reset release
+	nx_cpuif_reg_write_one(CMUI_OTG_SYS_0_AHB_clk_enb, 1);	// usb otg ahb clock enable
+	nx_cpuif_reg_write_one(RSTI_otg_sys_0_ahb_rst, 1);	// usb otg ahb reset release
+	nx_cpuif_reg_write_one(CMUI_OTG_SYS_0_APB_clk_enb, 1);	// usb otg apb clock enable
+	nx_cpuif_reg_write_one(RSTI_otg_sys_0_apb_rst, 1);	// usb otg apb reset release
 
-    nx_cpuif_reg_write_one(CMUI_USB_0_AXI_clk_enb, 1);	// usb bus axi clock enable
-    nx_cpuif_reg_write_one(RSTI_usb_0_axi_rst, 1);	// usb bus axi reset release
+	nx_cpuif_reg_write_one(CMUI_USB_0_AXI_clk_enb, 1);	// usb bus axi clock enable
+	nx_cpuif_reg_write_one(RSTI_usb_0_axi_rst, 1);	// usb bus axi reset release
 #endif
 
+	/* 29: enable, 30:phy word interface (0: 8 bit, 1: 16 bit) */
+	pTieoffreg->TIEOFFREG[2] |= 3 << 29;
+	pTieoffreg->TIEOFFREG[1] &= ~(1 << 28);	// 28 : POR=0
+	pTieoffreg->TIEOFFREG[1] |= 1 << 27;	// 27 : POR_ENB=1
 
-    pTieoffreg->TIEOFFREG[2] |= 3 << 29;          // 29: enable, 30:phy word interface (0: 8 bit, 1: 16 bit)
-    pTieoffreg->TIEOFFREG[1] &= ~(1 << 28);       // 28 : POR=0
-    pTieoffreg->TIEOFFREG[1] |= 1 << 27;          // 27 : POR_ENB=1
+	udelay(40);				// 40us delay need.
 
-    // simulation 을 위해 짧게 줄임
-    //udelay(40);                                 // 40us delay need.
-	udelay(5);                                  // 40us delay need.
+	pTieoffreg->TIEOFFREG[0] |= 1 << 8;	// 8 : i_nUtmiResetSync
 
-    pTieoffreg->TIEOFFREG[0] |= 1 << 8;           // 8 : i_nUtmiResetSync
+	udelay(1);				// 10 clock need
 
-	udelay(1);                                  // 10 clock need
+	pTieoffreg->TIEOFFREG[0] |= 1 << 7;	// 7 : i_nResetSync 
 
-    pTieoffreg->TIEOFFREG[0] |= 1 << 7;           // 7 : i_nResetSync 
-
-	udelay(1);                                  // 10 clock need
+	udelay(1);				// 10 clock need
 
 	/* usb core soft reset */
 	pUOReg->GCSR.GRSTCTL = CORE_SOFT_RESET;
-	while (!(pUOReg->GCSR.GRSTCTL & AHB_MASTER_IDLE));
+	while (!(pUOReg->GCSR.GRSTCTL & AHB_MASTER_IDLE))
+		;
 
 	/* init_core */
-	pUOReg->GCSR.GAHBCFG = PTXFE_HALF|NPTXFE_HALF|MODE_SLAVE|BURST_SINGLE|GBL_INT_UNMASK;
+	pUOReg->GCSR.GAHBCFG = PTXFE_HALF | NPTXFE_HALF | MODE_SLAVE |
+				BURST_SINGLE | GBL_INT_UNMASK;
 	pUOReg->GCSR.GUSBCFG =
 		  0 << 15	/* PHY Low Power Clock sel */
 		| 1 << 14	/* Non-Periodic TxFIFO Rewind Enable */
@@ -891,14 +944,13 @@ CBOOL iUSBBOOT(U32 option)
 	if ((pUOReg->GCSR.GINTSTS & 0x1) == INT_DEV_MODE) {
 		/* soft disconnect on */
 		pUOReg->DCSR.DCTL |= SOFT_DISCONNECT;
-        // simulation 을 위해 짧게 줄임
-		//udelay(10);
-		udelay(5);
+
+		udelay(10);
 		/* soft disconnect off */
 		pUOReg->DCSR.DCTL &= ~SOFT_DISCONNECT;
 
 		/* usb init device */
-		pUOReg->DCSR.DCFG = 1 << 18;// | pUSBBootStatus->speed<<0; /* [][1: full speed(30Mhz) 0:high speed]*/
+		pUOReg->DCSR.DCFG = 1 << 18;
 		pUOReg->GCSR.GINTMSK = INT_RESUME | INT_OUT_EP | INT_IN_EP |
 					INT_ENUMDONE | INT_RESET | INT_SUSPEND |
 					INT_RX_FIFO_NOT_EMPTY;
@@ -910,29 +962,30 @@ CBOOL iUSBBOOT(U32 option)
 	pUSBBootStatus->speed = USB_HIGH;
 	pUSBBootStatus->ep0_state = EP0_STATE_INIT;
 
-	NX_DEBUG_MSG("irom usb boot ready!\r\n");
+	printf("irom usb boot ready!\r\n");
 
 	pUSBBootStatus->bDownLoading = CTRUE;
 	while (pUSBBootStatus->bDownLoading) {
 		if (pUOReg->GCSR.GINTSTS &
 				(WkUpInt | OEPInt | IEPInt | EnumDone |
-				 USBRst | USBSusp | RXFLvl))
-		{
+				 USBRst | USBSusp | RXFLvl)) {
 			nx_udc_int_hndlr(pUSBBootStatus, option);
 			pUOReg->GCSR.GINTSTS = 0xFFFFFFFF;
 		}
 	}
 	/* usb core soft reset */
 	pUOReg->GCSR.GRSTCTL = CORE_SOFT_RESET;
-	while (!(pUOReg->GCSR.GRSTCTL & AHB_MASTER_IDLE));
+	while (!(pUOReg->GCSR.GRSTCTL & AHB_MASTER_IDLE))
+		;
 
 #ifdef NXP5540
-	(*(volatile U32 *)(PHY_BASEADDR_USB_OTG_LINK_A_MODULE + 0x00)) = 0x00; // reset Avalid, Bvalid, sessend
+	 /* reset Avalid, Bvalid, sessend */
+	pUOReg->GCSR.GOTGCTL = 0x00;
 #endif
 
 	pTieoffreg->TIEOFFREG[0] &= ~(1 << 8);	// 8 : i_nUtmiResetSync
 	pTieoffreg->TIEOFFREG[0] &= ~(1 << 7);	// 7 : i_nResetSync
-	pTieoffreg->TIEOFFREG[1] |=   3 << 27 ;	// 27 : POR_ENB=1, 28 : POR=1
+	pTieoffreg->TIEOFFREG[1] |=   3 << 27;	// 27 : POR_ENB=1, 28 : POR=1
 
 #ifdef NXP5430
 	ResetCon(RESETINDEX_OF_USB20OTG_MODULE_i_nRST, CTRUE);  // reset on

@@ -28,11 +28,12 @@
 #endif
 #ifdef NXP5540
 #include <nx_chip_sfr.h>
-#include <nx_ecid.h>
 #endif
 #include <nx_clkpwr.h>
 #include <nx_alive.h>
 #include <nx_gpio.h>
+#include <nx_ecid.h>
+
 #include "printf.h"
 
 #ifdef NXP5430
@@ -45,6 +46,9 @@ struct NX_GPIO_RegisterSet (* const pGPIOReg)[1] =
 #endif
 struct NX_ALIVE_RegisterSet * const pALIVEReg =
 	(struct NX_ALIVE_RegisterSet *)PHY_BASEADDR_ALIVE_MODULE;
+
+struct NX_ECID_RegisterSet * const pECIDReg =
+	(struct NX_ECID_RegisterSet *)PHY_BASEADDR_ECID_MODULE;
 
 extern CBOOL iSDXCFSBOOT(U32 option);
 extern CBOOL iUSBBOOT(U32 option);
