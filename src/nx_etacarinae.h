@@ -162,8 +162,8 @@
 #define GPIO_GROUP_E		4
 #define GPIO_GROUP_F		5
 
-//#define POLY 0xEDB88320L
-#define POLY			0x04C11DB7L    //reverse
+#define POLY 0xEDB88320L
+//#define POLY			0x04C11DB7L    //reverse
 
 #ifdef NXP5430
 #define BASEADDR_SRAM		(0x60000000)
