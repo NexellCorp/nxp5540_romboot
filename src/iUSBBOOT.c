@@ -846,27 +846,13 @@ CBOOL iUSBBOOT(U32 option)
 	pUSBBootStatus = &USBBootStatus;
 	ptr = (U8*)pUSBBootStatus;
 
-	delay = 0x10000000;
-#ifdef NXP5430
-	while ((!(pECIDReg->EC[2] & 1 << 15)) && delay--)
-		;
-#endif
-#ifdef NXP5540
-	while ((!(pECIDReg->EC[2] & 1 << 15)) && delay--)
-		;
-#endif
-	if (delay == 0) {
+	U32 ID = pECIDReg->ECID[3];
+	if (ID == 0) {	// ECID is not burned
 		VID = VENDORID;
 		PID = PRODUCTID;
 	} else {
-		U32 ID = pECIDReg->ECID[3];
-		if (ID == 0) {	// ECID is not burned
-			VID = VENDORID;
-			PID = PRODUCTID;
-		} else {
-			VID = (ID >> 16) & 0xFFFF;
-			PID = (ID >>  0) & 0xFFFF;
-		}
+		VID = (ID >> 16) & 0xFFFF;
+		PID = (ID >>  0) & 0xFFFF;
 	}
 	printf("USB VID:%04X, PID:%04X\r\n", VID, PID);
 

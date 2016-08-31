@@ -75,29 +75,11 @@ void iROMBOOT(U32 OrgBootOption)
 	// Disable writing data to ALIVE registers.
 	pALIVEReg->ALIVEPWRGATEREG 	= 0;
 #endif
+
+	while (!(pECIDReg->EC[2] & 1 << 15))	// wait efuse ready
+		;
 #ifdef NXP5540
 
-#endif
-#if 0
-	SetMMUTableDefault();
-	StartMMUnCache(CTRUE, CTRUE, CTRUE);
-#endif
-
-	//--------------------------------------------------------------------------
-	// Debug Console
-	//--------------------------------------------------------------------------
-	DebugInit(3);
-
-	printf("\r\n\n iROMBOOT by Nexell Co. : Built on %s %s\r\n",
-			__DATE__, __TIME__);
-
-	enable_mmu_el3(0);
-	printf("pad Boot Option: %02X\r\n", option);
-
-	if (((option >> BOOTMODE) & 0x7) == 1)
-		goto lastboot;
-
-#ifdef NXP5540
 	CBOOL IsSecure = !!(pECIDReg->SJTAG[0] | pECIDReg->SJTAG[1] |
 			pECIDReg->SJTAG[2] | pECIDReg->SJTAG[3]);
 
@@ -118,6 +100,27 @@ void iROMBOOT(U32 OrgBootOption)
 				if ((eRSTCFG & 1 << 14) == 0)	// check invalid mark
 					OrgBootOption = eRSTCFG & 0x3FFF;
 		}
+#endif
+
+
+	//--------------------------------------------------------------------------
+	// Debug Console
+	//--------------------------------------------------------------------------
+	DebugInit(3);
+
+	printf("\r\n\n iROMBOOT by Nexell Co. : Built on %s %s\r\n",
+			__DATE__, __TIME__);
+
+	// mmu is enabled when you have some problem, you must check table addr.
+	enable_mmu_el3(0);
+
+	printf("pad Boot Option: %02X\r\n", option);
+
+	if (((option >> BOOTMODE) & 0x7) == 1)
+		goto lastboot;
+
+#ifdef NXP5540
+
 	
 	printf("efuse Boot Option: %02X\r\n", option);
 #endif
