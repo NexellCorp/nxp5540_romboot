@@ -208,7 +208,10 @@ CBOOL DebugInit(U32 port)
 void	DebugPutch(S8 ch)
 {
 	const U32 TX_FIFO_FULL = 1 << 24;
-	while (pReg_Uart->FSTATUS & TX_FIFO_FULL)	{ ; }
+//	while (pReg_Uart->FSTATUS & TX_FIFO_FULL)	{ ; }
+	while (pReg_Uart->FSTATUS & TX_FIFO_FULL) {
+		pReg_Uart->FSTATUS;
+	}
 	pReg_Uart->THR = (U32)ch;
 }
 

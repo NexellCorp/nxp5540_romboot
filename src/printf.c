@@ -49,12 +49,10 @@
 
 static void printchar(char **str, int c)
 {
-#if 0
 	if (str) {
 		**str = c;
 		++(*str);
 	} else
-#endif
 		(void)putchar((S8)c);
 }
 
