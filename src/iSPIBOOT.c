@@ -512,7 +512,7 @@ U32 iSPIBOOT(U32 option)
 
 	pSBI = (struct nx_bootinfo *)pdwBuffer;
 
-	if (pSBI->signature == HEADER_ID) {
+	if (pSBI->signature != HEADER_ID) {
 		printf("boot signature error(%04X)\r\n", pSBI->signature);
 		goto error;
 	}
