@@ -12,6 +12,15 @@ SECTIONS
 		*(.text)
 	}
 
+	cur_pos = .;
+	. = 0x00007000;
+	. = ALIGN(4);
+	.rodata :
+	{
+	    obj/NXP5540_pagetable.o (.rodata)
+	}
+
+	. = cur_pos;
 	. = ALIGN(4);
 	.rodata : { *(.rodata) }
 
@@ -23,9 +32,9 @@ SECTIONS
 
 	end = .;
 
-    . = ALIGN(4);
-    .bss :
-    {
+	. = ALIGN(4);
+	.bss :
+	{
 		__bss_start__ = ABSOLUTE (.);
 		__bss_end__ = ABSOLUTE (.);
 	}
