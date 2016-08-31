@@ -751,6 +751,9 @@ static CBOOL NX_SDMMC_SetBusWidth(SDXCBOOTSTATUS *pSDXCBootStatus,
 
 	/* 0 : 1-bit mode, 1 : 4-bit mode */
 	pSDXCReg->CTYPE = buswidth >> 2;
+#ifdef NXP5540
+	pSDXCReg->TIEMODE = buswidth >> 2;
+#endif
 
 	return CTRUE;
 }
@@ -1279,7 +1282,7 @@ static CBOOL eMMCBoot(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 #endif
 
 //	if (option & 1 << EMMCBOOT)
-//		cmd.flag |= NX_SDXC_CMDFLAG_ENABLE_BOOT;
+		cmd.flag |= NX_SDXC_CMDFLAG_ENABLE_BOOT;
 
 	if (NX_SDMMC_STATUS_NOERROR !=
 			NX_SDMMC_SendCommandInternal(pSDXCBootStatus, &cmd)) {
