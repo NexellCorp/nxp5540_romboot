@@ -822,7 +822,7 @@ static void nx_udc_int_hndlr(USBBOOTSTATUS *pUSBBootStatus, U32 option)
 	}
 	pUOReg->GCSR.GINTSTS = int_status; /* Interrupt Clear */
 }
-#define SIM_TEST
+//#define SIM_TEST
 void udelay(U32 utime)
 {
 	register volatile U32 i;
@@ -873,8 +873,7 @@ CBOOL iUSBBOOT(U32 option)
 
 	for(i = 0; i < sizeof(USBBOOTSTATUS); i++);
 		ptr[i] = 0;
-	for(i = 0; i < DEVICE_DESCRIPTOR_SIZE; i++)
-	{
+	for(i = 0; i < DEVICE_DESCRIPTOR_SIZE; i++) {
 		pUSBBootStatus->HSDeviceDescriptor[i] = gs_DeviceDescriptorHS[i];
 		pUSBBootStatus->FSDeviceDescriptor[i] = gs_DeviceDescriptorFS[i];
 	}
@@ -929,7 +928,6 @@ CBOOL iUSBBOOT(U32 option)
 	nx_cpuif_reg_write_one(CMUI_USB_0_APB_clk_enb, 1);
 	nx_cpuif_reg_write_one(CMUI_OTG_SYS_0_AHB_clk_enb, 1);
 	nx_cpuif_reg_write_one(CMUI_OTG_SYS_0_APB_clk_enb, 1);
-#endif
 
 	/* 29: enable, 30:phy word interface (0: 8 bit, 1: 16 bit) */
 	pTieoffreg->TIEOFFREG[2] |= 3 << 29;
@@ -946,6 +944,24 @@ CBOOL iUSBBOOT(U32 option)
 
 	udelay(1);				// 10 clock need
 
+#endif
+#ifdef NXP5430
+	pTieoffreg->TIEOFFREG[12] &= ~0x3;
+	/* 29: enable, 30:phy word interface (0: 8 bit, 1: 16 bit) */
+	pTieoffreg->TIEOFFREG[14] |= 0x3 << 8;
+	pTieoffreg->TIEOFFREG[13] = 0xA3006C00;	// 5V VBUS, POR = 0
+	pTieoffreg->TIEOFFREG[13] |= 1 << 7;	// 7 : POR_ENB=1
+
+	udelay(40);				// 40us delay need.
+
+	pTieoffreg->TIEOFFREG[13] |= 1 << 3;	// 3 : i_nUtmiResetSync
+
+	udelay(1);				// 10 clock need
+
+	pTieoffreg->TIEOFFREG[13] |= 1 << 2;	// 2 : i_nResetSync 
+
+	udelay(1);				// 10 clock need
+#endif
 	/* usb core soft reset */
 	pUOReg->GCSR.GRSTCTL = CORE_SOFT_RESET;
 	while (!(pUOReg->GCSR.GRSTCTL & AHB_MASTER_IDLE))
