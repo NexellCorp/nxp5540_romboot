@@ -215,7 +215,7 @@ U32 iSDXCFSBOOT(U32 option)
 	pSDXCBootStatus = &SDXCBootStatus;
 
 	pSDXCBootStatus->SDPort = ((option >> SELSDPORT) & 0x1);
-	if (option & 1UL << SELSDPORT1)
+	if (option & 2UL << SELSDPORT)
 		pSDXCBootStatus->SDPort += 2;
 
 	if (pSDXCBootStatus->SDPort >= 3) {

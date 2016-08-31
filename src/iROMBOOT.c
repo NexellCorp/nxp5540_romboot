@@ -61,7 +61,6 @@ void iROMBOOT(U32 OrgBootOption)
 {
 	void (*pLaunch)(void) = (void(*)(void))BASEADDR_SRAM;
 	CBOOL Result = CFALSE;
-	U32 BootState = 0;
 	U32 option = OrgBootOption;
 
 #ifdef NXP5430
@@ -91,14 +90,38 @@ void iROMBOOT(U32 OrgBootOption)
 
 	printf("\r\n\n iROMBOOT by Nexell Co. : Built on %s %s\r\n",
 			__DATE__, __TIME__);
-#if 1
-//	arm_configure_mmu_el3(0x40000000, 0x40000000, 0x50000000, 0x50200000);
+
 	enable_mmu_el3(0);
-#endif
-	printf("Boot Option: %02X\r\n", option);
+	printf("pad Boot Option: %02X\r\n", option);
 
 	if (((option >> BOOTMODE) & 0x7) == 1)
-		iUSBBOOT(option);
+		goto lastboot;
+
+#ifdef NXP5540
+	CBOOL IsSecure = !!(pECIDReg->SJTAG[0] | pECIDReg->SJTAG[1] |
+			pECIDReg->SJTAG[2] | pECIDReg->SJTAG[3]);
+
+	// copy secure jtag hash to aes secure key for secure boot decrypt.
+	pECIDReg->CRAESKEY[0] = pECIDReg->SJTAG[0];
+	pECIDReg->CRAESKEY[1] = pECIDReg->SJTAG[1];
+	pECIDReg->CRAESKEY[2] = pECIDReg->SJTAG[2];
+	pECIDReg->CRAESKEY[3] = pECIDReg->SJTAG[3];
+
+	U32 eRSTCFG = pECIDReg->RSTCFG;
+
+	if (eRSTCFG & 1 << 15)		// check boot config written
+		if ((eRSTCFG & 1 << 14) == 0) {	// check invalid mark
+			OrgBootOption = eRSTCFG & 0x3FFF;
+		} else {
+			eRSTCFG >>= 16;
+			if (eRSTCFG & 1 << 15)	// check boot config backup
+				if ((eRSTCFG & 1 << 14) == 0)	// check invalid mark
+					OrgBootOption = eRSTCFG & 0x3FFF;
+		}
+	
+	printf("efuse Boot Option: %02X\r\n", option);
+#endif
+
 
 	do {
 //--------------------------------------------------------------------------
@@ -108,13 +131,10 @@ void iROMBOOT(U32 OrgBootOption)
 		case SDFSBOOT :	// iSDHCFSBOOT (SD/MMC/eSD/eMMC)
 			Result = iSDXCFSBOOT(option);
 			break;
-		default:
-		case USBBOOT :	// iUSBBOOT
-			Result = iUSBBOOT(option);
-			break;
 		case SPIBOOT :	// iSPIBOOT (Serial Flash memory)
 			Result = iSPIBOOT(option);
 			break;
+		default:
 		case SDBOOT :	// iSDHCBOOT (SD/MMC/eSD/eMMC)
 		case EMMCBOOT :
 			Result = iSDXCBOOT(option);
@@ -124,53 +144,27 @@ void iROMBOOT(U32 OrgBootOption)
 			break;
 		}
 
-		if (Result)
+		if (CTRUE == Result)
 			break;
 
-		while(1);
+		if (option & 1 << NEXTTRY) {
+
+			option = OrgBootOption & ~0x7UL;
+			option = OrgBootOption & ~(0x2UL << PORTNUMBER);
+
+			if (option & 1 << USE_FS)
+				Result = iSDXCFSBOOT(option);
+			else
+				Result = iSDXCBOOT(option);
+			if (Result)
+				break;
+		}
+
 		option = OrgBootOption & ~0x7UL;
-		if (BootState != 0) {
-			option |= USBBOOT;
-			continue;
-		}
-
-		BootState = 1;
-		if (!(option & 1 << NEXTTRY))
-			continue;
-
-		if (((OrgBootOption & 0x7) == SDBOOT) ||
-			((OrgBootOption & 0x7) == SDFSBOOT)) {
-			if (OrgBootOption & 1 << PORTNUMBER1) {// port 2 or 2 High speed
-				option &= ~(1 << PORTNUMBER1);
-				if (option & 1 << NEXTPORT)
-					option &= ~(1 << PORTNUMBER);	// 2 or 3 => 0
-				else
-					option |= 1 << PORTNUMBER;	// 2 or 3 => 1
-			} else {
-				if (OrgBootOption & 1 << PORTNUMBER) {	// port 1
-					if (option & 1 << NEXTPORT)
-						option |= 1 << PORTNUMBER1;	// 1 => 2
-					option &= ~(1 << PORTNUMBER);		// 1 => 0
-				} else {					// port 0
-					if (option & 1 << NEXTPORT)
-						option |= 1 << PORTNUMBER;	// 0 => 1
-					else
-						option |= 1 << PORTNUMBER1;	// 0 => 2
-				}
-			}
-		} else {
-			if ((OrgBootOption & 0x7) != NANDECBOOT)
-				option &= ~(1 << PORTNUMBER1);
-			if (option & 1 << NEXTPORT) {
-				option ^= 1 << PORTNUMBER;
-			}
-		}
-
-		if (option & 1 << USE_FS)
-			option |= SDFSBOOT;
-		else
-			option |= SDBOOT;
-	} while (1);
+		option |= USBBOOT;
+lastboot:
+		iUSBBOOT(option);
+	} while (0);
 
 
 	pLaunch();

@@ -232,9 +232,9 @@ static CBOOL NANDFlash_Open(NANDBOOTECSTATUS *pBootStatus, U32 option)
 
 	nftype = (option >> NANDTYPE) & 0x3;	// 0:small 3 step, 1:small 4 step, 2:large 4 step, 3:large 5 step
 
-	if (option & 1 << NANDPAGE0)	// 0: 2KB, 1:4KB, 2:8KB, 3:16KB and above
+	if (option & 1 << NANDPAGE)	// 0: 2KB, 1:4KB, 2:8KB, 3:16KB and above
 		pagesize = 0x1;
-	if (option & 1 << NANDPAGE1)
+	if (option & 2 << NANDPAGE)
 		pagesize += 0x2;
 
 	// for large block

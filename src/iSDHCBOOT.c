@@ -1278,8 +1278,8 @@ static CBOOL eMMCBoot(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 	cmd.flag	|= NX_SDXC_CMDFLAG_EXPECTBOOTACK;
 #endif
 
-//	if (option & 1 << eMMCBOOT)
-		cmd.flag |= NX_SDXC_CMDFLAG_ENABLE_BOOT;
+//	if (option & 1 << EMMCBOOT)
+//		cmd.flag |= NX_SDXC_CMDFLAG_ENABLE_BOOT;
 
 	if (NX_SDMMC_STATUS_NOERROR !=
 			NX_SDMMC_SendCommandInternal(pSDXCBootStatus, &cmd)) {
@@ -1402,7 +1402,6 @@ static CBOOL SDMMCBOOT(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 			(U32*)(BASEADDR_SRAM + sizeof(struct nx_bootheader)),
 			BootSize);
 error:
-//	__asm__ __volatile__ ("wfi");
 
 	return result;
 }
@@ -1594,7 +1593,7 @@ U32 iSDXCBOOT(U32 option)
 	pSDXCBootStatus = &SDXCBootStatus;
 
 	pSDXCBootStatus->SDPort = ((option >> SELSDPORT) & 0x1);// 0 or 1
-	if (option & 1UL << SELSDPORT1)
+	if (option & 2UL << SELSDPORT)
 		pSDXCBootStatus->SDPort += 2;			// 2 or 3
 
 	if (pSDXCBootStatus->SDPort >= 3) {

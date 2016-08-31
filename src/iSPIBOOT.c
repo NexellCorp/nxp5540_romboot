@@ -457,14 +457,13 @@ U32 iSPIBOOT(U32 option)
 	register U8 *pdwBuffer = (U8*)BASEADDR_SRAM;
 	register U32 iRxSize = 0;
 	register U32 SPIPort = (option >> SELSPIPORT) & 0x1;
-	CBOOL ret = CFALSE;//, bHighSpeed = CFALSE;
+	CBOOL ret = CFALSE;
 
-	if (option & 1 << SELSPIPORT1)
+	if (option & 2 << SELSPIPORT)
 		SPIPort += 2;
 
 	if (SPIPort >= 3) {
 		SPIPort = 0;
-//		bHighSpeed = CTRUE;     // ??
 	}
 	register struct NX_SSP_RegisterSet * const pSSPSPIReg =
 						pgSSPSPIReg[SPIPort];
