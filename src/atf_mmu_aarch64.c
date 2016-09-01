@@ -293,7 +293,7 @@ const U64 l1t[4] __attribute__((__aligned__(0x20))) = {
 #ifdef NXP5540
 extern const U64 l2t0[], l2t1[];
 const U64 l1t[4] __attribute__((__aligned__(0x20))) = {
-	0x0000000000007003,	/* <============== must be checked by last */
+	0x0000000000006003,	/* <============== must be checked by last */
 //	((U64)l2t0) | 0x3,
 	0x0000000000000000, 
 	0x0000000000000000, 
