@@ -31,5 +31,6 @@ SECTIONS
 	}
 
 	_end = .;
+    ASSERT( . < 0x50010000, "*E, Bianry Must be smaller than 64KB")
 }
 
