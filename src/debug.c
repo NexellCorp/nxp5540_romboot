@@ -208,10 +208,14 @@ CBOOL DebugInit(U32 port)
 void	DebugPutch(S8 ch)
 {
 	const U32 TX_FIFO_FULL = 1 << 24;
-//	while (pReg_Uart->FSTATUS & TX_FIFO_FULL)	{ ; }
+#ifdef NXP5430
+	while (pReg_Uart->FSTATUS & TX_FIFO_FULL)	{ ; }
+#endif
+#ifdef NXP5540
 	while (pReg_Uart->FSTATUS & TX_FIFO_FULL) {
 		pReg_Uart->FSTATUS;
 	}
+#endif
 	pReg_Uart->THR = (U32)ch;
 }
 
