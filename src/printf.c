@@ -43,6 +43,7 @@
 */
 
 #include "nx_type.h"
+#include "nx_etacarinae_bootoption.h"
 #include "printf.h"
 
 #include "libarm.h"
@@ -217,6 +218,8 @@ static int print(char **out, const char *format, va_list args)
 int printf(const char *format, ...)
 {
 	va_list args;
+	if (GetBootOption() & 1 << NOBOOTMSG)
+		return 0;
 
 	va_start(args, format);
 	return print(0, format, args);
