@@ -27,7 +27,7 @@ LDFLAGS		= -Bstatic						\
 		-nostdlib
 
 SYS_OBJS	 = 	startup_$(OPMODE)_$(EMUL_CPU).o iROMBOOT.o CRYPTO.o	\
-			libplat.o printf.o debug.o
+			libplat.o printf.o debug.o buildinfo.o
 SYS_OBJS	+= 	iSDHCBOOT.o
 SYS_OBJS	+= 	iUSBBOOT.o
 SYS_OBJS	+= 	iSPIBOOT.o
@@ -98,6 +98,14 @@ endif
 bin:
 	$(Q)echo [binary.... $(PROJECT_NAME)_$(EMUL_CPU)_$(OPMODE).bin]
 	$(Q)$(MAKEBIN) -O binary $(DIR_TARGETOUTPUT)/$(PROJECT_NAME)_$(EMUL_CPU)_$(OPMODE).elf $(DIR_TARGETOUTPUT)/$(PROJECT_NAME)_$(EMUL_CPU)_$(OPMODE).bin
+ifeq ($(OS),Windows_NT)
+	$(Q)if exist $(DIR_OBJOUTPUT)                      \
+		@$(RM) $(DIR_OBJOUTPUT)\buildinfo.o
+else
+	$(Q)if     [ -e $(DIR_OBJOUTPUT) ]; then           \
+		$(RM) $(DIR_OBJOUTPUT)/buildinfo.o;     \
+	fi;
+endif
 
 clean:
 ifeq ($(OS),Windows_NT)
