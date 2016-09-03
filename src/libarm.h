@@ -52,4 +52,7 @@ U64 GetTCR_EL3(void);
 void SetTTBR0_EL3(U64 TTB);
 void InvalidateTLB_All(void);
 void InvalidateIcache_All(void);
+void SetBootOption(U64 option);
+U64 GetBootOption(void);
+void SendFunctionPTR(U64 ptr);
 #endif

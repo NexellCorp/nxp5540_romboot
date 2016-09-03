@@ -161,6 +161,21 @@ InvalidateIcache_All:
 	isb     sy
 	RET
 
+.global GetBootOption
+GetBootOption:
+	MRS	x0, TPIDR_EL3
+	RET
+
+.global SetBootOption
+SetBootOption:
+	MSR	TPIDR_EL3, x0
+	RET
+
+.global SendFunctionPTR
+SendFunctionPTR:
+	MSR	TPIDR_EL1, x0
+	RET
+
 .global EnterLowLevel
 //; void EnterLowLevel(unsigned int *EL1Start, unsigned int rSPSR);
 EnterLowLevel:
