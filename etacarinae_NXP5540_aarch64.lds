@@ -12,18 +12,6 @@ SECTIONS
 		*(.text)
 	}
 
-	cur_pos = .;
-	. = 0x00007000;
-	. = ALIGN(4);
-	.rodata :
-	{
-	    obj/NXP5540_pagetable.o (.rodata)
-	}
-
-	. = cur_pos;
-	. = ALIGN(4);
-	.rodata : { *(.rodata) }
-
 	. = ALIGN(4);
 	.data : { *(.data) }
 
@@ -40,5 +28,14 @@ SECTIONS
 	}
 
 	_end = .;
+    . = 0x00006000;
+    . = ALIGN(4);
+    .rodata : {
+        obj/NXP5540_pagetable.o(.rodata)
+        *(.rodata)
+    }
+
+    ASSERT( . < 0x8000 , "*E, Bianry Must be smaller than 32KB, in MPW. 20160901 choiyk")
+
 }
 
