@@ -367,6 +367,7 @@ typedef struct __attribute__((aligned(sizeof(U8*)))) tag_USBBOOTSTATUS {
 
 	U8*		Current_ptr;
 	U8*		up_ptr;
+	U8*		up_addr;
 
 	volatile CBOOL	bDownLoading;
 	CBOOL		bHeaderReceived;
@@ -383,7 +384,6 @@ typedef struct __attribute__((aligned(sizeof(U8*)))) tag_USBBOOTSTATUS {
 	U32		Current_Fifo_Size;
 	U32		Remain_size;
 
-	U32		up_addr;
 	U32		up_size;
 
 	U8		CurConfig;
@@ -391,9 +391,10 @@ typedef struct __attribute__((aligned(sizeof(U8*)))) tag_USBBOOTSTATUS {
 	U8		CurSetting;
 	U8		__Reserved;
 
-	U8	HSDeviceDescriptor[DEVICE_DESCRIPTOR_SIZE];
-	U8	__Reserved1[2];
-	U8	FSDeviceDescriptor[DEVICE_DESCRIPTOR_SIZE];
+	U8	__attribute__ ((aligned(4)))
+		HSDeviceDescriptor[DEVICE_DESCRIPTOR_SIZE];
+	U8	__attribute__ ((aligned(4)))
+		FSDeviceDescriptor[DEVICE_DESCRIPTOR_SIZE];
 
 } USBBOOTSTATUS;
 

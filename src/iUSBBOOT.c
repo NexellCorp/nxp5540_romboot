@@ -449,8 +449,7 @@ static void nx_usb_int_bulkin(USBBOOTSTATUS *pUSBBootStatus)
 
 	bulkin_buf = (U8*)pUSBBootStatus->up_ptr;
 	remain_cnt = pUSBBootStatus->up_size -
-		((MPTRS)pUSBBootStatus->up_ptr -
-			pUSBBootStatus->up_addr);
+			(pUSBBootStatus->up_ptr - pUSBBootStatus->up_addr);
 
 	if (remain_cnt > pUSBBootStatus->bulkin_max_pktsize) {
 		pUOReg->DCSR.DEPIR[BULK_IN_EP].DIEPTSIZ =
@@ -496,24 +495,27 @@ static void nx_usb_int_bulkout(USBBOOTSTATUS *pUSBBootStatus,
 		if ((fifo_cnt_byte & 3) == 0) {
 			pUSBBootStatus->iRxHeaderSize += fifo_cnt_byte;
 		} else {
-			printf("ERROR : Header Packet Size must be "
-					"aligned on 32-bits.\r\n");
+			printf("Packet size align error:%d\r\n", fifo_cnt_byte);
 			pUOReg->DCSR.DEPOR[BULK_OUT_EP].DOEPCTL |= DEPCTL_STALL;
 		}
 
-		if (512 <= pUSBBootStatus->iRxHeaderSize) {
+		if ((S32)sizeof(struct nx_bootheader) <=
+				pUSBBootStatus->iRxHeaderSize) {
 			struct nx_bootinfo *pSBI =
 				(struct nx_bootinfo *)pdwBuffer;
 
 			if (option & 1 << DECRYPT)
-				Decrypt((U32*)pdwBuffer, (U32*)pdwBuffer, 512);
+				Decrypt((U32*)pdwBuffer, (U32*)pdwBuffer,
+						sizeof(struct nx_bootheader));
 
 			if (pSBI->signature == HEADER_ID) {
 				pUSBBootStatus->bHeaderReceived = CTRUE;
-				pUSBBootStatus->RxBuffAddr	=
-					(U8*)pdwBuffer+pUSBBootStatus->iRxHeaderSize;
+				pUSBBootStatus->RxBuffAddr =
+					(U8*)pdwBuffer +
+					pUSBBootStatus->iRxHeaderSize;
 				pUSBBootStatus->RxBuffAddr_save	=
-					(U8*)pdwBuffer+pUSBBootStatus->iRxHeaderSize;
+					(U8*)pdwBuffer +
+					pUSBBootStatus->iRxHeaderSize;
 				pUSBBootStatus->iRxSize = pSBI->LoadSize;
 
 				if (pUSBBootStatus->iRxSize >
@@ -542,15 +544,11 @@ static void nx_usb_int_bulkout(USBBOOTSTATUS *pUSBBootStatus,
 				fifo_cnt_byte);
 
 #if (0)
-		NX_DEBUG_MSG("Bin Packet Size = ");
-		NX_DEBUG_DEC(iRxSize);
-		NX_DEBUG_MSG(" => ");
-		NX_DEBUG_HEX(pUSBBootStatus->RxBuffAddr);
-		NX_DEBUG_MSG(", ");
-		NX_DEBUG_DEC(pUSBBootStatus->iRxSize);
-		NX_DEBUG_MSG("\n");
+		printf("Bin Packet Size = %x ==> %x, %x\r\n",
+				iRxSize,
+				pUSBBootStatus->RxBuffAddr,
+				pUSBBootStatus->iRxSize);
 #endif
-
 		pUSBBootStatus->RxBuffAddr += fifo_cnt_byte;
 		pUSBBootStatus->iRxSize	-= fifo_cnt_byte;
 
@@ -839,7 +837,8 @@ extern struct NX_ECID_RegisterSet * const pECIDReg;
 CBOOL iUSBBOOT(U32 option)
 {
 	USBBOOTSTATUS USBBootStatus, *pUSBBootStatus;
-	U32 i, delay;
+	__attribute__ ((aligned(4))) U8 updata[512];
+	U32 i;
 	U8 *ptr;
 	U16 VID, PID;
 
@@ -872,6 +871,18 @@ CBOOL iUSBBOOT(U32 option)
 	pUSBBootStatus->FSDeviceDescriptor[ 9] = (VID >> 8) & 0xFF;
 	pUSBBootStatus->FSDeviceDescriptor[10] = (PID >> 0) & 0xFF;
 	pUSBBootStatus->FSDeviceDescriptor[11] = (PID >> 8) & 0xFF;
+
+	pUSBBootStatus->up_addr = updata;
+	pUSBBootStatus->up_ptr = updata;
+	pUSBBootStatus->up_size = 512;
+
+	U32 *pdwupdata = (U32*)updata;
+	pdwupdata[0] = pECIDReg->ECID[0];
+	pdwupdata[1] = pECIDReg->ECID[1];
+	pdwupdata[2] = pECIDReg->ECID[2];
+	pdwupdata[3] = pECIDReg->ECID[3];
+	for (i = 16; i < 512; i += 4)
+		pdwupdata[i >> 2] = 0;
 
 #ifdef NXP5430
 	ResetCon(RESETINDEX_OF_USB20OTG_MODULE_i_nRST, CTRUE);  // reset on
