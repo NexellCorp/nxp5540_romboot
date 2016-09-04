@@ -230,15 +230,13 @@ static CBOOL NANDFlash_Open(NANDBOOTECSTATUS *pBootStatus, U32 option)
 	temp |= ((temp & NX_NFCTRL_EXSEL_R)>>1);
 	temp &= ~ (NX_NFCTRL_HWBOOT_W);
 
-	nftype = (option >> NANDTYPE) & 0x3;	// 0:small 3 step, 1:small 4 step, 2:large 4 step, 3:large 5 step
+	// 0:small 3 step, 1:small 4 step, 2:large 4 step, 3:large 5 step
+	nftype = (option >> NANDTYPE) & 0x3;
 
-	if (option & 1 << NANDPAGE)	// 0: 2KB, 1:4KB, 2:8KB, 3:16KB and above
-		pagesize = 0x1;
-	if (option & 2 << NANDPAGE)
-		pagesize += 0x2;
+	// 0: 2KB, 1:4KB, 2:8KB, 3:16KB and above
+	pagesize = (option >> NANDPAGE) & 0x3;
 
-	// for large block
-	if (nftype & 2) {
+	if (nftype & 1 << 1) {	// large block
 		pBootStatus->dwSectorSize	= 1024;
 		pBootStatus->iNX_BCH_VAR_K	= 1024 * 8;
 		pBootStatus->iNX_BCH_VAR_M	= 14;
@@ -247,7 +245,7 @@ static CBOOL NANDFlash_Open(NANDBOOTECSTATUS *pBootStatus, U32 option)
 		temp |=	NX_NFCTRL_NCSENB |
 			NX_NFCTRL_ECCMODE_60 |
 			NX_NFCTRL_IRQENB;
-	} else {
+	} else {		// small block
 		pBootStatus->dwSectorSize	= 512;
 		pBootStatus->iNX_BCH_VAR_K	= 512 * 8;
 		pBootStatus->iNX_BCH_VAR_M	= 13;
@@ -273,15 +271,17 @@ static CBOOL NANDFlash_Open(NANDBOOTECSTATUS *pBootStatus, U32 option)
 	//--------------------------------------------------------------------------
 	// 1) Get NFTYPE from CfgNFType
 	// 2) Set NX_NFCTRL_BANK	as '0'
-	// 3) Enable an interrupt to use NX_NFCTRL_IRQPEND for checking ready status of NAND flash memory.
+	// 3) Enable an interrupt to use NX_NFCTRL_IRQPEND
+	//    for checking ready status of NAND flash memory.
 	// 4) Set 16-bit ECC mode
 	//--------------------------------------------------------------------------
 	pNandControl->NFCONTROL = temp;
 
 	// Wait until RnB is 1
 	temp = PENDDELAY;
-	while (0 == (pNandControl->NFCONTROL & NX_NFCTRL_RNB)  && temp--);
-	if (temp == (U32)-1)
+	while (0 == (pNandControl->NFCONTROL & NX_NFCTRL_RNB)  && --temp)
+		;
+	if (temp == 0)
 		return CFALSE;
 
 	//--------------------------------------------------------------------------
@@ -289,7 +289,7 @@ static CBOOL NANDFlash_Open(NANDBOOTECSTATUS *pBootStatus, U32 option)
 	//--------------------------------------------------------------------------
 	temp = pNandControl->NFCONTROL;
 	temp &= ~ (NX_NFCTRL_EXSEL_W);
-	temp |= (((temp & NX_NFCTRL_EXSEL_R) >> 1) | NX_NFCTRL_IRQPEND);		// Clear NX_NFCTRL_IRQPEND
+	temp |= (((temp & NX_NFCTRL_EXSEL_R) >> 1) | NX_NFCTRL_IRQPEND);
 	temp &= ~ (NX_NFCTRL_HWBOOT_W);
 	pNandControl->NFCONTROL = temp;
 
@@ -297,8 +297,9 @@ static CBOOL NANDFlash_Open(NANDBOOTECSTATUS *pBootStatus, U32 option)
 
 	temp = PENDDELAY;
 	// Wait until ready by using NX_NFCTRL_IRQPEND which is set at rising edge of RnB.
-	while (0 == (pNandControl->NFCONTROL & NX_NFCTRL_IRQPEND) && temp--);
-	if (temp == (U32)-1)
+	while (0 == (pNandControl->NFCONTROL & NX_NFCTRL_IRQPEND) && --temp)
+		;
+	if (temp == 0)
 		return CFALSE;
 
 	return CTRUE;
@@ -312,7 +313,7 @@ static void NANDFlash_Close(void)
 	temp = pNandControl->NFCONTROL;
 	temp &= ~(NX_NFCTRL_IRQENB | NX_NFCTRL_NCSENB | NX_NFCTRL_EXSEL_W);
 	temp |= (((temp & NX_NFCTRL_EXSEL_R) >> 1) | NX_NFCTRL_IRQPEND);
-	temp &= ~ (NX_NFCTRL_HWBOOT_W);
+	temp &= ~(NX_NFCTRL_HWBOOT_W);
 	pNandControl->NFCONTROL = temp;
 }
 
@@ -321,46 +322,52 @@ static CBOOL NANDFlash_SetAddr(NANDBOOTECSTATUS *pBootStatus)
 {
 	register volatile U32 temp;
 	// check for changing page
-	if (pBootStatus->iSectorLeft == 0) {
-		U32 row		= pBootStatus->dwRowCur;
-		U32 nftype	= pBootStatus->dwNFType;
+	if (pBootStatus->iSectorLeft != 0)
+		return CTRUE;
 
-		temp = pNandControl->NFCONTROL;
-		temp &= ~ (NX_NFCTRL_EXSEL_W);
-		temp |= (((temp & NX_NFCTRL_EXSEL_R)>>1) | NX_NFCTRL_IRQPEND);		// Clear NX_NFCTRL_IRQPEND
-		temp &= ~ (NX_NFCTRL_HWBOOT_W);
-		pNandControl->NFCONTROL = temp;
+	U32 row		= pBootStatus->dwRowCur;
+	U32 nftype	= pBootStatus->dwNFType;
 
-		pNandAccess->NAND_CMD = NAND_CMD_READ_1ST;
+	temp = pNandControl->NFCONTROL;
+	temp &= ~(NX_NFCTRL_EXSEL_W);
+	temp |= (((temp & NX_NFCTRL_EXSEL_R) >> 1) | NX_NFCTRL_IRQPEND);
+	temp &= ~(NX_NFCTRL_HWBOOT_W);
+	pNandControl->NFCONTROL = temp;
 
-		// +------------------------+-------+-------+
-		// |		NFTYPE      | COL   | ROW   |
-		// +------------------------+-------+-------+
-		// | 2'b00 : Small 3 addr   |	1   |	2   |
-		// | 2'b01 : Small 4 addr   |	1   |	3   |
-		// | 2'b10 : Large 4 addr   |	2   |	2   |
-		// | 2'b11 : Large 5 addr   |	2   |	3   |
-		// +------------------------+-------+-------+
-			pNandAccess->NAND_ADDR = 0;			// COL 1st
-		if (nftype & 0x2)
-			pNandAccess->NAND_ADDR = 0;			// COL 2nd
-			pNandAccess->NAND_ADDR = (U8)(row >>  0);	// ROW 1st
-			pNandAccess->NAND_ADDR = (U8)(row >>  8);	// ROW 2nd
-		if (nftype & 0x1)
-			pNandAccess->NAND_ADDR = (U8)(row >> 16);	// ROW 3rd
+	pNandAccess->NAND_CMD = NAND_CMD_READ_1ST;
 
-		if (nftype & 0x2)	// Large block
-			pNandAccess->NAND_CMD = NAND_CMD_READ_2ND;
+	// +------------------------+-------+-------+
+	// |		NFTYPE      | COL   | ROW   |
+	// +------------------------+-------+-------+
+	// | 2'b00 : Small 3 addr   |	1   |	2   |
+	// | 2'b01 : Small 4 addr   |	1   |	3   |
+	// | 2'b10 : Large 4 addr   |	2   |	2   |
+	// | 2'b11 : Large 5 addr   |	2   |	3   |
+	// +------------------------+-------+-------+
+		pNandAccess->NAND_ADDR = 0;			// COL 1st
+	if (nftype & 1 << 1)	// large block
+		pNandAccess->NAND_ADDR = 0;			// COL 2nd
 
-		// Wait until ready by using NX_NFCTRL_IRQPEND which is set at rising edge of RnB.
-		temp = PENDDELAY;
-		while (0 == (pNandControl->NFCONTROL & NX_NFCTRL_IRQPEND) && temp--);
-		if (temp == (U32)-1)
-			return CFALSE;
+		pNandAccess->NAND_ADDR = (U8)(row >>  0);	// ROW 1st
+		pNandAccess->NAND_ADDR = (U8)(row >>  8);	// ROW 2nd
 
-		pBootStatus->iSectorLeft = pBootStatus->iSectorsPerPage;
-		pBootStatus->dwRowCur++;
-	}
+	if (nftype & 1 << 0)
+		pNandAccess->NAND_ADDR = (U8)(row >> 16);	// ROW 3rd
+
+	if (nftype & 1 << 1)	// Large block
+		pNandAccess->NAND_CMD = NAND_CMD_READ_2ND;
+
+	// Wait until ready by using NX_NFCTRL_IRQPEND
+	// which is set at rising edge of RnB.
+	temp = PENDDELAY;
+	while (0 == (pNandControl->NFCONTROL & NX_NFCTRL_IRQPEND) && --temp)
+		;
+	if (temp == 0)
+		return CFALSE;
+
+	pBootStatus->iSectorLeft = pBootStatus->iSectorsPerPage;
+	pBootStatus->dwRowCur++;
+
 	return CTRUE;
 }
 
@@ -370,13 +377,14 @@ static void NANDFlash_ReadData(NANDBOOTECSTATUS *pBootStatus, U32 *pData)
 	register U32 temp;
 
 	// run ecc
-	pNandControl->NFECCCTRL =	1 << NX_NFECCCTRL_RUNECC_W   |	   // run ecc
-					0 << NX_NFECCCTRL_ELPLOAD|
-			NX_NF_DECODE << NX_NFECCCTRL_DECMODE_W |
-	(pBootStatus->iNX_BCH_VAR_T & 0x7F) << NX_NFECCCTRL_ELPNUM |
+	pNandControl->NFECCCTRL =
+						  1 << NX_NFECCCTRL_RUNECC_W   |
+						  0 << NX_NFECCCTRL_ELPLOAD|
+				       NX_NF_DECODE << NX_NFECCCTRL_DECMODE_W |
+		(pBootStatus->iNX_BCH_VAR_T & 0x7F) << NX_NFECCCTRL_ELPNUM |
 	((pBootStatus->iNX_BCH_VAR_M *
-	  pBootStatus->iNX_BCH_VAR_T / 8 - 1) & 0xFF) << NX_NFECCCTRL_PDATACNT |
-	 ((pBootStatus->dwSectorSize - 1) & 0x3FF) << NX_NFECCCTRL_DATACNT;
+	pBootStatus->iNX_BCH_VAR_T / 8 - 1) & 0xFF) << NX_NFECCCTRL_PDATACNT |
+	  ((pBootStatus->dwSectorSize - 1) & 0x3FF) << NX_NFECCCTRL_DATACNT;
 
 	// Read data from NAND flash memory to SRAM
 	temp = pBootStatus->dwSectorSize / (4 * 8);
@@ -439,9 +447,10 @@ static CBOOL NANDFlash_ReadSector(NANDBOOTECSTATUS *pBootStatus, U32 *pData)
 	// Determines whether or not there's an error in data by using H/W BCH decoder.
 	// Wait until H/W BCH decoder has been finished.
 	temp = PENDDELAY;
-	while ((0==(pNandControl->NFECCSTATUS & NX_NFECCSTATUS_DECDONE)) &&
-			temp--);
-	if (temp == (U32)-1)
+	while ((0 == (pNandControl->NFECCSTATUS & NX_NFECCSTATUS_DECDONE)) &&
+			--temp)
+		;
+	if (temp == 0)
 		return CFALSE;
 
 	pNandControl->NFECCAUTOMODE =
@@ -449,50 +458,36 @@ static CBOOL NANDFlash_ReadSector(NANDBOOTECSTATUS *pBootStatus, U32 *pData)
 		 ~(NX_NFACTRL_ELP | NX_NFACTRL_SYN));	// connect syndrome path
 
 	// Check an error status of H/W BCH decoder.
-	if (pNandControl->NFECCSTATUS & NX_NFECCSTATUS_ERROR) {
-		NX_DEBUG_MSG("-> ");
-		NX_DEBUG_DEC(pBootStatus->dwRowCur - 1);
-		NX_DEBUG_MSG(" page, ");
-		NX_DEBUG_DEC(pBootStatus->iSectorsPerPage -
-				pBootStatus->iSectorLeft - 1);
-		NX_DEBUG_MSG(" sector : ");
+	if ((pNandControl->NFECCSTATUS & NX_NFECCSTATUS_ERROR) == 0)
+		return CTRUE;
 
-		// load elp
-		pNandControl->NFECCCTRL =
-			0 << NX_NFECCCTRL_RUNECC_W |
-			1 << NX_NFECCCTRL_ELPLOAD |	   // load elp
-			NX_NF_DECODE << NX_NFECCCTRL_DECMODE_W |
-			(pBootStatus->iNX_BCH_VAR_T & 0x7F) << NX_NFECCCTRL_ELPNUM |
-			((pBootStatus->iNX_BCH_VAR_M *
-			  pBootStatus->iNX_BCH_VAR_T / 8 - 1) & 0xFF) <<
-				NX_NFECCCTRL_PDATACNT |
-			((pBootStatus->dwSectorSize - 1) & 0x3FF) <<
-				NX_NFECCCTRL_DATACNT;
+	NX_DEBUG_MSG("-> ");
+	NX_DEBUG_DEC(pBootStatus->dwRowCur - 1);
+	NX_DEBUG_MSG(" page, ");
+	NX_DEBUG_DEC(pBootStatus->iSectorsPerPage -
+			pBootStatus->iSectorLeft - 1);
+	NX_DEBUG_MSG(" sector : ");
 
-		temp = PENDDELAY;
-		while ((pNandControl->NFECCSTATUS & NX_NFECCSTATUS_BUSY) &&
-				temp--);
-		if (temp == (U32)-1)
-			return CFALSE;
+	// load elp
+	pNandControl->NFECCCTRL =
+						    0 << NX_NFECCCTRL_RUNECC_W |
+						    1 << NX_NFECCCTRL_ELPLOAD |
+					 NX_NF_DECODE << NX_NFECCCTRL_DECMODE_W |
+		  (pBootStatus->iNX_BCH_VAR_T & 0x7F) << NX_NFECCCTRL_ELPNUM |
+	((pBootStatus->iNX_BCH_VAR_M *
+	  pBootStatus->iNX_BCH_VAR_T / 8 - 1) & 0xFF) << NX_NFECCCTRL_PDATACNT |
+	    ((pBootStatus->dwSectorSize - 1) & 0x3FF) << NX_NFECCCTRL_DATACNT;
 
-		return CorrectErrors(pBootStatus, pData);
-	}
+	temp = PENDDELAY;
+	while ((pNandControl->NFECCSTATUS & NX_NFECCSTATUS_BUSY) && --temp)
+		;
+	if (temp == 0)
+		return CFALSE;
+
+	return CorrectErrors(pBootStatus, pData);
 
 	return CTRUE;
 }
-/*
-RnB0   b 14 0 gpio:2 reset:0	RnB1   b 14 1 gpio:2 reset:0
-nNFOE0 b 16 0 gpio:2 reset:0	nNFOE1 b 16 1 gpio:2 reset:0
-nNFWE0 b 18 0 gpio:2 reset:0	nNFWE1 b 18 1 gpio:2 reset:0
-sd 0   b 13 0 gpio:1 reset:0	sdex 0 a 30 2 gpio:0 reset:0
-sd 1   b 15 0 gpio:1 reset:0	sdex 1 b  0 2 gpio:0 reset:0
-sd 2   b 17 0 gpio:1 reset:0	sdex 2 b  2 2 gpio:0 reset:0
-sd 3   b 19 0 gpio:1 reset:0	sdex 3 b  4 2 gpio:0 reset:0
-sd 4   b 20 0 gpio:1 reset:0	sdex 4 b  6 2 gpio:0 reset:0
-sd 5   b 21 0 gpio:1 reset:0	sdex 5 b  8 2 gpio:0 reset:0
-sd 6   b 22 0 gpio:1 reset:0	sdex 6 b  9 2 gpio:0 reset:0
-sd 7   b 23 0 gpio:1 reset:0	sdex 7 b 10 2 gpio:0 reset:0
-*/
 
 #ifdef NXP5540
 static const union nxpad nandpad[14] = {
@@ -517,6 +512,7 @@ void Decrypt(U32 *SrcAddr, U32 *DestAddr, U32 Size);
 //------------------------------------------------------------------------------
 CBOOL iNANDBOOTEC(U32 option)
 {
+//	U32 passflag[128];
 	CBOOL Result = CFALSE;
 	U32 dwBinAddr, dwBinAddr_Save, BootSize;
 	S32 iBinSecLeft;
@@ -569,10 +565,13 @@ CBOOL iNANDBOOTEC(U32 option)
 
 	if (!NANDFlash_ReadSector(pBootStatus, (U32 *)pSBI))
 		goto errexit;
+	if (pBootStatus->dwSectorSize <= 512)
+		if (!NANDFlash_ReadSector(pBootStatus, (U32 *)pSBI))
+			goto errexit;
 
 	if (option & 1 << DECRYPT)
 		Decrypt((U32*)pSBI, (U32*)pSBI,
-				pBootStatus->dwSectorSize);
+				sizeof(struct nx_bootheader));
 
 	if (pSBI->signature != HEADER_ID)
 		goto errexit;
@@ -582,15 +581,12 @@ CBOOL iNANDBOOTEC(U32 option)
 	if (BootSize > INTERNAL_SRAM_SIZE - SECONDBOOT_STACK)
 		BootSize = INTERNAL_SRAM_SIZE - SECONDBOOT_STACK;
 
-	/* already read 512 byte when header load. */
-	if (pBootStatus->dwSectorSize > 512)
-		BootSize -= 512;
 
 	iBinSecLeft = getquotient(BootSize + (pBootStatus->dwSectorSize - 1),
 					pBootStatus->dwSectorSize);
 
 	dwBinAddr_Save = dwBinAddr =
-				(U32)BASEADDR_SRAM + pBootStatus->dwSectorSize;
+				(U32)BASEADDR_SRAM + sizeof(struct nx_bootheader);
 	while (iBinSecLeft--) {
 		if (NANDFlash_ReadSector(pBootStatus, (U32 *)(MPTRS)dwBinAddr))
 			dwBinAddr += pBootStatus->dwSectorSize;
