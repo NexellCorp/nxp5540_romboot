@@ -17,6 +17,7 @@
  */
 #include "nx_etacarinae.h"
 #include "lib_aarch64.h"
+#include "nx_etacarinae_bootoption.h"
 
 
 .global exception_vectors

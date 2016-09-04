@@ -17,196 +17,6 @@
 #include "context.h"
 #include "lib_aarch64.h"
 
-	.globl  aarch64_exceptions
-
-	/*
-	 * This macro verifies that the a given vector doesn't exceed the
-	 * architectural limit of 32 instructions. This is meant to be placed
-	 * immedately after the last instruction in the vector. It takes the
-	 * vector entry as the parameter
-	 */
-	.macro check_vector_size since
-		.if (. - \since) > (32 * 4)
-			.error "Vector exceeds 32 instructions"
-		.endif
-	.endm
-
-	.section .vectors, "ax"; .align 11
-
-/* -----------------------------------------------------
- * Very simple stackless exception handlers used by BL1.
- * -----------------------------------------------------
- */
-	.global exception_vectors
-exception_vectors:
-/* -----------------------------------------------------
- * Current EL with SP0 : 0x0 - 0x200
- * -----------------------------------------------------
- */
-	.align  7
-SynchronousExceptionSP0:
-	mov	x0, #SYNC_EXCEPTION_SP_EL0
-	bl	plat_report_exception
-1:
-	wfi
-	b	1b	
-	check_vector_size SynchronousExceptionSP0
-
-	.align  7
-IrqSP0:
-	mov     x0, #IRQ_SP_EL0
-	bl      plat_report_exception
-1:
-	wfi
-	b	1b
-	check_vector_size IrqSP0
-
-	.align  7
-FiqSP0:
-	mov     x0, #FIQ_SP_EL0
-	bl      plat_report_exception
-1:
-	wfi
-	b	1b
-	check_vector_size FiqSP0
-
-	.align  7
-SErrorSP0:
-	mov	x0, #SERROR_SP_EL0
-	bl	plat_report_exception
-1:
-	wfi
-	b	1b
-	check_vector_size SErrorSP0
-/* -----------------------------------------------------
- * Current EL with SPx: 0x200 - 0x400
- * -----------------------------------------------------
- */
-	.align  7
-SynchronousExceptionSPx:
-	mov     x0, #SYNC_EXCEPTION_SP_ELX
-	bl      plat_report_exception
-1:
-	wfi
-	b	1b
-	check_vector_size SynchronousExceptionSPx
-
-	.align  7
-IrqSPx:
-	mov     x0, #IRQ_SP_ELX
-	bl      plat_report_exception
-1:
-	wfi
-	b	1b
-	check_vector_size IrqSPx
-
-	.align  7
-FiqSPx:
-	mov     x0, #FIQ_SP_ELX
-	bl      plat_report_exception
-1:
-	wfi
-	b	1b
-	check_vector_size FiqSPx
-
-	.align  7
-SErrorSPx:
-	mov     x0, #SERROR_SP_ELX
-	bl      plat_report_exception
-1:
-	wfi
-	b	1b
-	check_vector_size SErrorSPx
-
-/* -----------------------------------------------------
- * Lower EL using AArch64 : 0x400 - 0x600
- * -----------------------------------------------------
- */
-	.align  7
-SynchronousExceptionA64:
-	/* Enable the SError interrupt */
-	msr     daifclr, #DAIF_ABT_BIT
-
-	str     x30, [sp, #CTX_GPREGS_OFFSET + CTX_GPREG_LR]
-
-	/* Expect only SMC exceptions */
-	mrs     x30, esr_el3
-	ubfx    x30, x30, #ESR_EC_SHIFT, #ESR_EC_LENGTH
-	cmp     x30, #EC_AARCH64_SMC
-	b.ne    unexpected_sync_exception
-
-	b       smc_handler64
-	check_vector_size SynchronousExceptionA64
-
-	.align  7
-IrqA64:
-	mov     x0, #IRQ_AARCH64
-	bl      plat_report_exception
-1:
-	wfi
-	b	1b
-	check_vector_size IrqA64
-
-	.align  7
-FiqA64:
-	mov     x0, #FIQ_AARCH64
-	bl      plat_report_exception
-1:
-	wfi
-	b	1b
-	check_vector_size FiqA64
-
-	.align  7
-SErrorA64:
-	mov     x0, #SERROR_AARCH64
-	bl      plat_report_exception
-1:
-	wfi
-	b	1b
-	check_vector_size SErrorA64
-
-/* -----------------------------------------------------
- * Lower EL using AArch32 : 0x600 - 0x800
- * -----------------------------------------------------
- */
-	.align  7
-SynchronousExceptionA32:
-	mov     x0, #SYNC_EXCEPTION_AARCH32
-	bl      plat_report_exception
-1:
-	wfi
-	b	1b
-	check_vector_size SynchronousExceptionA32
-
-	.align  7
-IrqA32:
-	mov     x0, #IRQ_AARCH32
-	bl      plat_report_exception
-1:
-	wfi
-	b	1b
-	check_vector_size IrqA32
-
-	.align  7
-FiqA32:
-	mov     x0, #FIQ_AARCH32
-	bl      plat_report_exception
-1:
-	wfi
-	b	1b
-	check_vector_size FiqA32
-
-	.align  7
-SErrorA32:
-	mov     x0, #SERROR_AARCH32
-	bl      plat_report_exception
-1:
-	wfi
-	b	1b
-	check_vector_size SErrorA32
-
-
-
 
 /* -----------------------------------------------------
  * Save Secure/Normal world context and jump to
@@ -422,4 +232,194 @@ el3_exit:
 	msr	sp_el0, x17
 	ldp	x16, x17, [sp, #CTX_GPREGS_OFFSET + CTX_GPREG_X16]
 	eret
+
+	.globl  aarch64_exceptions
+
+	/*
+	 * This macro verifies that the a given vector doesn't exceed the
+	 * architectural limit of 32 instructions. This is meant to be placed
+	 * immedately after the last instruction in the vector. It takes the
+	 * vector entry as the parameter
+	 */
+	.macro check_vector_size since
+		.if (. - \since) > (32 * 4)
+			.error "Vector exceeds 32 instructions"
+		.endif
+	.endm
+
+	.section .vectors, "ax"; .align 11
+
+/* -----------------------------------------------------
+ * Very simple stackless exception handlers used by BL1.
+ * -----------------------------------------------------
+ */
+	.global exception_vectors
+exception_vectors:
+/* -----------------------------------------------------
+ * Current EL with SP0 : 0x0 - 0x200
+ * -----------------------------------------------------
+ */
+	.align  7
+SynchronousExceptionSP0:
+	mov	x0, #SYNC_EXCEPTION_SP_EL0
+	bl	plat_report_exception
+1:
+	wfi
+	b	1b	
+	check_vector_size SynchronousExceptionSP0
+
+	.align  7
+IrqSP0:
+	mov     x0, #IRQ_SP_EL0
+	bl      plat_report_exception
+1:
+	wfi
+	b	1b
+	check_vector_size IrqSP0
+
+	.align  7
+FiqSP0:
+	mov     x0, #FIQ_SP_EL0
+	bl      plat_report_exception
+1:
+	wfi
+	b	1b
+	check_vector_size FiqSP0
+
+	.align  7
+SErrorSP0:
+	mov	x0, #SERROR_SP_EL0
+	bl	plat_report_exception
+1:
+	wfi
+	b	1b
+	check_vector_size SErrorSP0
+/* -----------------------------------------------------
+ * Current EL with SPx: 0x200 - 0x400
+ * -----------------------------------------------------
+ */
+	.align  7
+SynchronousExceptionSPx:
+	mov     x0, #SYNC_EXCEPTION_SP_ELX
+	bl      plat_report_exception
+1:
+	wfi
+	b	1b
+	check_vector_size SynchronousExceptionSPx
+
+	.align  7
+IrqSPx:
+	mov     x0, #IRQ_SP_ELX
+	bl      plat_report_exception
+1:
+	wfi
+	b	1b
+	check_vector_size IrqSPx
+
+	.align  7
+FiqSPx:
+	mov     x0, #FIQ_SP_ELX
+	bl      plat_report_exception
+1:
+	wfi
+	b	1b
+	check_vector_size FiqSPx
+
+	.align  7
+SErrorSPx:
+	mov     x0, #SERROR_SP_ELX
+	bl      plat_report_exception
+1:
+	wfi
+	b	1b
+	check_vector_size SErrorSPx
+
+/* -----------------------------------------------------
+ * Lower EL using AArch64 : 0x400 - 0x600
+ * -----------------------------------------------------
+ */
+	.align  7
+SynchronousExceptionA64:
+	/* Enable the SError interrupt */
+	msr     daifclr, #DAIF_ABT_BIT
+
+	str     x30, [sp, #CTX_GPREGS_OFFSET + CTX_GPREG_LR]
+
+	/* Expect only SMC exceptions */
+	mrs     x30, esr_el3
+	ubfx    x30, x30, #ESR_EC_SHIFT, #ESR_EC_LENGTH
+	cmp     x30, #EC_AARCH64_SMC
+	b.ne    unexpected_sync_exception
+
+	b       smc_handler64
+	check_vector_size SynchronousExceptionA64
+
+	.align  7
+IrqA64:
+	mov     x0, #IRQ_AARCH64
+	bl      plat_report_exception
+1:
+	wfi
+	b	1b
+	check_vector_size IrqA64
+
+	.align  7
+FiqA64:
+	mov     x0, #FIQ_AARCH64
+	bl      plat_report_exception
+1:
+	wfi
+	b	1b
+	check_vector_size FiqA64
+
+	.align  7
+SErrorA64:
+	mov     x0, #SERROR_AARCH64
+	bl      plat_report_exception
+1:
+	wfi
+	b	1b
+	check_vector_size SErrorA64
+
+/* -----------------------------------------------------
+ * Lower EL using AArch32 : 0x600 - 0x800
+ * -----------------------------------------------------
+ */
+	.align  7
+SynchronousExceptionA32:
+	mov     x0, #SYNC_EXCEPTION_AARCH32
+	bl      plat_report_exception
+1:
+	wfi
+	b	1b
+	check_vector_size SynchronousExceptionA32
+
+	.align  7
+IrqA32:
+	mov     x0, #IRQ_AARCH32
+	bl      plat_report_exception
+1:
+	wfi
+	b	1b
+	check_vector_size IrqA32
+
+	.align  7
+FiqA32:
+	mov     x0, #FIQ_AARCH32
+	bl      plat_report_exception
+1:
+	wfi
+	b	1b
+	check_vector_size FiqA32
+
+	.align  7
+SErrorA32:
+	mov     x0, #SERROR_AARCH32
+	bl      plat_report_exception
+1:
+	wfi
+	b	1b
+	check_vector_size SErrorA32
+
+
 

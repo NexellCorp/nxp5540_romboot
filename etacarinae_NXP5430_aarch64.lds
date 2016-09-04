@@ -2,10 +2,14 @@ OUTPUT_FORMAT("elf64-littleaarch64", "elf64-littleaarch64", "elf64-littleaarch64
 OUTPUT_ARCH(aarch64)
 ENTRY(Startup)
 
+;MEMORY {
+;    ROM (rx): ORIGIN = 0x50000000, LENGTH = 0x10000
+;    RAM (rwx): ORIGIN = 0x60000000, LENGTH = 0x34000
+;}
 SECTIONS
 {
 	. = 0x50000000;
-	. = ALIGN(4);
+	. = ALIGN(4096);
 	.text :
 	{
 		obj/startup_aarch64.o	(.text)
