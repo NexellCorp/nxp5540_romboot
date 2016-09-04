@@ -8,7 +8,7 @@ SECTIONS
 	. = ALIGN(4);
 	.text :
 	{
-		obj/startup_aarch64_NXP5430.o	(.text)
+		obj/startup_aarch64.o	(.text)
 		*(.text)
 	}
 

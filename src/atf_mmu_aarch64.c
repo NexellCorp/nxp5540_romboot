@@ -16,7 +16,8 @@
 
 
 #include "nx_type.h"
-#include "nx_etacarinae.h"
+//#include "nx_etacarinae.h"
+#include "lib_aarch64.h"
 #include "atf_mmu_aarch64.h"
 #include "printf.h"
 

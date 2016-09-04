@@ -16,8 +16,10 @@
  *			  2015.05.04	Hans Change to support AArch64
  */
 #include "nx_etacarinae.h"
+#include "lib_aarch64.h"
 
-#include "aarch64_Vectors.inc"
+
+.global exception_vectors
 
 	.align 9, 0	// 2^9 = 512 bytes sector size
 
@@ -42,16 +44,110 @@ Startup:
 primary_cold_start:
 
 	msr	DAIFSet, #(I_Bit|F_Bit|A_Bit)	//; disable interrupt & fast interrupt and Abort
+//	plat_reset_handler
+	/* In juno, it sets the latency of L2 Data and Tag. How about nexell? */
+	/* Do anything just after reset. At here, do we need? */
+//	plat_reset_handler
 
+	MOV	x1, #(SCTLR_I_BIT | SCTLR_A_BIT | SCTLR_SA_BIT)
+	mrs	x0, SCTLR_EL3
+	orr	x0, x0, x1
+	msr	SCTLR_EL3, x0
+	isb
 
-	bl	remap_vectors
+	adr	x0, exception_vectors
+	msr	VBAR_EL3, x0
+	isb
 
+	msr	DAIFClr, #(A_Bit)	//; Enable Abort
+
+	mrs	x0, CPTR_EL3
+	bic	w0, w0, #TCPAC_BIT
+	bic	w0, w0, #TTA_BIT
+	bic	w0, w0, #TFP_BIT
+	msr	CPTR_EL3, x0
+
+#ifdef NXP5540
+//;=============================================================================
+//; pad retention off
+//;=============================================================================
+//;	MOV	X0, #0x089c		//; alive pad retention reg
+//;	MOVK	X0, #0x2001, lsl #16
+//;	MOV	X1, #0x3FF
+//;	STR	X1, [x0]		//; pad retention off
+
+//;=============================================================================
+//; Get Boot Config
+//;=============================================================================
+	MOV	x0, #0x027C
+	MOVK	x0, #0x2001, lsl #16	//; syscon address
+	LDR	w29, [x0]		//; Get Boot Config
+#endif
+
+#ifdef NXP5430
 //;==================================================================
 //; Get Boot Config
 //;==================================================================
 	MOV	x0, #0xFE50		//; nsih virtual register address
 	MOVk	x0, #0x4FFF, lsl #16	//; syscon address
 	LDR	w29, [x0]		//; Get Boot Config
+#endif
+
+#ifdef NXP5540
+//;=============================================================================
+//; Set Cache EMA for Each Core Voltage
+//;=============================================================================
+	MOV	x0, xzr
+	MOVK	x0, #0x202C, lsl #16	//; tie-off reg base address
+
+	MOV	x2, #(18 * 4)
+	LDR	w1, [x0]		//; Get CPU0 EMA
+
+	BIC	w1, w1, #(7<<17)	//; clear CPU0 EMA
+	BIC	w1, w1, #(7<<23)	//; clear CPU0 L2EMA
+
+	//; 0: 1.0 volt	3 apply		1: 1.1 volt 1 apply - reset config
+	TST	w29, #(1<<COREVOLTAGE)
+	MOV	w3, #0
+	b.eq	1f
+	MOV	w3, #1<<17		//; 1 ==> 1.1 volt
+	ORR	w3, w3, #1<<23
+	b	2f
+1:
+	MOV	w3, #3<<17		//; 0 ==> 1.0 volt
+	ORR	w3, w3, #3<<23
+2:
+
+	ORR	w1, w1, w3		//; apply CPU0 EMA
+
+	STR	w1, [x0, #(18*4)]	//; Set CPU0 EMA
+//;=============================================================================
+//; Reset Release for Access to SRAM
+//;=============================================================================
+	MOV	x1, #0x040C		//; release cmu coda reset
+	MOVK	x1, #0x2010, lsl #16	//; cmu sys base
+	LDR	w2, [x1]	
+	ORR	w2, w2, #0x00000010	//; cmu sys coda reset release
+	STR	w2, [x1]		//; release cmu coda reset
+
+	MOV	x1, #0x8000		//; cmu sys coda reset offset
+	MOVK	x1, #0x2010, lsl #16	//; cmu sys base
+	LDR	w2, [x1]		//; release cmu coda reset
+	ORR	w2, w2, #0x40000000	//; cmu sys coda reset release
+	STR	w2, [x1]		//; release cmu coda reset
+
+	MOV	x1, #0x0408
+	MOVK	x1, #0x2021, lsl #16	//; cmu coda base
+	LDR	w2, [x1]		//; release axi sram reset
+	ORR	w2, w2, #0x00000001	//; axi sram reset release
+	STR	w2, [x1]		//; release axi sram reset
+
+	MOV	x1, #0x8000		//; cmu coda sram offset
+	MOVK	x1, #0x2021, lsl #16	//; cmu coda base
+	LDR	w2, [x1, #0x0]		//; release axi sram reset
+	ORR	w2, w2, #0x00000060	//; axi sram reset release
+	STR	w2, [x1, #0x0]		//; release axi sram reset
+#endif
 
 //;==================================================================
 //; Setup System Coprocessor
@@ -67,8 +163,6 @@ primary_cold_start:
 	bic	x0, x0, #(1<<0)			// 0: secure mode
 	msr	SCR_EL3, x0
 
-	msr	CPTR_EL3, xzr			//; not traped FP, SIMD
-
 	mrs	x0, S3_1_c15_c2_1
 	orr	x0, x0, #(1<<6)			// [6] SMPEN
 	msr	S3_1_c15_c2_1, x0
@@ -78,11 +172,6 @@ primary_cold_start:
 	orr	x0, x0, #(3<<20)		//; access fpu is not traped EL0, EL1
 	msr	CPACR_EL1, x0
 
-	mrs	x0, CPTR_EL3
-	bic	w0, w0, #TCPAC_BIT
-	bic	w0, w0, #TTA_BIT
-	bic	w0, w0, #TFP_BIT
-	msr	CPTR_EL3, x0
 
 
 #if 0	// not need
@@ -97,14 +186,25 @@ primary_cold_start:
 //;=============================================================================
 //; boot delay for cache auto initialize 10000ns
 //;=============================================================================
+#ifdef NXP5430
 	MOV	x0, 0x113C
 	MOVK	x0, #0xC001, lsl #16	//; ARM efuse status register address
 	MOV	x2, #0x3<<16
-EfuseInitRecheck:
+1:
 	LDR	w1, [x0]
 	AND	w1, w1, w2	//; 16: ARMTOP Efuse Initial Done, 17: ARMTOP_P1 Efuse Initial Done
 	CMP	w1, w2
-	B.ne	EfuseInitRecheck
+	B.ne	1b
+#endif
+#ifdef NXP5540
+	MOV	x0, xzr
+	MOVK	x0, #0x202C, lsl #16	//; ARM efuse status register address
+1:
+	LDR	w1, [x0, #(1*4)]
+	AND	w1, w1, #(1<<24)	//; 24: ARMTOP Efuse Initial Done
+	CMP	w1, wzr
+	B.eq	1b
+#endif
 
 	ic	ialluis				//; invalidate icache all
 	isb	sy
@@ -112,11 +212,6 @@ EfuseInitRecheck:
 	mov	x1, #(SCTLR_SA_BIT | SCTLR_A_BIT | SCTLR_I_BIT)
 	orr	x0, x0, x1
 	msr	SCTLR_EL3, x0			//; icache enable
-
-	mov	w0, #BASEADDR_SRAM
-	add	x0, x0, #INTERNAL_SRAM_SIZE
-
-	mov	sp, x0
 
 #if 0
 	ldr	x0, = __bss_start__
@@ -136,60 +231,19 @@ clbss_l:
 	str	xzr, [x1], #8			// clear 64-bit BSS word
 	b.lo	clbss_l
 clbss_e:
+//;==================================================================
+//; Setup stacks
+//;==================================================================
+	mov	x0, #BASEADDR_SRAM
+	add	x0, x0, #INTERNAL_SRAM_SIZE
+	mov	sp, x0
 
-	mov	x0, x29
+	mov	w0, w29		//; restore boot config
 
 	bl	iROMBOOT		//; save this in register for possible long jump
 	b	.
 
 	.ltorg
-
-//.global sync_asm_handler_EL3
-	.align 4
-.global synchrorous_vector_jump
-synchrorous_vector_jump:
-	adr     x0, sync_vector_value
-	ldr     w0, [x0]
-	br      x0
-sync_vector_value:
-	.long    sync_asm_handler_EL3
-
-.global    remap_vectors
-// void remap_vectors(U32 cpuid, U32 *synchrorous_vector_jump,
-//			void temp, U32 *__bss_end__);
-remap_vectors:
-	ldr	x3, =__bss_end__
-	add	x3, x3, #0x7FF
-	bic	x3, x3, #0x7FF
-
-	ldr	x1, =synchrorous_vector_jump
-	ldr	x2, [x1], #8
-//;	str	x2, [x3, #0x000]	//; current Exception level with SP_EL0
-	str	x2, [x3, #0x200]	//; current Exception level with SP_ELx, x>0
-	str	x2, [x3, #0x400]	//; Lower Exception level with aarch64
-	str	x2, [x3, #0x600]	//; Lower Exception level with aarch32
-	ldr	x2, [x1], #8
-//;	str	x2, [x3, #0x008]	//; current Exception level with SP_EL0
-	str	x2, [x3, #0x208]	//; current Exception level with SP_ELx, x>0
-	str	x2, [x3, #0x408]	//; Lower Exception level with aarch64
-	str	x2, [x3, #0x608]	//; Lower Exception level with aarch32
-
-        msr	VBAR_EL3, x3			//; reset exception vector
-
-	ret
-
-	.ltorg
-//==================================================================
-// Exception Handler entry
-//==================================================================
-	.align 3
-	.global sync_asm_handler_EL3
-sync_asm_handler_EL3:
-	PUSH_HANDLER_FRAME
-	bl	sync_c_handler_EL3
-	POP_HANDLER_FRAME
-	msr	elr_el3, x30                        //; lr
-	eret
 
 //;==================================================================
 //; End of startup.s
