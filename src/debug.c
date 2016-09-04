@@ -18,6 +18,7 @@
 #include <nx_uart.h>
 #include "libarm.h"
 #include "libplat.h"
+#include "nx_etacarinae_bootoption.h"
 
 #ifdef NXP5430
 #include <nx_chip.h>
@@ -120,6 +121,8 @@ static struct NX_UART_RegisterSet * const pReg_Uart =
 CBOOL DebugInit(U32 port)
 {
 	U32 SOURCE_CLOCK = 147456000;
+	if (GetBootOption() & 1 << NOBOOTMSG)
+		return 0;
 #ifdef NXP5430
 	pReg_Uart = (struct NX_UART_RegisterSet *)((MPTRS)UARTBASEADDR[port]);
 	struct NX_CLKGEN_RegisterSet * const pReg_UartClkGen =
