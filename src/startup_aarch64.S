@@ -29,7 +29,7 @@
 //;==================================================================
 .global Startup
 Startup:
-	b	.
+//	b	.
 	mrs	x0, SCTLR_EL3
 	bic	x0, x0, #(SCTLR_EE_BIT)		//; little endian
 	msr	SCTLR_EL3, x0
@@ -43,8 +43,8 @@ Startup:
 	b	99b
 
 primary_cold_start:
-
-	msr	DAIFSet, #(I_Bit|F_Bit|A_Bit)	//; disable interrupt & fast interrupt and Abort
+	//; disable interrupt & fast interrupt and Abort
+	msr	DAIFSet, #(I_Bit|F_Bit|A_Bit)
 //	plat_reset_handler
 	/* In juno, it sets the latency of L2 Data and Tag. How about nexell? */
 	/* Do anything just after reset. At here, do we need? */

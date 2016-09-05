@@ -31,7 +31,8 @@ smc_handler64:
  */
 	mov     x30, #BL1_SMC_RUN_IMAGE
 	cmp     x30, x0
-	b.ne    smc_handler
+	b.ne	.	//; not supported general smc service
+//	b.ne    smc_handler
 
 /* ------------------------------------------------
  * Make sure only Secure world reaches here.
@@ -46,9 +47,11 @@ smc_handler64:
  * SP_EL0 for the C runtime stack.
  * ----------------------------------------------
  */
+/*	// no need any stack
 	ldr     x30, [sp, #CTX_EL3STATE_OFFSET + CTX_RUNTIME_SP]
 	msr     spsel, #0
 	mov     sp, x30
+*/
 
 /* ---------------------------------------------------------------------
  * Pass EL3 control to BL31.
@@ -91,7 +94,7 @@ disable_mmu_icache_el3:
 	isb                             // ensure MMU is off
 	dsb     sy
 	ret
-
+#if 0
 /* -----------------------------------------------------
  * Save Secure/Normal world context and jump to
  * BL1 SMC handler.
@@ -232,7 +235,7 @@ el3_exit:
 	msr	sp_el0, x17
 	ldp	x16, x17, [sp, #CTX_GPREGS_OFFSET + CTX_GPREG_X16]
 	eret
-
+#endif
 
 
 
@@ -350,7 +353,7 @@ SynchronousExceptionA64:
 	/* Enable the SError interrupt */
 	msr     daifclr, #DAIF_ABT_BIT
 
-	str     x30, [sp, #CTX_GPREGS_OFFSET + CTX_GPREG_LR]
+//;	str     x30, [sp, #CTX_GPREGS_OFFSET + CTX_GPREG_LR]
 
 	/* Expect only SMC exceptions */
 	mrs     x30, esr_el3
