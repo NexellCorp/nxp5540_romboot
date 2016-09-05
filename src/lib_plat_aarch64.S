@@ -13,6 +13,7 @@
  *	Author          : Firware Team
  *	History         : 2016.09.04 Hans Create
  */
+#include "nx_etacarinae_bootoption.h"
 
 #ifdef NXP5430
 #define UART0_BASE		0xC00A1000
@@ -52,7 +53,7 @@ plat_crash_console_putc:
 	movk	x1, #(PLAT_UART_BASE >> 16), lsl #16
 
 	/* Check the input parameter */
-	cbz     x1, putc_error
+//;	cbz     x1, putc_error
 	/* Prepend '\r' to '\n' */
 	cmp     w0, #0xA
 	b.ne    2f
@@ -113,6 +114,11 @@ asm_print_hex:
 
 .global plat_report_exception
 plat_report_exception:
+	MRS	x9, TPIDR_EL3
+	and	x9, x9, #(1 << NOBOOTMSG)
+	cmp	x9, #0
+	b.ne	.	//; if uart is not ready not output
+
 	mov     x8, x30
 
 	adr     x4, plat_err_str
@@ -134,7 +140,7 @@ plat_report_exception:
 	ret
 .section .rodata.rev_err_str, "aS"
 plat_err_str:
-	.asciz "\nPlatform exception reporting:"
+	.asciz "\nEL3 Exception:"
 esr_el3_str:
 	.asciz "\nESR_EL3: "
 elr_el3_str:
