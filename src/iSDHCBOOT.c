@@ -934,6 +934,11 @@ CBOOL NX_SDMMC_Init(SDXCBOOTSTATUS *pSDXCBootStatus)
 	pSDXCReg->INTMASK = 0;
 	pSDXCReg->RINTSTS = 0xFFFFFFFF;
 
+#ifdef NXP5540
+	// Wake up & Power on fifo sram
+	pSDXCReg->TIESRAM = 0x3;
+#endif
+
 	return CTRUE;
 }
 
@@ -1221,7 +1226,84 @@ End:
 
 	return result;
 }
-#if 1
+
+//------------------------------------------------------------------------------
+static CBOOL NX_SDMMC_ReadBootSector(
+		SDXCBOOTSTATUS *pSDXCBootStatus,
+		U32 numberOfSector,
+		U32 *pdwBuffer)
+{
+	U32		count;
+	register struct NX_SDMMC_RegisterSet * const pSDXCReg =
+					pgSDXCReg[pSDXCBootStatus->SDPort];
+
+	NX_ASSERT(0==((U32)pdwBuffer & 3));
+
+	count = numberOfSector * BLOCK_LENGTH;
+	NX_ASSERT(0 == (count % 32));
+
+	while (0 < count) {
+		if ((pSDXCReg->RINTSTS & NX_SDXC_RINTSTS_RXDR)
+		 || (pSDXCReg->RINTSTS & NX_SDXC_RINTSTS_DTO)) {
+			U32 FSize, Timeout = NX_SDMMC_TIMEOUT;
+			while ((pSDXCReg->STATUS & NX_SDXC_STATUS_FIFOEMPTY) &&
+					Timeout--)
+				;
+//			if (0 == Timeout)
+//				break;
+			FSize = (pSDXCReg->STATUS &
+					NX_SDXC_STATUS_FIFOCOUNT) >> 17;
+			count -= (FSize * 4);
+			while (FSize) {
+				*pdwBuffer++ = pSDXCReg->DATA;
+				FSize--;
+			}
+
+			pSDXCReg->RINTSTS = NX_SDXC_RINTSTS_RXDR;
+		}
+#if 0
+		// Check Errors
+		if (pSDXCReg->RINTSTS & (NX_SDXC_RINTSTS_DRTO |
+					NX_SDXC_RINTSTS_EBE |
+					NX_SDXC_RINTSTS_SBE |
+					NX_SDXC_RINTSTS_DCRC)) {
+			printf("Read left = %x\r\n", count);
+
+			if (pSDXCReg->RINTSTS & NX_SDXC_RINTSTS_DRTO)
+				printf("DRTO\r\n");
+			if (pSDXCReg->RINTSTS & NX_SDXC_RINTSTS_EBE)
+				printf("EBE\r\n");
+			if (pSDXCReg->RINTSTS & NX_SDXC_RINTSTS_SBE)
+				printf("SBE\r\n");
+			if (pSDXCReg->RINTSTS & NX_SDXC_RINTSTS_DCRC)
+				printf("DCRC\r\n");
+
+			return CFALSE;
+		}
+#endif
+		if (pSDXCReg->RINTSTS & NX_SDXC_RINTSTS_DTO) {
+			if (count == 0) {
+				pSDXCReg->RINTSTS = NX_SDXC_RINTSTS_DTO;
+				printf("DTO\r\n");
+				break;
+			}
+		}
+
+		#if defined(NX_DEBUG)
+		if (pSDXCReg->RINTSTS & NX_SDXC_RINTSTS_HTO) {
+			printf("HTO\r\n");
+			pSDXCReg->RINTSTS = NX_SDXC_RINTSTS_HTO;
+		}
+		#endif
+
+		NX_ASSERT(0 == (pSDXCReg->RINTSTS & NX_SDXC_RINTSTS_FRUN));
+	}
+
+	pSDXCReg->RINTSTS = NX_SDXC_RINTSTS_DTO;
+
+	return CTRUE;
+}
+#ifdef NXP5430
 void DataDump(U32 * Addr, U32 Size)
 {
 	U32 i, j;
@@ -1281,19 +1363,25 @@ static CBOOL eMMCBoot(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 	cmd.flag	|= NX_SDXC_CMDFLAG_EXPECTBOOTACK;
 #endif
 
-//	if (option & 1 << EMMCBOOT)
-		cmd.flag |= NX_SDXC_CMDFLAG_ENABLE_BOOT;
+	option |= 1 << eMMCBOOTMODE;
+//	0: normal boot, 1: Alternative boot
+	if ((option & 1 << eMMCBOOTMODE) == 0)
+		cmd.flag |= NX_SDXC_CMDFLAG_ENABLE_BOOT;	// normal boot
 
+	/* just send boot command. no expect response */
 	if (NX_SDMMC_STATUS_NOERROR !=
 			NX_SDMMC_SendCommandInternal(pSDXCBootStatus, &cmd)) {
-		printf("Send Cmd Internal Err\r\n");
-		goto error;
+		if (option & 1 << eMMCBOOTMODE) {
+			printf("Send Cmd Internal Err\r\n");
+			goto error;
+		}
 	}
+
 	struct nx_bootinfo *pSBI =
 		(struct nx_bootinfo *)BASEADDR_SRAM;
 
 	// read bootheader 1024 bytes
-	if (NX_SDMMC_ReadSectorData(pSDXCBootStatus, 2, (U32 *)pSBI)
+	if (NX_SDMMC_ReadBootSector(pSDXCBootStatus, 2, (U32 *)pSBI)
 			== CFALSE) { 
 		printf("Cannot Read Boot Header\r\n");
 		goto error;
@@ -1302,11 +1390,15 @@ static CBOOL eMMCBoot(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
  		Decrypt((U32*)BASEADDR_SRAM, (U32*)BASEADDR_SRAM,
 				sizeof(struct nx_bootheader));
 
+#ifdef NXP5430
+	DataDump(BASEADDR_SRAM, 1024);
+#endif
 	if (pSBI->signature != HEADER_ID) {
-		printf("boot header error (%04X)\r\n", pSBI->signature);
+		printf("no boot header(%04X)\r\n", pSBI->signature);
 		goto error;
 	}
 
+//	__asm__ __volatile__ ("wfi");
 	printf("Load Addr: %x, Load Size: %x, Launch Addr :%x\r\n",
 			pSBI->LoadAddr, pSBI->LoadSize,
 			pSBI->StartAddr);
@@ -1317,7 +1409,7 @@ static CBOOL eMMCBoot(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 		BootSize = INTERNAL_SRAM_SIZE - SECONDBOOT_STACK;
 
 	//	Read Data
-	result = NX_SDMMC_ReadSectorData(pSDXCBootStatus,
+	result = NX_SDMMC_ReadBootSector(pSDXCBootStatus,
 			(BootSize + BLOCK_LENGTH - 1) / BLOCK_LENGTH,
 			(U32 *)(BASEADDR_SRAM + sizeof(struct nx_bootheader)));
 
@@ -1326,6 +1418,9 @@ static CBOOL eMMCBoot(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 			(U32*)(BASEADDR_SRAM + sizeof(struct nx_bootheader)),
 			BootSize);
 
+#ifdef NXP5430
+	DataDump(BASEADDR_SRAM, 1024);
+#endif
 error:
 
 	//--------------------------------------------------------------------------
@@ -1385,7 +1480,9 @@ static CBOOL SDMMCBOOT(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 
 	if (pSBI->signature != HEADER_ID) {
 		printf("wrong boot Sinature(%04x)\r\n", pSBI->signature);
+#ifdef NXP5430
 		DataDump((U32*)pSBI, sizeof(struct nx_bootheader));
+#endif
 		goto error;
 	}
 	U32 BootSize;
