@@ -126,12 +126,28 @@
 #define TFP_BIT                 (1 << 10)
 
 /* CPSR/SPSR definitions */
-#define DAIF_FIQ_BIT            (1 << 0)
-#define DAIF_IRQ_BIT            (1 << 1)
-#define DAIF_ABT_BIT            (1 << 2)
-#define DAIF_DBG_BIT            (1 << 3)
-#define SPSR_DAIF_SHIFT         6
-#define SPSR_DAIF_MASK          0xf
+#define DAIF_FIQ_BIT		(1 << 0)
+#define DAIF_IRQ_BIT		(1 << 1)
+#define DAIF_ABT_BIT		(1 << 2)
+#define DAIF_DBG_BIT		(1 << 3)
+#define SPSR_DAIF_SHIFT		6
+#define SPSR_DAIF_MASK		0xf
+
+#define SPSR_AIF_SHIFT		6
+#define SPSR_AIF_MASK		0x7
+
+#define SPSR_E_SHIFT		9
+#define SPSR_E_MASK		0x1
+#define SPSR_E_LITTLE		0x0
+#define SPSR_E_BIG		0x1
+
+#define SPSR_T_SHIFT		5
+#define SPSR_T_MASK		0x1
+#define SPSR_T_ARM		0x0
+#define SPSR_T_THUMB		0x1
+
+#define DISABLE_ALL_EXCEPTIONS \
+		(DAIF_FIQ_BIT | DAIF_IRQ_BIT | DAIF_ABT_BIT | DAIF_DBG_BIT)
 
 #define HCR_RW_BIT		(1ull << 31)
 #define HCR_AMO_BIT		(1 << 5)
@@ -175,6 +191,18 @@
 #define MODE_EL0		0x0
 #endif
 
+#define SPSR_64(el, sp, daif)				\
+	(MODE_RW_64 << MODE_RW_SHIFT |			\
+	((el) & MODE_EL_MASK) << MODE_EL_SHIFT |	\
+	((sp) & MODE_SP_MASK) << MODE_SP_SHIFT |	\
+	((daif) & SPSR_DAIF_MASK) << SPSR_DAIF_SHIFT)
+
+#define SPSR_MODE32(mode, isa, endian, aif)		\
+	(MODE_RW_32 << MODE_RW_SHIFT |			\
+	((mode) & MODE32_MASK) << MODE32_SHIFT |	\
+	((isa) & SPSR_T_MASK) << SPSR_T_SHIFT |		\
+	((endian) & SPSR_E_MASK) << SPSR_E_SHIFT |	\
+	((aif) & SPSR_AIF_MASK) << SPSR_AIF_SHIFT)
 
 //;-------------------------------------------------------------------------------
 //; Control register 1 format bit definition

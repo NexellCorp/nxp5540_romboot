@@ -61,7 +61,7 @@
 
 
 #define NOBOOTMSG		12	// 0: boot message, 1: no boot message
-#define NOBOOT			13	// must be zero
+#define BOOTHALT		13	// must be zero
 #define VALIDFIELD		14	// 0: valid, 1: invalid
 #define BOOTCFGUSE		15	// 0: not use, 1: use
 

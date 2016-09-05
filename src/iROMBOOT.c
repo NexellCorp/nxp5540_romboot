@@ -1,19 +1,18 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//	Copyright (C) 2009 Nexell Co., Ltd All Rights Reserved
-//	Nexell Co. Proprietary & Confidential
-//
-//	Nexell informs that this code and information is provided "as is" base
-//	and without warranty of any kind, either expressed or implied, including
-//	but not limited to the implied warranties of merchantability and/or fitness
-//	for a particular puporse.
-//
-//
-//	Module		:
-//	File		: iROMBOOT.c
-//	Description	:
-//	Author		: Hans
-//	History		:
+// Copyright (C) 2009 Nexell Co., Ltd All Rights Reserved
+// Nexell Co. Proprietary & Confidential
+// 
+// Nexell informs that this code and information is provided "as is" base
+// and without warranty of any kind, either expressed or implied, including
+// but not limited to the implied warranties of merchantability and/or
+// fitness for a particular puporse.
+// 
+// Module		:
+// File		: iROMBOOT.c
+// Description	:
+// Author		: Hans
+// History		:
 //		2014-01-12	Hans create
 //		2016-08-09	Hans modified for NXP5540
 ////////////////////////////////////////////////////////////////////////////////
@@ -36,6 +35,9 @@
 
 #include "printf.h"
 
+#include "libarm.h"
+#include "lib_aarch64.h"
+
 #ifdef NXP5430
 struct NX_GPIO_RegisterSet (* const pGPIOReg)[1] =
 	(struct NX_GPIO_RegisterSet (*)[])PHY_BASEADDR_GPIOA_MODULE;
@@ -56,12 +58,14 @@ extern CBOOL iSPIBOOT(U32 option);
 extern CBOOL iSDXCBOOT(U32 option);
 extern CBOOL iNANDBOOTEC(U32 option);
 void enable_mmu_el3(U32);
+void EnterLowLevel(unsigned int *EL1Start, unsigned int rSPSR);
+void buildinfo(void);
 //------------------------------------------------------------------------------
 void iROMBOOT(U32 OrgBootOption)
 {
-	void (*pLaunch)(void) = (void(*)(void))BASEADDR_SRAM;
 	CBOOL Result = CFALSE;
 	U32 option = OrgBootOption;
+	U32 eBootOption;
 
 #ifdef NXP5430
 	//--------------------------------------------------------------------------
@@ -70,61 +74,82 @@ void iROMBOOT(U32 OrgBootOption)
 	// Enable writing data to ALIVE registers.
 	pALIVEReg->ALIVEPWRGATEREG 	= 1;
 
-	pALIVEReg->VDDCTRLSETREG	= 0x00000003;
+	pALIVEReg->VDDCTRLSETREG	= 0x00000003;	// need pad retention off
 
 	// Disable writing data to ALIVE registers.
 	pALIVEReg->ALIVEPWRGATEREG 	= 0;
-#endif
 
 	while (!(pECIDReg->EC[2] & 1 << 15))	// wait efuse ready
 		;
+#endif
+
 #ifdef NXP5540
 
+	while (!(pECIDReg->EC[2] & 1 << 16))	// wait efuse ready
+		;
 	CBOOL IsSecure = !!(pECIDReg->SJTAG[0] | pECIDReg->SJTAG[1] |
 			pECIDReg->SJTAG[2] | pECIDReg->SJTAG[3]);
 
-	// copy secure jtag hash to aes secure key for secure boot decrypt.
-	pECIDReg->CRAESKEY[0] = pECIDReg->SJTAG[0];
-	pECIDReg->CRAESKEY[1] = pECIDReg->SJTAG[1];
-	pECIDReg->CRAESKEY[2] = pECIDReg->SJTAG[2];
-	pECIDReg->CRAESKEY[3] = pECIDReg->SJTAG[3];
+	if (IsSecure == 1) {
+		option |= 1 << DECRYPT;
 
-	U32 eRSTCFG = pECIDReg->RSTCFG;
-
-	if (eRSTCFG & 1 << 15)		// check boot config written
-		if ((eRSTCFG & 1 << 14) == 0) {	// check invalid mark
-			OrgBootOption = eRSTCFG & 0x3FFF;
-		} else {
-			eRSTCFG >>= 16;
-			if (eRSTCFG & 1 << 15)	// check boot config backup
-				if ((eRSTCFG & 1 << 14) == 0)	// check invalid mark
-					OrgBootOption = eRSTCFG & 0x3FFF;
-		}
+		// copy secure jtag hash to aes secure key for secure boot decrypt.
+		pECIDReg->CRAESKEY[0] = pECIDReg->SJTAG[0];
+		pECIDReg->CRAESKEY[1] = pECIDReg->SJTAG[1];
+		pECIDReg->CRAESKEY[2] = pECIDReg->SJTAG[2];
+		pECIDReg->CRAESKEY[3] = pECIDReg->SJTAG[3];
+	}
 #endif
 
 
-	//--------------------------------------------------------------------------
-	// Debug Console
-	//--------------------------------------------------------------------------
+#ifdef NXP5430
+	U32 eRSTCFG = 1 << BOOTCFGUSE | 0 << VALIDFIELD | 0 << BOOTHALT |
+		0 << NOBOOTMSG | 0 << USE_SDFS | 1 << NEXTTRYPORT |
+		0 << PORTNUMBER | 0 << BOOTMODE;
+#endif
+#ifdef NXP5540
+	U32 eRSTCFG = pECIDReg->RSTCFG;
+#endif
+
+	// check low boot config written and valid
+	if ((eRSTCFG & 0x3 << VALIDFIELD) == 0x2 << VALIDFIELD) {
+		eBootOption = eRSTCFG & 0x3FFF;
+	} else {
+		// check high boot config and valid
+		eRSTCFG >>= 16;
+		if ((eRSTCFG & 0x3 << VALIDFIELD) == 0x2 << VALIDFIELD)
+			eBootOption = eRSTCFG & 0x3FFF;
+		else
+			// any efuse value does not written.
+			// ext rstcfg has no next port information.
+			eBootOption |= 0x3 << NEXTTRYPORT;	// 3: no next try
+	}
+
+	option = (option & 1 << DECRYPT) | eBootOption;
+
+	SetBootOption(option);	// save boot option to system register.
+
+//--------------------------------------------------------------------------
+// Debug Console
+//--------------------------------------------------------------------------
 	DebugInit(3);
 
-	printf("\r\n\n iROMBOOT by Nexell Co. : Built on %s %s\r\n",
-			__DATE__, __TIME__);
+	buildinfo();
 
 	// mmu is enabled when you have some problem, you must check table addr.
-	enable_mmu_el3(0);
+	enable_mmu_el3((option & 1 << ICACHE)? 0 : 1 << 0);
 
-	printf("pad Boot Option: %02X\r\n", option);
+	printf("Boot Option: %02X\r\n", option);
 
-	if (((option >> BOOTMODE) & 0x7) == 1)
+	// external usb boot is top priority, always first checked.
+	if ((OrgBootOption & 0x7 << BOOTMODE) == 1) {
+		SetBootOption(option);	// save boot option to system register.
 		goto lastboot;
+	}
 
-#ifdef NXP5540
-
-	
-	printf("efuse Boot Option: %02X\r\n", option);
-#endif
-
+	if (option & 1 << BOOTHALT)
+		while (1)
+			__asm__ __volatile__ ("wfi");
 
 	do {
 //--------------------------------------------------------------------------
@@ -138,6 +163,9 @@ void iROMBOOT(U32 OrgBootOption)
 			Result = iSPIBOOT(option);
 			break;
 		default:
+			printf("not support boot mode(%x)\r\n", option);
+		case USBBOOT:
+			break;
 		case SDBOOT :	// iSDHCBOOT (SD/MMC/eSD/eMMC)
 		case EMMCBOOT :
 			Result = iSDXCBOOT(option);
@@ -145,23 +173,28 @@ void iROMBOOT(U32 OrgBootOption)
 		case NANDECBOOT :
 			Result = iNANDBOOTEC(option);
 			break;
+		case GMACBOOT:
+			break;
 		}
 
 		if (CTRUE == Result)
 			break;
 
-		if (option & 1 << NEXTTRY) {
+		U32 next_port = (option >> NEXTTRYPORT) & 0x3;
+		if (3 == next_port)
+			goto lastboot;
 
-			option = OrgBootOption & ~0x7UL;
-			option = OrgBootOption & ~(0x2UL << PORTNUMBER);
+		option = OrgBootOption & ~0x7UL;
+		option = OrgBootOption & ~(0x3UL << PORTNUMBER);
+		option |= next_port << PORTNUMBER;
 
-			if (option & 1 << USE_FS)
-				Result = iSDXCFSBOOT(option);
-			else
-				Result = iSDXCBOOT(option);
-			if (Result)
-				break;
-		}
+		if (option & 1 << USE_SDFS)
+			Result = iSDXCFSBOOT(option);
+		else
+			Result = iSDXCBOOT(option);
+
+		if (CTRUE == Result)
+			break;
 
 		option = OrgBootOption & ~0x7UL;
 		option |= USBBOOT;
@@ -170,5 +203,12 @@ lastboot:
 	} while (0);
 
 
-	pLaunch();
+	U32 scr_el3 = GetSCR_EL3();
+	scr_el3 &= ~(SCR_NS_BIT | SCR_RW_BIT | SCR_FIQ_BIT | SCR_IRQ_BIT |
+			SCR_ST_BIT | SCR_HCE_BIT);
+	scr_el3 |= SCR_RW_BIT;	// low level is aarch64
+	SetSCR_EL3(scr_el3);
+
+	U32 spsr_el3 = SPSR_64(MODE_EL1, MODE_SP_ELX, DISABLE_ALL_EXCEPTIONS);
+	EnterLowLevel((U32*)BASEADDR_SRAM, spsr_el3);
 }
