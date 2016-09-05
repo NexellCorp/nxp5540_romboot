@@ -214,7 +214,7 @@ primary_cold_start:
 	orr	x0, x0, x1
 	and	x2, x29, #(1 << ICACHE)
 	cmp	x2, xzr
-	b.eq	2f
+	b.ne	2f
 	orr	x0, x0, SCTLR_I_BIT
 2:
 	msr	SCTLR_EL3, x0			//; icache enable

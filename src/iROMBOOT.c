@@ -137,7 +137,7 @@ void iROMBOOT(U32 OrgBootOption)
 	buildinfo();
 
 	// mmu is enabled when you have some problem, you must check table addr.
-	enable_mmu_el3((option & 1 << ICACHE)? 0 : 1 << 0);
+	enable_mmu_el3((option & 1 << ICACHE)? 1 << 0 : 0);
 
 	printf("Boot Option: %02X\r\n", option);
 
