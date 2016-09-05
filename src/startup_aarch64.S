@@ -29,7 +29,7 @@
 //;==================================================================
 .global Startup
 Startup:
-//	b	.
+	b	.
 	mrs	x0, SCTLR_EL3
 	bic	x0, x0, #(SCTLR_EE_BIT)		//; little endian
 	msr	SCTLR_EL3, x0
@@ -50,7 +50,7 @@ primary_cold_start:
 	/* Do anything just after reset. At here, do we need? */
 //	plat_reset_handler
 
-	MOV	x1, #(SCTLR_I_BIT | SCTLR_A_BIT | SCTLR_SA_BIT)
+	MOV	x1, #(SCTLR_A_BIT | SCTLR_SA_BIT)
 	mrs	x0, SCTLR_EL3
 	orr	x0, x0, x1
 	msr	SCTLR_EL3, x0
@@ -210,8 +210,13 @@ primary_cold_start:
 	ic	ialluis				//; invalidate icache all
 	isb	sy
 	mrs	x0, SCTLR_EL3
-	mov	x1, #(SCTLR_SA_BIT | SCTLR_A_BIT | SCTLR_I_BIT)
+	mov	x1, #(SCTLR_SA_BIT | SCTLR_A_BIT)
 	orr	x0, x0, x1
+	and	x2, x29, #(1 << ICACHE)
+	cmp	x2, xzr
+	b.eq	2f
+	orr	x0, x0, SCTLR_I_BIT
+2:
 	msr	SCTLR_EL3, x0			//; icache enable
 
 #if 0
