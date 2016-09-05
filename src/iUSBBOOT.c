@@ -1017,14 +1017,26 @@ CBOOL iUSBBOOT(U32 option)
 	while (!(pUOReg->GCSR.GRSTCTL & AHB_MASTER_IDLE))
 		;
 
+#ifdef NXP5430
+	/* usb core soft reset */
+	pUOReg->GCSR.GRSTCTL = CORE_SOFT_RESET;
+	while(!(pUOReg->GCSR.GRSTCTL & AHB_MASTER_IDLE));
+
+	pTieoffreg->TIEOFFREG[13] &= ~(1 << 3);	// 8 : i_nUtmiResetSync
+	pTieoffreg->TIEOFFREG[13] &= ~(1 << 2);	// 7 : i_nResetSync
+	pTieoffreg->TIEOFFREG[13] |=   3 << 7;	// 27 : POR_ENB=1, 28 : POR=1
+#endif
 #ifdef NXP5540
 	 /* reset Avalid, Bvalid, sessend */
 	pUOReg->GCSR.GOTGCTL = 0x00;
-#endif
+
+	/* usb core soft reset */
+	pUOReg->GCSR.GRSTCTL = CORE_SOFT_RESET;
 
 	pTieoffreg->TIEOFFREG[0] &= ~(1 << 8);	// 8 : i_nUtmiResetSync
 	pTieoffreg->TIEOFFREG[0] &= ~(1 << 7);	// 7 : i_nResetSync
 	pTieoffreg->TIEOFFREG[1] |=   3 << 27;	// 27 : POR_ENB=1, 28 : POR=1
+#endif
 
 #ifdef NXP5430
 	ResetCon(RESETINDEX_OF_USB20OTG_MODULE_i_nRST, CTRUE);  // reset on
