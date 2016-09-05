@@ -21,7 +21,7 @@
 #include "nx_etacarinae_bootoption.h"
 
 
-		.align 8
+		.align 4
 
 //;==================================================================
 //; Vectors

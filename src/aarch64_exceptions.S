@@ -233,7 +233,15 @@ el3_exit:
 	ldp	x16, x17, [sp, #CTX_GPREGS_OFFSET + CTX_GPREG_X16]
 	eret
 
-	.globl  aarch64_exceptions
+
+
+
+
+/* -----------------------------------------------------------------------------
+ * start of exception vectors
+ * -----------------------------------------------------------------------------
+ */
+	.globl  exception_vectors
 
 	/*
 	 * This macro verifies that the a given vector doesn't exceed the
@@ -253,7 +261,6 @@ el3_exit:
  * Very simple stackless exception handlers used by BL1.
  * -----------------------------------------------------
  */
-	.global exception_vectors
 exception_vectors:
 /* -----------------------------------------------------
  * Current EL with SP0 : 0x0 - 0x200

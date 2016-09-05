@@ -81,7 +81,7 @@ struct NX_ALIVE_RegisterSet
 
 	volatile U32 ALIVEGPIOPADOUTRSTREG;			///< 0x8C : Alive GPIO PAD Out Reset Register
 	volatile U32 ALIVEGPIOPADOUTSETREG;			///< 0x90 : Alive GPIO PAD Out Set Register
-	volatile U32 ALIVEGPIOPADOUTREADREG;			///< 0x94 :	Alive GPIO PAD Out Read Register
+	volatile U32 ALIVEGPIOPADOUTREADREG;			///< 0x94 : Alive GPIO PAD Out Read Register
 
 	volatile U32 VDDCTRLRSTREG;				///< 0x98 : VDD Control Reset Register
 	volatile U32 VDDCTRLSETREG;				///< 0x9C : VDD Control Set Register
@@ -133,7 +133,7 @@ struct NX_ALIVE_RegisterSet
 
 enum
 {
-	ENV_ALIVE_GPIOS 		= 15, 			///<	Total number of ALIVE GPIO
+	ENV_ALIVE_GPIOS 		= 15, 	///<	Total number of ALIVE GPIO
 	ENV_ALIVE_GPIO_MASK 		= (1UL << ENV_ALIVE_GPIOS) - 1,	
 	ENV_ALIVE_GPIO_CEC         	= 6,
 	ENV_ALIVE_GPIO_VDDPWRTOGGLE	= 7
