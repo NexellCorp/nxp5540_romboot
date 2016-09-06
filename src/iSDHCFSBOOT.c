@@ -47,7 +47,7 @@ CBOOL ProcessNSIH(FIL *file, U8 *pOutData, U32 option)
 	S32 writesize = 0, skipline = 0, bytesize = 0, line = 0;
 	U32 writeval = 0, FSize = file->fsize;
 
-	printf("header file size: %d\r\n", file->fsize);
+//	printf("header file size: %d\r\n", file->fsize);
 
 	if (FSize > 32 * 1024)
 		FSize = 32 * 1024;
@@ -99,8 +99,8 @@ CBOOL ProcessNSIH(FIL *file, U8 *pOutData, U32 option)
 					}
 				} else {
 					if (writesize != 0) {
-						printf("ProcessNSIH : Error at "
-						"%d line.\r\n", line + 1);
+						printf("%d line error\r\n",
+								line + 1);
 						return CFALSE;
 					}
 				}
@@ -111,8 +111,8 @@ CBOOL ProcessNSIH(FIL *file, U8 *pOutData, U32 option)
 		}
 	}
 
-	printf("ProcessNSIH : %d line, %d bytes generated.\r\n",
-			line + 1, bytesize);
+//	printf("ProcessNSIH : %d line, %d bytes generated.\r\n",
+//			line + 1, bytesize);
 
 	return bytesize;
 }
@@ -125,20 +125,20 @@ static CBOOL FSBoot(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 		(struct nx_bootinfo *)BASEADDR_SRAM;
 	const char *diskname = "0:";
 
-	printf("mount to disk 0\r\n");
+//	printf("mount to disk 0\r\n");
 	FATFS.fs_type = 0;
 	FATFS.id = 0;
 	FATFS.diskhandle = (U32*)pSDXCBootStatus;
 
 	if (FR_OK != f_mount(&diskname, &FATFS, 0)) {
-		printf("disk mount fail\r\n");
+		printf("mount fail\r\n");
 		return Ret;
 	}
 	const char *headerfilename = "nxbtinfo.sbh";
 	FIL hfile;
 
 	if (FR_OK != f_open(&hfile, headerfilename, FA_READ, &FATFS)) {
-		printf("%s file open fail\r\n", headerfilename);
+		printf("%s open fail\r\n", headerfilename);
 		return Ret;
 	}
 
@@ -146,7 +146,7 @@ static CBOOL FSBoot(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 		goto errexith;
 
 	if (pSBI->signature == HEADER_ID) {
-		printf("cannot found boot signature (%04X)\r\n",
+		printf("sig(%04X)\r\n",
 				pSBI->signature);
 		goto errexith;
 	}
@@ -155,7 +155,7 @@ static CBOOL FSBoot(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 	FIL lfile;
 
 	if (FR_OK != f_open(&lfile, loaderfilename, FA_READ, &FATFS)) {
-		printf("cannot open boot file %s\r\n", loaderfilename);
+		printf("file %s open fail\r\n", loaderfilename);
 		goto errexith;
 	}
 	U32 RSize, BootSize = lfile.fsize;
@@ -166,7 +166,7 @@ static CBOOL FSBoot(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 	if (FR_OK == f_read(&lfile, (void*)(BASEADDR_SRAM +
 					sizeof(struct nx_bootinfo)),
 				BootSize, &RSize)) {
-		printf("cannot read boot file %d\r\n", RSize);
+		printf("read fail(%d)\r\n", RSize);
 		goto errexitl;
 	}
 	if (option & 1 << DECRYPT)

@@ -489,13 +489,13 @@ static void nx_usb_int_bulkout(USBBOOTSTATUS *pUSBBootStatus,
 	if (CTRUE != pUSBBootStatus->bHeaderReceived) {
 		U32 *pdwBuffer = (U32*)BASEADDR_SRAM;
 		nx_usb_read_out_fifo(BULK_OUT_EP,
-				(U8 *)&pdwBuffer[pUSBBootStatus->iRxHeaderSize / 4],
+			(U8 *)&pdwBuffer[pUSBBootStatus->iRxHeaderSize / 4],
 				fifo_cnt_byte);
 
 		if ((fifo_cnt_byte & 3) == 0) {
 			pUSBBootStatus->iRxHeaderSize += fifo_cnt_byte;
 		} else {
-			printf("Packet size align error:%d\r\n", fifo_cnt_byte);
+			printf("size align:%d\r\n", fifo_cnt_byte);
 			pUOReg->DCSR.DEPOR[BULK_OUT_EP].DOEPCTL |= DEPCTL_STALL;
 		}
 
@@ -527,7 +527,7 @@ static void nx_usb_int_bulkout(USBBOOTSTATUS *pUSBBootStatus,
 				pUSBBootStatus->iRxSize_save =
 					pUSBBootStatus->iRxSize;
 
-				printf("USB Load Address = %x, %x\r\n",
+				printf("LA:%x, S:%x\r\n",
 						(MPTRS)pUSBBootStatus->RxBuffAddr,
 						pUSBBootStatus->iRxSize);
 			} else {
@@ -553,7 +553,7 @@ static void nx_usb_int_bulkout(USBBOOTSTATUS *pUSBBootStatus,
 		pUSBBootStatus->iRxSize	-= fifo_cnt_byte;
 
 		if (pUSBBootStatus->iRxSize <= 0) {
-			printf("Download completed!\r\n");
+			printf("DL done!\r\n");
 
 			pUSBBootStatus->bDownLoading	= CFALSE;
 			pUSBBootStatus->bHeaderReceived = CFALSE;
@@ -614,12 +614,12 @@ static S32 nx_usb_set_init(USBBOOTSTATUS *pUSBBootStatus)
 	/* Set if Device is High speed or Full speed */
 	if (((status & 0x6) >> 1) == USB_HIGH) {
 		pUSBBootStatus->speed = USB_HIGH;
-		printf("High Speed Detection\r\n");
+		printf("High Speed\r\n");
 	} else if (((status & 0x6) >> 1) == USB_FULL) {
 		pUSBBootStatus->speed = USB_FULL;
-		printf("Full Speed Detection\r\n");
+		printf("Full Speed\r\n");
 	} else {
-		printf("**** Error:Neither High_Speed nor Full_Speed\r\n");
+		printf("Neither High nor Full\r\n");
 		return CFALSE;
 	}
 
@@ -1018,10 +1018,6 @@ CBOOL iUSBBOOT(U32 option)
 		;
 
 #ifdef NXP5430
-	/* usb core soft reset */
-	pUOReg->GCSR.GRSTCTL = CORE_SOFT_RESET;
-	while(!(pUOReg->GCSR.GRSTCTL & AHB_MASTER_IDLE));
-
 	pTieoffreg->TIEOFFREG[13] &= ~(1 << 3);	// 8 : i_nUtmiResetSync
 	pTieoffreg->TIEOFFREG[13] &= ~(1 << 2);	// 7 : i_nResetSync
 	pTieoffreg->TIEOFFREG[13] |=   3 << 7;	// 27 : POR_ENB=1, 28 : POR=1
@@ -1050,6 +1046,7 @@ CBOOL iUSBBOOT(U32 option)
 		Decrypt((U32*)pUSBBootStatus->RxBuffAddr_save,
 			(U32*)pUSBBootStatus->RxBuffAddr_save,
 			pUSBBootStatus->iRxSize_save);
+//	printf("download done.\r\n");
 
 	return CTRUE;
 }

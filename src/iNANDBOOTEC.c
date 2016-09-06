@@ -180,7 +180,7 @@ static CBOOL CorrectErrors(NANDBOOTECSTATUS *pBootStatus, U32 *pData)
 
 	errors = NX_NAND_GetErrorLocation(&Loc[0]);
 	if (0 > errors) {
-		NX_DEBUG_MSG("\t\t ERROR -> Failed to correct errors.\n\n");
+		printf("correct error\r\n");
 		return CFALSE;
 	}
 

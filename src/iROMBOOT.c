@@ -65,7 +65,7 @@ void iROMBOOT(U32 OrgBootOption)
 {
 	CBOOL Result = CFALSE;
 	U32 option = OrgBootOption;
-	U32 eBootOption;
+	U32 eBootOption = 0;
 
 #ifdef NXP5430
 	//--------------------------------------------------------------------------

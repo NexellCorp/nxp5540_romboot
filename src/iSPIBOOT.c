@@ -61,7 +61,7 @@
 /*#define SPI_SOURCE_CLOCK	NX_CLKSRCPLL2_FREQ */
 #define SPI_SOURCE_DIVIDOVER	(8UL)		/* 550000000/8/2 = 34.375MHz */
 #define SPI_SOURCE_DIVIDHIGH	(18UL)		/* 550000000/18/2 = 15.277778MHz */
-#define SPI_SOURCE_DIVIDLOW	(48UL)		/* 96000000/48/2 = 1.000000MHz */
+//#define SPI_SOURCE_DIVIDLOW	(48UL)		/* 96000000/48/2 = 1.000000MHz */
 
 /*
 spi 0
@@ -389,14 +389,18 @@ static _nx_cpuif_sym_ cpuif[3][7] = {
 	RSTI_spi_2_apb_rst},
 };
 #endif
-void SPIInit(U32 SPIPort, U32 option)
+void SPIInit(U32 SPIPort, U32 option, CBOOL Speed)
 {
 	register struct NX_SSP_RegisterSet * const pSSPSPIReg =
 						pgSSPSPIReg[SPIPort];
 #ifdef NXP5540
 	U32 regval;
+	if (Speed == CTRUE)
+		regval = SPI_SOURCE_DIVIDOVER;
+	else
+		regval = SPI_SOURCE_DIVIDHIGH;
 	nx_cpuif_reg_write_one(cpuif[SPIPort][0],
-			(SPI_SOURCE_DIVIDOVER - 1));      // clock divider value
+			(regval - 1));      // clock divider value
 	while (1 == nx_cpuif_reg_read_one(cpuif[SPIPort][1], &regval));
 	nx_cpuif_reg_write_one(cpuif[SPIPort][2], 1);// clock enable
 
@@ -457,19 +461,20 @@ U32 iSPIBOOT(U32 option)
 	register U8 *pdwBuffer = (U8*)BASEADDR_SRAM;
 	register U32 iRxSize = 0;
 	register U32 SPIPort = (option >> SELSPIPORT) & 0x1;
-	CBOOL ret = CFALSE;
+	CBOOL ret = CFALSE, IsHighSpeed = CFALSE;
 
 	if (option & 2 << SELSPIPORT)
 		SPIPort += 2;
 
 	if (SPIPort >= 3) {
 		SPIPort = 0;
+		IsHighSpeed = CTRUE;
 	}
 	register struct NX_SSP_RegisterSet * const pSSPSPIReg =
 						pgSSPSPIReg[SPIPort];
-	printf("SPI Boot Port:%d\r\n", SPIPort);
+	printf("SPI:%d\r\n", SPIPort);
 
-	SPIInit(SPIPort, option);
+	SPIInit(SPIPort, option, IsHighSpeed);
 
 	SPIPortInit(SPIPort);
 
@@ -513,7 +518,7 @@ U32 iSPIBOOT(U32 option)
 	pSBI = (struct nx_bootinfo *)pdwBuffer;
 
 	if (pSBI->signature != HEADER_ID) {
-		printf("boot signature error(%04X)\r\n", pSBI->signature);
+		printf("no sig(%04X)\r\n", pSBI->signature);
 		goto error;
 	}
 
@@ -542,6 +547,8 @@ U32 iSPIBOOT(U32 option)
 
 	if (fcs != 0 && fcs == pSBI->CRC32)
 		ret = CTRUE;
+	else
+		printf("fcs:%X:%X\r\n", fcs, pSBI->CRC32);
 error:
 
 	while (pSSPSPIReg->SPI_STATUS & 0x1FF << 6);	// wait while TX fifo counter is not 0
@@ -549,7 +556,7 @@ error:
 	while ((pSSPSPIReg->SPI_STATUS >> 15) & 0x1FF)	// while RX fifo is not empty
 		pSSPSPIReg->SPI_RX_DATA;		// RX data read
 
-	printf("loading completed!\n");
+	printf("load done!\r\n");
 
 	pSSPSPIReg->CH_CFG &= ~(3 << 0);	// rx, tx channel off
 	pSSPSPIReg->CS_REG |= 1 << 0;		// chip select state to inactive

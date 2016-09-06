@@ -20,7 +20,7 @@
 
 inline void buildinfo(void)
 {
-	printf("\r\n\n iROMBOOT by Nexell Co. : Built on %s %s\r\n",
+	printf("\r\n\nROMBOOT by Nexell Co. : Built on %s %s\r\n",
 			__DATE__, __TIME__);
 }
 
