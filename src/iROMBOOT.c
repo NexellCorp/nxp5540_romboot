@@ -18,6 +18,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 #include <nx_etacarinae.h>
 #include "nx_etacarinae_bootoption.h"
+#include "nx_etacarinae_bootheader.h"
 #include <nx_type.h>
 #include "debug.h"
 
@@ -64,8 +65,8 @@ void buildinfo(void);
 void iROMBOOT(U32 OrgBootOption)
 {
 	CBOOL Result = CFALSE;
-	U32 option = OrgBootOption;
-	U32 eBootOption = 0;
+	U32 option = OrgBootOption & 0x1FF;
+	U32 eBootOption;
 
 #ifdef NXP5430
 	//--------------------------------------------------------------------------
@@ -90,7 +91,7 @@ void iROMBOOT(U32 OrgBootOption)
 	CBOOL IsSecure = !!(pECIDReg->SJTAG[0] | pECIDReg->SJTAG[1] |
 			pECIDReg->SJTAG[2] | pECIDReg->SJTAG[3]);
 
-	if (IsSecure == 1) {
+	if (IsSecure == CTRUE) {
 		option |= 1 << DECRYPT;
 
 		// copy secure jtag hash to aes secure key for secure boot decrypt.
@@ -114,18 +115,21 @@ void iROMBOOT(U32 OrgBootOption)
 	// check low boot config written and valid
 	if ((eRSTCFG & 0x3 << VALIDFIELD) == 0x2 << VALIDFIELD) {
 		eBootOption = eRSTCFG & 0x3FFF;
+		option = (option & 1 << DECRYPT) | eBootOption;
 	} else {
 		// check high boot config and valid
 		eRSTCFG >>= 16;
-		if ((eRSTCFG & 0x3 << VALIDFIELD) == 0x2 << VALIDFIELD)
+		if ((eRSTCFG & 0x3 << VALIDFIELD) == 0x2 << VALIDFIELD) {
 			eBootOption = eRSTCFG & 0x3FFF;
-		else
+			option = (option & 1 << DECRYPT) | eBootOption;
+		} else {
 			// any efuse value does not written.
 			// ext rstcfg has no next port information.
-			eBootOption |= 0x3 << NEXTTRYPORT;	// 3: no next try
+			eBootOption = 0x3 << NEXTTRYPORT;	// 3: no next try
+			option |= eBootOption;
+		}
 	}
 
-	option = (option & 1 << DECRYPT) | eBootOption;
 
 	SetBootOption(option);	// save boot option to system register.
 
@@ -163,7 +167,7 @@ void iROMBOOT(U32 OrgBootOption)
 			Result = iSPIBOOT(option);
 			break;
 		default:
-			printf("not support boot mode(%x)\r\n", option);
+			printf("not support mode(%x)\r\n", option);
 		case USBBOOT:
 			break;
 		case SDBOOT :	// iSDHCBOOT (SD/MMC/eSD/eMMC)
@@ -203,12 +207,28 @@ lastboot:
 	} while (0);
 
 
+
+	struct nx_bootheader *pbh = (struct nx_bootheader *)BASEADDR_SRAM;
+	U32 spsr_el3;
+	printf("Launch to 0x%X aarch%d\r\n",
+			pbh->bi.StartAddr,
+			pbh->bi.sel_arch ? 32 : 64);
+
 	U32 scr_el3 = GetSCR_EL3();
 	scr_el3 &= ~(SCR_NS_BIT | SCR_RW_BIT | SCR_FIQ_BIT | SCR_IRQ_BIT |
 			SCR_ST_BIT | SCR_HCE_BIT);
-	scr_el3 |= SCR_RW_BIT;	// low level is aarch64
+	if (pbh->bi.sel_arch == 0) {
+		scr_el3 |= SCR_RW_BIT;	// low level is aarch64
+		spsr_el3 = SPSR_64(MODE_EL1, MODE_SP_ELX, DISABLE_ALL_EXCEPTIONS);
+	} else {
+		spsr_el3 = SPSR_MODE32(MODE32_svc, SPSR_T_ARM,
+				SPSR_E_LITTLE,
+				DAIF_FIQ_BIT |
+				DAIF_IRQ_BIT |
+				DAIF_ABT_BIT);
+	}
+
 	SetSCR_EL3(scr_el3);
 
-	U32 spsr_el3 = SPSR_64(MODE_EL1, MODE_SP_ELX, DISABLE_ALL_EXCEPTIONS);
-	EnterLowLevel((U32*)BASEADDR_SRAM, spsr_el3);
+	EnterLowLevel((U32*)pbh->bi.StartAddr, spsr_el3);
 }

@@ -189,7 +189,18 @@
 #define MODE_EL2		0x2
 #define MODE_EL1		0x1
 #define MODE_EL0		0x0
-#endif
+
+#define MODE32_SHIFT            0
+#define MODE32_MASK             0xf
+#define MODE32_usr              0x0
+#define MODE32_fiq              0x1
+#define MODE32_irq              0x2
+#define MODE32_svc              0x3
+#define MODE32_mon              0x6
+#define MODE32_abt              0x7
+#define MODE32_hyp              0xa
+#define MODE32_und              0xb
+#define MODE32_sys              0xf
 
 #define SPSR_64(el, sp, daif)				\
 	(MODE_RW_64 << MODE_RW_SHIFT |			\
@@ -220,3 +231,4 @@
 #define BIT1_C		(1 <<  2)	//; DCache enable/disable
 #define BIT1_A		(1 <<  1)	//; Alignment fault enable/disable
 #define BIT1_M		(1 <<  0)	//; MMU enable/disable
+#endif

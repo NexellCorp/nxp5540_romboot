@@ -186,7 +186,11 @@ struct nx_bootinfo {
 	unsigned long long LoadAddr;			/* 0x058 ~ 0x05f */
 	unsigned long long StartAddr;			/* 0x060 ~ 0x067 */
 
-	unsigned int _reserved1[2];			/* 0x068 ~ 0x06f */
+	unsigned char sel_arch;				/* 0x068*/
+	unsigned char _reserved1_0;			/* 0x069*/
+	unsigned char _reserved1_1;			/* 0x06a*/
+	unsigned char _reserved1_2;			/* 0x06b*/
+	unsigned int _reserved1;			/* 0x06c ~ 0x06f */
 
 	unsigned char Validslot[4];			/* 0x070 ~ 0x073 */
 	unsigned char loadorder[4];			/* 0x074 ~ 0x077 */
