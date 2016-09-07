@@ -57,9 +57,8 @@
 #define NX_NFCTRL_ECCRST		(1U<<11)
 #define NX_NFCTRL_RNB			(1U<< 9)
 #define NX_NFCTRL_IRQENB		(1U<< 8)
-#define NX_NFCTRL_HWBOOT_W		(1U<< 6)
-#define NX_NFCTRL_EXSEL_R		(1U<< 6)
-#define NX_NFCTRL_EXSEL_W		(1U<< 5)
+#define NX_NFCTRL_HWBOOT		(1U<< 6)
+#define NX_NFCTRL_EXSEL			(1U<< 5)
 #define NX_NFCTRL_NFTYPE		(3U<< 3)
 #define NX_NFCTRL_BANK			(3U<< 0)
 
@@ -72,10 +71,9 @@
 #define NX_NFECCSTATUS_BUSY		(1U<<  2)
 #define NX_NFECCSTATUS_DECDONE		(1U<<  1)
 
-#define NX_NFECCCTRL_RUNECC_W		28	// ecc start
-#define NX_NFECCCTRL_DECMODE_R		28
+#define NX_NFECCCTRL_RUNECC		28	// ecc start
 #define NX_NFECCCTRL_ELPLOAD		27	// set after elp registers
-#define NX_NFECCCTRL_DECMODE_W		26	// 0: encoder 1: decoder
+#define NX_NFECCCTRL_DECMODE		26	// 0: encoder 1: decoder
 	#define NX_NF_ENCODE			0
 	#define NX_NF_DECODE			1
 #define NX_NFECCCTRL_ELPNUM		18	// number of elp (0x7F)
@@ -227,9 +225,7 @@ static CBOOL NANDFlash_Open(NANDBOOTECSTATUS *pBootStatus, U32 option)
 	register volatile U32 temp;
 
 	temp = pNandControl->NFCONTROL;
-	temp &= ~ (NX_NFCTRL_ECCMODE | NX_NFCTRL_EXSEL_W);
-	temp |= ((temp & NX_NFCTRL_EXSEL_R)>>1);
-	temp &= ~ (NX_NFCTRL_HWBOOT_W);
+	temp &= ~NX_NFCTRL_ECCMODE;
 
 	// 0:small 3 step, 1:small 4 step, 2:large 4 step, 3:large 5 step
 	nftype = (option >> NANDTYPE) & 0x3;
@@ -288,11 +284,7 @@ static CBOOL NANDFlash_Open(NANDBOOTECSTATUS *pBootStatus, U32 option)
 	//--------------------------------------------------------------------------
 	// Reset NAND flash memory for Micron device.
 	//--------------------------------------------------------------------------
-	temp = pNandControl->NFCONTROL;
-	temp &= ~ (NX_NFCTRL_EXSEL_W);
-	temp |= (((temp & NX_NFCTRL_EXSEL_R) >> 1) | NX_NFCTRL_IRQPEND);
-	temp &= ~ (NX_NFCTRL_HWBOOT_W);
-	pNandControl->NFCONTROL = temp;
+	pNandControl->NFCONTROL |= NX_NFCTRL_IRQPEND;
 
 	pNandAccess->NAND_CMD = NAND_CMD_RESET;
 
@@ -312,9 +304,8 @@ static void NANDFlash_Close(void)
 	register U32 temp;
 
 	temp = pNandControl->NFCONTROL;
-	temp &= ~(NX_NFCTRL_IRQENB | NX_NFCTRL_NCSENB | NX_NFCTRL_EXSEL_W);
-	temp |= (((temp & NX_NFCTRL_EXSEL_R) >> 1) | NX_NFCTRL_IRQPEND);
-	temp &= ~(NX_NFCTRL_HWBOOT_W);
+	temp &= ~NX_NFCTRL_NCSENB;
+	temp |= NX_NFCTRL_IRQPEND;
 	pNandControl->NFCONTROL = temp;
 }
 
@@ -329,11 +320,7 @@ static CBOOL NANDFlash_SetAddr(NANDBOOTECSTATUS *pBootStatus)
 	U32 row		= pBootStatus->dwRowCur;
 	U32 nftype	= pBootStatus->dwNFType;
 
-	temp = pNandControl->NFCONTROL;
-	temp &= ~(NX_NFCTRL_EXSEL_W);
-	temp |= (((temp & NX_NFCTRL_EXSEL_R) >> 1) | NX_NFCTRL_IRQPEND);
-	temp &= ~(NX_NFCTRL_HWBOOT_W);
-	pNandControl->NFCONTROL = temp;
+	pNandControl->NFCONTROL |= NX_NFCTRL_IRQPEND;
 
 	pNandAccess->NAND_CMD = NAND_CMD_READ_1ST;
 
@@ -379,9 +366,9 @@ static void NANDFlash_ReadData(NANDBOOTECSTATUS *pBootStatus, U32 *pData)
 
 	// run ecc
 	pNandControl->NFECCCTRL =
-						  1 << NX_NFECCCTRL_RUNECC_W   |
+						  1 << NX_NFECCCTRL_RUNECC   |
 						  0 << NX_NFECCCTRL_ELPLOAD|
-				       NX_NF_DECODE << NX_NFECCCTRL_DECMODE_W |
+				       NX_NF_DECODE << NX_NFECCCTRL_DECMODE |
 		(pBootStatus->iNX_BCH_VAR_T & 0x7F) << NX_NFECCCTRL_ELPNUM |
 	((pBootStatus->iNX_BCH_VAR_M *
 	pBootStatus->iNX_BCH_VAR_T / 8 - 1) & 0xFF) << NX_NFECCCTRL_PDATACNT |
@@ -421,11 +408,7 @@ static CBOOL NANDFlash_ReadSector(NANDBOOTECSTATUS *pBootStatus, U32 *pData)
 
 	//--------------------------------------------------------------------------
 	// Reset H/W BCH decoder.
-	temp = pNandControl->NFCONTROL;
-	temp &= ~ (NX_NFCTRL_EXSEL_W);
-	temp |= (((temp & NX_NFCTRL_EXSEL_R) >> 1) | NX_NFCTRL_ECCRST);
-	temp &= ~ (NX_NFCTRL_HWBOOT_W);
-	pNandControl->NFCONTROL = temp;
+	pNandControl->NFCONTROL |= NX_NFCTRL_ECCRST;
 
 	pNandControl->NFECCAUTOMODE =
 		(pNandControl->NFECCAUTOMODE & ~(NX_NFACTRL_ELP)) |
@@ -471,9 +454,9 @@ static CBOOL NANDFlash_ReadSector(NANDBOOTECSTATUS *pBootStatus, U32 *pData)
 
 	// load elp
 	pNandControl->NFECCCTRL =
-						    0 << NX_NFECCCTRL_RUNECC_W |
+						    0 << NX_NFECCCTRL_RUNECC |
 						    1 << NX_NFECCCTRL_ELPLOAD |
-					 NX_NF_DECODE << NX_NFECCCTRL_DECMODE_W |
+					 NX_NF_DECODE << NX_NFECCCTRL_DECMODE |
 		  (pBootStatus->iNX_BCH_VAR_T & 0x7F) << NX_NFECCCTRL_ELPNUM |
 	((pBootStatus->iNX_BCH_VAR_M *
 	  pBootStatus->iNX_BCH_VAR_T / 8 - 1) & 0xFF) << NX_NFECCCTRL_PDATACNT |
@@ -542,8 +525,7 @@ CBOOL iNANDBOOTEC(U32 option)
 		0x0000000F;		        // D  1,  0 ALT3
 
 	pNandControl->NFCONTROL = (pNandControl->NFCONTROL &
-			~(NX_NFCTRL_BANK | NX_NFCTRL_HWBOOT_W | NX_NFCTRL_EXSEL_W))
-			| 0x00;	// nNSCS0
+			~NX_NFCTRL_BANK) | 0x00;	// nNSCS0
 
 	pGPIOReg[GPIO_GROUP_C]->GPIOx_ALTFN[0] =
 		(pGPIOReg[GPIO_GROUP_C]->GPIOx_ALTFN[0] & ~0xC0000000) |
@@ -604,11 +586,9 @@ CBOOL iNANDBOOTEC(U32 option)
 	}
 errexit:
 	NANDFlash_Close();
-
+	// nNSCS0, Select SD bus
 	pNandControl->NFCONTROL =
-		(pNandControl->NFCONTROL &
-		 ~(NX_NFCTRL_BANK | NX_NFCTRL_HWBOOT_W | NX_NFCTRL_EXSEL_W)) |
-		0x00;	// nNSCS0, Select SD bus
+		(pNandControl->NFCONTROL & ~NX_NFCTRL_BANK) | 0x00;
 
 	return Result;
 }
