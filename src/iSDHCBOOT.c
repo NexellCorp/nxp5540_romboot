@@ -1339,7 +1339,8 @@ static CBOOL eMMCBoot(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 		SDSpeed = SDXC_CLKDIV_LOW;
 
 	pSDXCReg->CTYPE		= 1;	/* Data Bus Width : 0(1-bit), 1(4-bit) */
-	pSDXCReg->BYTCNT	= 0;	/* unspecified data size */
+//	pSDXCReg->BYTCNT	= 0;	/* unspecified data size */
+	pSDXCReg->BYTCNT	= 128 * 1024;	/* for Alternative */
 
 	if (CFALSE == NX_SDMMC_SetClock(pSDXCBootStatus, CTRUE, SDSpeed)) {
 		printf("clk init fail\r\n");
@@ -1381,8 +1382,7 @@ static CBOOL eMMCBoot(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 		(struct nx_bootinfo *)BASEADDR_SRAM;
 
 	// read bootheader 1024 bytes
-	if (NX_SDMMC_ReadBootSector(pSDXCBootStatus, 2, (U32 *)pSBI)
-//	if (NX_SDMMC_ReadSectors(pSDXCBootStatus, 0, 2, (U32 *)pSBI)
+	if (NX_SDMMC_ReadBootSector(pSDXCBootStatus, 128 * 2, (U32 *)pSBI)
 			== CFALSE) { 
 		printf("BH Rd Fail\r\n");
 		goto error;
@@ -1395,33 +1395,16 @@ static CBOOL eMMCBoot(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 	DataDump(BASEADDR_SRAM, 1024);
 #endif
 	if (pSBI->signature != HEADER_ID) {
-		printf("no BH(%04X)\r\n", pSBI->signature);
-//		goto error;
+		printf("no BH(%08X)\r\n", pSBI->signature);
+		goto error;
 	}
 
-//	__asm__ __volatile__ ("wfi");
 	printf("LA:%x, Size:%x, SA:%x\r\n",
 			pSBI->LoadAddr, pSBI->LoadSize,
 			pSBI->StartAddr);
 
-	U32 BootSize = pSBI->LoadSize;
-
-	if (BootSize > INTERNAL_SRAM_SIZE - SECONDBOOT_STACK)
-		BootSize = INTERNAL_SRAM_SIZE - SECONDBOOT_STACK;
-
-	//	Read Data
-	result = NX_SDMMC_ReadBootSector(pSDXCBootStatus,
-//	result = NX_SDMMC_ReadSectors(pSDXCBootStatus, 2,
-			(BootSize + BLOCK_LENGTH - 1) / BLOCK_LENGTH,
-			(U32 *)(BASEADDR_SRAM + sizeof(struct nx_bootheader)));
-
-	if (option & 1 << DECRYPT)
-		Decrypt((U32*)(BASEADDR_SRAM + sizeof(struct nx_bootheader)),
-			(U32*)(BASEADDR_SRAM + sizeof(struct nx_bootheader)),
-			BootSize);
-
 #ifdef NXP5430
-	DataDump(BASEADDR_SRAM, 1024);
+	DataDump(BASEADDR_SRAM + 0x20000 - 0x200, 1024);
 #endif
 error:
 
