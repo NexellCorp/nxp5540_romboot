@@ -145,13 +145,12 @@ static CBOOL FSBoot(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 	if (CFALSE == ProcessNSIH(&hfile, (U8*)pSBI, option))
 		goto errexith;
 
-	if (pSBI->signature == HEADER_ID) {
-		printf("sig(%04X)\r\n",
-				pSBI->signature);
+	if (pSBI->signature != HEADER_ID) {
+		printf("sig(%04X)\r\n", pSBI->signature);
 		goto errexith;
 	}
 
-	const char *loaderfilename = pSBI->dbi[0].sdfsbi.filename;
+	const char *loaderfilename = "nxbtinfo.sbl";//pSBI->dbi[0].sdfsbi.filename;
 	FIL lfile;
 
 	if (FR_OK != f_open(&lfile, loaderfilename, FA_READ, &FATFS)) {
@@ -163,15 +162,15 @@ static CBOOL FSBoot(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 	if (BootSize > INTERNAL_SRAM_SIZE - SECONDBOOT_STACK)
 		BootSize = INTERNAL_SRAM_SIZE - SECONDBOOT_STACK;
 
-	if (FR_OK == f_read(&lfile, (void*)(BASEADDR_SRAM +
-					sizeof(struct nx_bootinfo)),
+	if (FR_OK != f_read(&lfile, (void*)(BASEADDR_SRAM +
+					sizeof(struct nx_bootheader)),
 				BootSize, &RSize)) {
 		printf("read fail(%d)\r\n", RSize);
 		goto errexitl;
 	}
 	if (option & 1 << DECRYPT)
-		Decrypt((U32*)(BASEADDR_SRAM + sizeof(struct nx_bootinfo)),
-			(U32*)(BASEADDR_SRAM + sizeof(struct nx_bootinfo)),
+		Decrypt((U32*)(BASEADDR_SRAM + sizeof(struct nx_bootheader)),
+			(U32*)(BASEADDR_SRAM + sizeof(struct nx_bootheader)),
 			BootSize);
 	Ret = CTRUE;
 
@@ -214,15 +213,15 @@ U32 iSDXCFSBOOT(U32 option)
 	SDXCBOOTSTATUS SDXCBootStatus, *pSDXCBootStatus;
 	pSDXCBootStatus = &SDXCBootStatus;
 
-	pSDXCBootStatus->SDPort = ((option >> SELSDPORT) & 0x1);
-	if (option & 2UL << SELSDPORT)
-		pSDXCBootStatus->SDPort += 2;
+	pSDXCBootStatus->SDPort = ((option >> SELSDPORT) & 0x3);
 
 	if (pSDXCBootStatus->SDPort >= 3) {
 		pSDXCBootStatus->SDPort = 0;
 		pSDXCBootStatus->bHighSpeed = CTRUE;
 	} else
 		pSDXCBootStatus->bHighSpeed = CFALSE;
+
+	printf("SD FS:%d\r\n", pSDXCBootStatus->SDPort);
 
 	NX_SDPADSetALT(pSDXCBootStatus->SDPort);
 
