@@ -59,9 +59,8 @@
 
 
 /*#define SPI_SOURCE_CLOCK	NX_CLKSRCPLL2_FREQ */
-#define SPI_SOURCE_DIVIDOVER	(8UL)		/* 550000000/8/2 = 34.375MHz */
-#define SPI_SOURCE_DIVIDHIGH	(18UL)		/* 550000000/18/2 = 15.277778MHz */
-//#define SPI_SOURCE_DIVIDLOW	(48UL)		/* 96000000/48/2 = 1.000000MHz */
+#define SPI_SOURCE_16MHz	(8UL)		/* 550000000/8/2/2 = 17.1875MHz */
+#define SPI_SOURCE_1MHz		(128UL)		/* 550000000/128/2/2 = 1.0742MHz */
 
 /*
 spi 0
@@ -395,10 +394,10 @@ void SPIInit(U32 SPIPort, U32 option, CBOOL Speed)
 						pgSSPSPIReg[SPIPort];
 #ifdef NXP5540
 	U32 regval;
-	if (Speed == CTRUE)
-		regval = SPI_SOURCE_DIVIDOVER;
+	if (option & 1 << SERIALFLASHSPEED)
+		regval = SPI_SOURCE_16MHz;
 	else
-		regval = SPI_SOURCE_DIVIDHIGH;
+		regval = SPI_SOURCE_1MHz;
 	nx_cpuif_reg_write_one(cpuif[SPIPort][0],
 			(regval - 1));      // clock divider value
 	while (1 == nx_cpuif_reg_read_one(cpuif[SPIPort][1], &regval));
@@ -422,21 +421,12 @@ void SPIInit(U32 SPIPort, U32 option, CBOOL Speed)
 	/////////////////////////////////////////////////////
 #endif
 
-
-	if (option & 1 << SERIALFLASHSPEED)
-		pSSPSPIReg->CH_CFG =
-			1 << 6 |	// high speed en (0:low speed, 1:high speed)
-			0 << 4 |	// master mode (0:master mode, 1:slave mode)
-			0 << 2 |	// active high, format a
-			0 << 1 |	// rx channel on (0:off, 1:on)
-			0 << 0;		// tx channel on
-	else
-		pSSPSPIReg->CH_CFG =
-			0 << 6 |	// high speed en (0:low speed, 1:high speed)
-			0 << 4 |	// master mode (0:master mode, 1:slave mode)
-			0 << 2 |	// active high, format a
-			0 << 1 |	// rx channel on (0:off, 1:on)
-			0 << 0;		// tx channel on
+	pSSPSPIReg->CH_CFG =
+		1 << 6 |	// high speed en (0:low speed, 1:high speed)
+		0 << 4 |	// master mode (0:master mode, 1:slave mode)
+		0 << 2 |	// active high, format a
+		0 << 1 |	// rx channel on (0:off, 1:on)
+		0 << 0;		// tx channel on
 
 	pSSPSPIReg->MODE_CFG =
 		0 << 29 |		// channel width (0:byte, 1:half word, 2:word)
