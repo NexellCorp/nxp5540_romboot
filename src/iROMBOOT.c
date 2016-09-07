@@ -215,7 +215,8 @@ lastboot:
 
 	struct nx_bootheader *pbh = (struct nx_bootheader *)BASEADDR_SRAM;
 
-	Dcache_flush_range((U64)pbh, pbh->bi.LoadSize);
+	Dcache_flush_range((U64)pbh, pbh->bi.LoadSize +
+					sizeof(struct nx_bootheader));
 
 	printf("Launch to aarch%d secure %s mode 0x%X\r\n",
 			pbh->bi.sel_arch ? 32 : 64,
