@@ -460,11 +460,8 @@ U32 iSPIBOOT(U32 option)
 	register struct nx_bootinfo *pSBI;
 	register U8 *pdwBuffer = (U8*)BASEADDR_SRAM;
 	register U32 iRxSize = 0;
-	register U32 SPIPort = (option >> SELSPIPORT) & 0x1;
+	register U32 SPIPort = (option >> SELSPIPORT) & 0x3;
 	CBOOL ret = CFALSE, IsHighSpeed = CFALSE;
-
-	if (option & 2 << SELSPIPORT)
-		SPIPort += 2;
 
 	if (SPIPort >= 3) {
 		SPIPort = 0;
@@ -551,8 +548,10 @@ U32 iSPIBOOT(U32 option)
 		printf("fcs:%X:%X\r\n", fcs, pSBI->CRC32);
 error:
 
-	while (pSSPSPIReg->SPI_STATUS & 0x1FF << 6);	// wait while TX fifo counter is not 0
-	while (!(pSSPSPIReg->SPI_STATUS & 0x1 << 25));	// wait for TX fifo is empty
+	while (pSSPSPIReg->SPI_STATUS & 0x1FF << 6)
+		pSSPSPIReg->SPI_STATUS;	// wait while TX fifo counter is not 0
+	while (!(pSSPSPIReg->SPI_STATUS & 0x1 << 25))
+		pSSPSPIReg->SPI_STATUS;	// wait for TX fifo is empty
 	while ((pSSPSPIReg->SPI_STATUS >> 15) & 0x1FF)	// while RX fifo is not empty
 		pSSPSPIReg->SPI_RX_DATA;		// RX data read
 
