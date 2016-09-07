@@ -1380,11 +1380,8 @@ static CBOOL eMMCBoot_Normal(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 	}
 	if (option & 1 << DECRYPT)
 		Decrypt((U32*)BASEADDR_SRAM, (U32*)BASEADDR_SRAM,
-				sizeof(struct nx_bootheader));
+				128 * 1024);
 
-#ifdef NXP5430
-	DataDump(BASEADDR_SRAM, 1024);
-#endif
 	if (pSBI->signature != HEADER_ID) {
 		printf("no BH(%08X)\r\n", pSBI->signature);
 		goto error;
@@ -1394,11 +1391,7 @@ static CBOOL eMMCBoot_Normal(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 			pSBI->LoadAddr, pSBI->LoadSize,
 			pSBI->StartAddr);
 
-#ifdef NXP5430
-	DataDump(BASEADDR_SRAM + 0x20000 - 0x200, 1024);
-#endif
 error:
-
 	timeout = 0;
 	while (1) {
 		if (pSDXCReg->RINTSTS & NX_SDXC_RINTSTS_CD)
@@ -1428,23 +1421,12 @@ static CBOOL eMMCBoot_Alt(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 		SDSpeed = SDXC_CLKDIV_LOW;
 
 	pSDXCReg->CTYPE		= 1;	/* Data Bus Width : 0(1-bit), 1(4-bit) */
-//	pSDXCReg->BYTCNT	= 0;	/* unspecified data size */
 	pSDXCReg->BYTCNT	= 128 * 1024;	/* for Alternative */
 
 	if (CFALSE == NX_SDMMC_SetClock(pSDXCBootStatus, CTRUE, SDSpeed)) {
 		printf("clk init fail\r\n");
 		return CFALSE;
 	}
-
-#if 0
-	cmd.cmdidx	= GO_IDLE_STATE;
-	cmd.arg		= 0xF0F0F0F0;
-	cmd.flag	= NX_SDXC_CMDFLAG_STARTCMD |
-			NX_SDXC_CMDFLAG_SENDINIT |
-			NX_SDXC_CMDFLAG_STOPABORT;
-
-	NX_SDMMC_SendCommand(&cmd);
-#endif
 
 	//----------------------------------------------------------------------
 	//	Send Alternative boot command
@@ -1471,7 +1453,7 @@ static CBOOL eMMCBoot_Alt(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 	}
 	if (option & 1 << DECRYPT)
 		Decrypt((U32*)BASEADDR_SRAM, (U32*)BASEADDR_SRAM,
-				sizeof(struct nx_bootheader));
+				128 * 1024);
 
 	if (pSBI->signature != HEADER_ID) {
 		printf("no BH(%08X)\r\n", pSBI->signature);
@@ -1483,7 +1465,6 @@ static CBOOL eMMCBoot_Alt(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 			pSBI->StartAddr);
 
 error:
-
 	//--------------------------------------------------------------------------
 	cmd.cmdidx	= GO_IDLE_STATE;
 	cmd.arg		= 0;
