@@ -54,10 +54,9 @@
 
 /* ========================= efuse =====================*/
 
-#define NEXTTRYPORT		7	// 0, 1, 2: port number, 3: not try
 #define USE_SDFS		9	// 0: sector read, 1: file read
 
-#define ReservedBIT		10	// reserved for future use
+#define NEXTTRYPORT		10	// 0, 1, 2: port number, 3: not try
 
 
 #define NOBOOTMSG		12	// 0: boot message, 1: no boot message

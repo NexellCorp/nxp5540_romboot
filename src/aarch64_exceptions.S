@@ -84,7 +84,8 @@ smc_handler64:
 unexpected_sync_exception:
 	mov     x0, #SYNC_EXCEPTION_AARCH64
 	bl      plat_report_exception
-	b       unexpected_sync_exception
+2:	wfi
+	b	2b
 
 disable_mmu_icache_el3:
 	mov     x1, #(SCTLR_M_BIT | SCTLR_C_BIT | SCTLR_I_BIT)

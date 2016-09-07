@@ -185,30 +185,31 @@ EnterLowLevel:
 	mov	x1, #5540
 	dsb	sy
 	ERET
-#if 0
+#if 1
 GetILineSize:
-	mrs	x1, ctr_el0
-	ubfx	x1, x1, #0xF
-	mov	x0, #4
-	lsl	x0, x0, x1
+	mrs	x2, ctr_el0
+	and	x2, x3, #0xF
+	mov	x2, #4
+	lsl	x2, x2, x3
 	ret
 
 GetDLineSize:
-	mrs	x1, ctr_el0
-	ubfx	x1, x1, #16, #4
-	mov	x0, #4
-	lsl	x0, x0, x1
+	mrs	x3, ctr_el0
+	ubfx	x3, x1, #16, #4
+	mov	x2, #4
+	lsl	x2, x2, x3
 	ret
 
+.global	Dcache_flush_range
+//; void Dcache_flush_range(U64 addr, U64 size);
 Dcache_flush_range:
 	mov	x19, x30
 	bl	GetDLineSize
-	mov	x2, x0
 	add	x1, x0, x1
 	sub	x3, x2, #1
 	bic	x0, x0, x3
 1:
-	dc	civac	//; flush:civac, clean:cvac, invalidate:ivac
+	dc	cvac, x0	//; flush:civac, clean:cvac, invalidate:ivac
 	add	x0, x0, x2
 	cmp	x0, x1
 	b.lo	1b

@@ -61,6 +61,7 @@ extern CBOOL iNANDBOOTEC(U32 option);
 void enable_mmu_el3(U32);
 void EnterLowLevel(unsigned int *EL1Start, unsigned int rSPSR);
 void buildinfo(void);
+void Dcache_flush_range(U64 addr, U64 size);
 //------------------------------------------------------------------------------
 void iROMBOOT(U32 OrgBootOption)
 {
@@ -82,12 +83,15 @@ void iROMBOOT(U32 OrgBootOption)
 
 	while (!(pECIDReg->EC[2] & 1 << 15))	// wait efuse ready
 		;
+//	option |= 1 << DECRYPT;		// just for temporary test.
 #endif
 
 #ifdef NXP5540
+	U32 EC;
+	do {
+		EC = pECIDReg->EC[2];
+	} while (!(EC & 1 << 16));	// wait efuse ready
 
-	while (!(pECIDReg->EC[2] & 1 << 16))	// wait efuse ready
-		;
 	CBOOL IsSecure = !!(pECIDReg->SJTAG[0] | pECIDReg->SJTAG[1] |
 			pECIDReg->SJTAG[2] | pECIDReg->SJTAG[3]);
 
@@ -104,9 +108,13 @@ void iROMBOOT(U32 OrgBootOption)
 
 
 #ifdef NXP5430
+#if 0
 	U32 eRSTCFG = 1 << BOOTCFGUSE | 0 << VALIDFIELD | 0 << BOOTHALT |
 		0 << NOBOOTMSG | 0 << USE_SDFS | 1 << NEXTTRYPORT |
 		0 << PORTNUMBER | 0 << BOOTMODE;
+#else
+	U32 eRSTCFG = *(volatile U32 *)0x4FFFFE54;
+#endif
 #endif
 #ifdef NXP5540
 	U32 eRSTCFG = pECIDReg->RSTCFG;
@@ -143,7 +151,7 @@ void iROMBOOT(U32 OrgBootOption)
 	// mmu is enabled when you have some problem, you must check table addr.
 	enable_mmu_el3((option & 1 << ICACHE)? 1 << 0 : 0);
 
-	printf("Boot Option: %02X\r\n", option);
+	printf("Boot Option: %02X(%X,%X)\r\n", option, OrgBootOption, eRSTCFG);
 
 	// external usb boot is top priority, always first checked.
 	if ((OrgBootOption & 0x7 << BOOTMODE) == 1) {
@@ -167,7 +175,7 @@ void iROMBOOT(U32 OrgBootOption)
 			Result = iSPIBOOT(option);
 			break;
 		default:
-			printf("not support mode(%x)\r\n", option);
+			printf("no support mode(%x)\r\n", option);
 		case USBBOOT:
 			break;
 		case SDBOOT :	// iSDHCBOOT (SD/MMC/eSD/eMMC)
@@ -200,23 +208,24 @@ void iROMBOOT(U32 OrgBootOption)
 		if (CTRUE == Result)
 			break;
 
-		option = OrgBootOption & ~0x7UL;
-		option |= USBBOOT;
 lastboot:
 		iUSBBOOT(option);
 	} while (0);
 
 
-
 	struct nx_bootheader *pbh = (struct nx_bootheader *)BASEADDR_SRAM;
-	U32 spsr_el3;
-	printf("Launch to 0x%X aarch%d\r\n",
-			pbh->bi.StartAddr,
-			pbh->bi.sel_arch ? 32 : 64);
+
+	Dcache_flush_range((U64)pbh, pbh->bi.LoadSize);
+
+	printf("Launch to aarch%d secure %s mode 0x%X\r\n",
+			pbh->bi.sel_arch ? 32 : 64,
+			pbh->bi.sel_arch ? "svc" : "EL1",
+			pbh->bi.StartAddr);
 
 	U32 scr_el3 = GetSCR_EL3();
 	scr_el3 &= ~(SCR_NS_BIT | SCR_RW_BIT | SCR_FIQ_BIT | SCR_IRQ_BIT |
 			SCR_ST_BIT | SCR_HCE_BIT);
+	U32 spsr_el3;
 	if (pbh->bi.sel_arch == 0) {
 		scr_el3 |= SCR_RW_BIT;	// low level is aarch64
 		spsr_el3 = SPSR_64(MODE_EL1, MODE_SP_ELX, DISABLE_ALL_EXCEPTIONS);
