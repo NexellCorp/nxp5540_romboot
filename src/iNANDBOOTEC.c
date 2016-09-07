@@ -26,6 +26,7 @@
 #include "nx_etacarinae_bootoption.h"
 #include <nx_debug2.h>
 #include <nx_type.h>
+#include "printf.h"
 
 #ifdef NXP5430
 #include <nx_chip.h>
