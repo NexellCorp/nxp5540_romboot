@@ -219,7 +219,7 @@ U32 iSDXCFSBOOT(U32 option)
 		pSDXCBootStatus->SDPort += 2;
 
 	if (pSDXCBootStatus->SDPort >= 3) {
-		pSDXCBootStatus->SDPort = 2;
+		pSDXCBootStatus->SDPort = 0;
 		pSDXCBootStatus->bHighSpeed = CTRUE;
 	} else
 		pSDXCBootStatus->bHighSpeed = CFALSE;
