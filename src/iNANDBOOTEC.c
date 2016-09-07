@@ -549,7 +549,8 @@ CBOOL iNANDBOOTEC(U32 option)
 	if (!NANDFlash_ReadSector(pBootStatus, (U32 *)pSBI))
 		goto errexit;
 	if (pBootStatus->dwSectorSize <= 512)
-		if (!NANDFlash_ReadSector(pBootStatus, (U32 *)pSBI))
+		if (!NANDFlash_ReadSector(pBootStatus,
+					(U32 *)((U32)pSBI + 512)))
 			goto errexit;
 
 	if (option & 1 << DECRYPT)
