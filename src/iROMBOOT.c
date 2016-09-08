@@ -95,7 +95,7 @@ void iROMBOOT(U32 OrgBootOption)
 	}	// wait efuse ready
 
 	// set HIGH TZPC0_TZPCDECPROT3[5] 
-	*(volatile U32 *)(0x20300000 + 0x828) = 1 << 5;
+	*(volatile U32 *)(PHY_BASEADDR_TZPC_MODULE + 0x828) = 1 << 5;
 
 
 	CBOOL IsSecure = !!(pSECIDReg->SJTAG[0] | pSECIDReg->SJTAG[1] |
@@ -112,7 +112,7 @@ void iROMBOOT(U32 OrgBootOption)
 	}
 
 	// set LOW TZPC0_TZPCDECPROT3[5] 
-	*(volatile U32 *)(0x20300000 + 0x828) = 0;
+	*(volatile U32 *)(PHY_BASEADDR_TZPC_MODULE + 0x828) = 0;
 #endif
 
 
@@ -221,17 +221,21 @@ lastboot:
 		iUSBBOOT(option);
 	} while (0);
 
-
 	struct nx_bootheader *pbh = (struct nx_bootheader *)BASEADDR_SRAM;
-
-	Dcache_flush_range((U64)pbh, pbh->bi.LoadSize +
-					sizeof(struct nx_bootheader));
 
 	printf("Launch to aarch%d secure %s mode 0x%X\r\n",
 			(pbh->bi.sel_arch == 1) ? 32 : 64,
 			(pbh->bi.sel_arch == 1) ? "SVC" :
 			(pbh->bi.sel_arch == 0) ? "EL1" : "EL3",
 			pbh->bi.StartAddr);
+
+	if (pbh->bi.sel_arch == 0xFF) {
+		void (*pLaunch)(void) = (void(*)(void))pbh->bi.StartAddr;
+		pLaunch();
+	}
+
+	Dcache_flush_range((U64)pbh, pbh->bi.LoadSize +
+					sizeof(struct nx_bootheader));
 
 	U32 scr_el3 = GetSCR_EL3();
 	scr_el3 &= ~(SCR_NS_BIT | SCR_RW_BIT | SCR_FIQ_BIT | SCR_IRQ_BIT |
@@ -250,9 +254,5 @@ lastboot:
 
 	SetSCR_EL3(scr_el3);
 
-	if (pbh->bi.sel_arch == 0xFF) {
-		void (*pLaunch)(void) = (void(*)(void))pbh->bi.StartAddr;
-		pLaunch();
-	} else
-		EnterLowLevel((U32*)pbh->bi.StartAddr, spsr_el3);
+	EnterLowLevel((U32*)pbh->bi.StartAddr, spsr_el3);
 }
