@@ -553,7 +553,7 @@ CBOOL iNANDBOOTEC(U32 option)
 		goto errexit;
 	if (pBootStatus->dwSectorSize <= 512)
 		if (!NANDFlash_ReadSector(pBootStatus,
-					(U32 *)((U32)pSBI + 512)))
+					(U32 *)((MPTRS)pSBI + 512)))
 			goto errexit;
 
 	if (option & 1 << DECRYPT)
@@ -574,10 +574,11 @@ CBOOL iNANDBOOTEC(U32 option)
 
 	dwBinAddr_Save = dwBinAddr =
 				(U32)BASEADDR_SRAM + sizeof(struct nx_bootheader);
-	while (iBinSecLeft--) {
-		if (NANDFlash_ReadSector(pBootStatus, (U32 *)(MPTRS)dwBinAddr))
+	while (iBinSecLeft) {
+		if (NANDFlash_ReadSector(pBootStatus, (U32 *)(MPTRS)dwBinAddr)) {
 			dwBinAddr += pBootStatus->dwSectorSize;
-		else
+			iBinSecLeft--;
+		} else
 			break;
 	}
 
