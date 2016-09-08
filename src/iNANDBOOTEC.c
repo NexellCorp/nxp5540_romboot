@@ -112,7 +112,8 @@ typedef struct tag_NANDBOOTECSTATUS
 	U32	dwSectorSize;
 
 	S32	iSectorsPerPage;
-	U32	dwNFType;
+	U32	dwNFType;		// 0: small, 1: large block
+	U32	dwAddStep;		// 0: s:3, l:4  1: s:4, l:5
 
 	U32	dwRowCur;
 	S32	iECCLeft;
@@ -228,12 +229,12 @@ static CBOOL NANDFlash_Open(NANDBOOTECSTATUS *pBootStatus, U32 option)
 	temp &= ~NX_NFCTRL_ECCMODE;
 
 	// 0:small 3 step, 1:small 4 step, 2:large 4 step, 3:large 5 step
-	nftype = (option >> NANDTYPE) & 0x3;
+	nftype = (option >> NANDTYPE) & 0x1;
 
 	// 0: 2KB, 1:4KB, 2:8KB, 3:16KB and above
 	pagesize = (option >> NANDPAGE) & 0x3;
 
-	if (nftype & 1 << 1) {	// large block
+	if (nftype == 1) {	// large block
 		pBootStatus->dwSectorSize	= 1024;
 		pBootStatus->iNX_BCH_VAR_K	= 1024 * 8;
 		pBootStatus->iNX_BCH_VAR_M	= 14;
@@ -258,6 +259,7 @@ static CBOOL NANDFlash_Open(NANDBOOTECSTATUS *pBootStatus, U32 option)
 
 	//--------------------------------------------------------------------------
 	pBootStatus->dwNFType	= nftype;
+	pBootStatus->dwAddStep	= (option >> NANDADDRSTEP) & 0x1;
 	pBootStatus->dwRowCur 	= ROW_START;	// base page address of NAND flash memory
 
 	pBootStatus->iSectorLeft	= 0;
@@ -319,6 +321,7 @@ static CBOOL NANDFlash_SetAddr(NANDBOOTECSTATUS *pBootStatus)
 
 	U32 row		= pBootStatus->dwRowCur;
 	U32 nftype	= pBootStatus->dwNFType;
+	U32 nfaddrstep	= pBootStatus->dwAddStep;
 
 	pNandControl->NFCONTROL |= NX_NFCTRL_IRQPEND;
 
@@ -333,16 +336,16 @@ static CBOOL NANDFlash_SetAddr(NANDBOOTECSTATUS *pBootStatus)
 	// | 2'b11 : Large 5 addr   |	2   |	3   |
 	// +------------------------+-------+-------+
 		pNandAccess->NAND_ADDR = 0;			// COL 1st
-	if (nftype & 1 << 1)	// large block
+	if (nftype == 1)	// large block
 		pNandAccess->NAND_ADDR = 0;			// COL 2nd
 
 		pNandAccess->NAND_ADDR = (U8)(row >>  0);	// ROW 1st
 		pNandAccess->NAND_ADDR = (U8)(row >>  8);	// ROW 2nd
 
-	if (nftype & 1 << 0)
+	if (nfaddrstep == 1)
 		pNandAccess->NAND_ADDR = (U8)(row >> 16);	// ROW 3rd
 
-	if (nftype & 1 << 1)	// Large block
+	if (nftype == 1)	// Large block
 		pNandAccess->NAND_CMD = NAND_CMD_READ_2ND;
 
 	// Wait until ready by using NX_NFCTRL_IRQPEND
