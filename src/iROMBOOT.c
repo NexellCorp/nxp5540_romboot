@@ -219,7 +219,8 @@ lastboot:
 
 	printf("Launch to aarch%d secure %s mode 0x%X\r\n",
 			(pbh->bi.sel_arch == 1) ? 32 : 64,
-			(pbh->bi.sel_arch == 1) ? "svc" : "EL1",
+			(pbh->bi.sel_arch == 1) ? "SVC" :
+			(pbh->bi.sel_arch == 0) ? "EL1" : "EL3",
 			pbh->bi.StartAddr);
 
 	U32 scr_el3 = GetSCR_EL3();
