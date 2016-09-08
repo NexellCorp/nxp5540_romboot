@@ -223,16 +223,16 @@ lastboot:
 
 	struct nx_bootheader *pbh = (struct nx_bootheader *)BASEADDR_SRAM;
 
+	if (pbh->bi.sel_arch == 0xFF) {
+		void (*pLaunch)(void) = (void(*)(void))pbh->bi.StartAddr;
+		pLaunch();
+	}
+
 	printf("Launch to aarch%d secure %s mode 0x%X\r\n",
 			(pbh->bi.sel_arch == 1) ? 32 : 64,
 			(pbh->bi.sel_arch == 1) ? "SVC" :
 			(pbh->bi.sel_arch == 0) ? "EL1" : "EL3",
 			pbh->bi.StartAddr);
-
-	if (pbh->bi.sel_arch == 0xFF) {
-		void (*pLaunch)(void) = (void(*)(void))pbh->bi.StartAddr;
-		pLaunch();
-	}
 
 	Dcache_flush_range((U64)pbh, pbh->bi.LoadSize +
 					sizeof(struct nx_bootheader));
