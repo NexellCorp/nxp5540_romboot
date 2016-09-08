@@ -429,7 +429,8 @@ void Decrypt(U32 *SrcAddr, U32 *DestAddr, U32 Size)
 
 		pCrypto->CRYPTO_CRT_CTRL0 |= 0x1 << 0;	// Decryption run
 
-		while (!(pCrypto->CRYPTO_CRT_CTRL0 & 0x1 << 0));
+		while (!(pCrypto->CRYPTO_CRT_CTRL0 & 0x1 << 0))
+			pCrypto->CRYPTO_CRT_CTRL0;
 
 		temp[3] = pCrypto->CRYPTO_AES_TOUT0;
 		temp[2] = pCrypto->CRYPTO_AES_TOUT1;

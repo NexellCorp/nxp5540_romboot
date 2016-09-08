@@ -477,8 +477,10 @@ U32 iSPIBOOT(U32 option)
 	pSSPSPIReg->SPI_TX_DATA = 0;		// memory array address mid byte
 	pSSPSPIReg->SPI_TX_DATA = 0;		// memory array address low byte
 
-	while (pSSPSPIReg->SPI_STATUS & 0x1FF << 6);	// wait while TX fifo counter is not 0
-	while (!(pSSPSPIReg->SPI_STATUS & 0x1 << 25));	// wait for TX fifo is empty
+	while (pSSPSPIReg->SPI_STATUS & 0x1FF << 6)	// wait while TX fifo counter is not 0
+		pSSPSPIReg->SPI_STATUS;			// t32 sim err
+	while (!(pSSPSPIReg->SPI_STATUS & 0x1 << 25))	// wait for TX fifo is empty
+		pSSPSPIReg->SPI_STATUS;			// t32 sim err
 	while (pSSPSPIReg->SPI_STATUS >> 15 & 0x1FF)	// while RX fifo is not empty
 		pSSPSPIReg->SPI_RX_DATA;		// discard RX data cmd & address
 	
@@ -489,7 +491,8 @@ U32 iSPIBOOT(U32 option)
 	pSSPSPIReg->SPI_TX_DATA = 0xAA;
 	
 	/* wait RX fifo is not empty */
-	while (!(pSSPSPIReg->SPI_STATUS >> 15 & 0x1FF));
+	while (!(pSSPSPIReg->SPI_STATUS >> 15 & 0x1FF))
+		pSSPSPIReg->SPI_STATUS;
 	while (sizeof(struct nx_bootheader) > iRxSize) {
 		if (pSSPSPIReg->SPI_STATUS >> 15 & 0x1FF) {
 			pSSPSPIReg->SPI_TX_DATA = 0xAA;
