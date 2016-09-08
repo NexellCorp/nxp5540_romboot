@@ -46,6 +46,9 @@ struct NX_GPIO_RegisterSet (* const pGPIOReg)[1] =
 #ifdef NXP5540
 struct NX_GPIO_RegisterSet (* const pGPIOReg)[1] =
 	(struct NX_GPIO_RegisterSet (*)[])PHY_BASEADDR_GPIO1_MODULE;
+
+struct NX_ECID_RegisterSet * const pSECIDReg =
+	(struct NX_ECID_RegisterSet *)PHY_BASEADDR_ECID_SECU_MODULE;
 #endif
 struct NX_ALIVE_RegisterSet * const pALIVEReg =
 	(struct NX_ALIVE_RegisterSet *)PHY_BASEADDR_ALIVE_MODULE;
@@ -91,18 +94,25 @@ void iROMBOOT(U32 OrgBootOption)
 		pECIDReg->EC[2];
 	}	// wait efuse ready
 
-	CBOOL IsSecure = !!(pECIDReg->SJTAG[0] | pECIDReg->SJTAG[1] |
-			pECIDReg->SJTAG[2] | pECIDReg->SJTAG[3]);
+	// set HIGH TZPC0_TZPCDECPROT3[5] 
+	*(volatile U32 *)(0x20300000 + 0x828) = 1 << 5;
+
+
+	CBOOL IsSecure = !!(pSECIDReg->SJTAG[0] | pSECIDReg->SJTAG[1] |
+			pSECIDReg->SJTAG[2] | pSECIDReg->SJTAG[3]);
 
 	if (IsSecure) {
 		option |= 1 << DECRYPT;
 
 		// copy secure jtag hash to aes secure key for secure boot decrypt.
-		pECIDReg->CRAESKEY[0] = pECIDReg->SJTAG[0];
-		pECIDReg->CRAESKEY[1] = pECIDReg->SJTAG[1];
-		pECIDReg->CRAESKEY[2] = pECIDReg->SJTAG[2];
-		pECIDReg->CRAESKEY[3] = pECIDReg->SJTAG[3];
+		pSECIDReg->CRAESKEY[0] = pSECIDReg->SJTAG[0];
+		pSECIDReg->CRAESKEY[1] = pSECIDReg->SJTAG[1];
+		pSECIDReg->CRAESKEY[2] = pSECIDReg->SJTAG[2];
+		pSECIDReg->CRAESKEY[3] = pSECIDReg->SJTAG[3];
 	}
+
+	// set LOW TZPC0_TZPCDECPROT3[5] 
+	*(volatile U32 *)(0x20300000 + 0x828) = 0;
 #endif
 
 
