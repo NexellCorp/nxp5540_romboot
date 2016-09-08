@@ -939,6 +939,7 @@ CBOOL NX_SDMMC_Init(SDXCBOOTSTATUS *pSDXCBootStatus)
 #ifdef NXP5540
 	// Wake up & Power on fifo sram
 	pSDXCReg->TIESRAM = 0x3;
+	pSDXCReg->TIEMODE = 1;
 #endif
 
 	return CTRUE;
