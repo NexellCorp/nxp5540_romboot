@@ -29,6 +29,9 @@
 #include <nx_ecid.h>
 
 #ifdef NXP5540
+#include <nx_resetcontrol_def.h>
+#include <nx_clockcontrol_def.h>
+#include "cpuif_regmap_framework.h"
 #include <nx_chip_sfr.h>
 #endif
 
@@ -365,15 +368,30 @@ void Decrypt(U32 *SrcAddr, U32 *DestAddr, U32 Size)
 #ifdef NXP5430
 	ResetCon(RESETINDEX_OF_ECID_MODULE_i_nRST, CTRUE);	// reset on
 	ResetCon(RESETINDEX_OF_ECID_MODULE_i_nRST, CFALSE);	// reset negate
-#endif
 
 	while (!(pECIDReg->EC[2] & 0x1 << 15));	// wait for ecid ready
 
-#ifdef NXP5430
 	ResetCon(RESETINDEX_OF_CRYPTO_MODULE_i_nRST, CTRUE);	// reset on
 	ResetCon(RESETINDEX_OF_CRYPTO_MODULE_i_nRST, CFALSE);	// reset negate
 
 	pCryptoClkGenReg->CLKENB = 1 << 3;	// pclk always mode.
+#endif
+#ifdef NXP5540
+	/////////////////////////////////////////////////////
+	// @modified by choiyk 2016.08.25 pm0400.
+	// S/W stop-and-go for SPI reset
+	//---------------------------------------------------
+	// sw code must be
+	// clock off -> reset mode 1 -> reset on -> clock on
+	//
+	// CRYPTO no need to wait ECID EFUSE ready
+	//---------------------------------------------------
+	nx_cpuif_reg_write_one((_nx_cpuif_sym_)CMUI_CRYPTO_0_APB_clk_enb , 0); // clock disable
+	nx_cpuif_reg_write_one((_nx_cpuif_sym_)RSTM_crypto_0_apb_rst, 1); // reset mode must be 1
+	nx_cpuif_reg_write_one((_nx_cpuif_sym_)RSTI_crypto_0_apb_rst, 0); // reset enable
+	nx_cpuif_reg_write_one((_nx_cpuif_sym_)RSTI_crypto_0_apb_rst, 1); // reset enable
+	nx_cpuif_reg_write_one((_nx_cpuif_sym_)CMUI_CRYPTO_0_APB_clk_enb , 1); // clock enable
+	/////////////////////////////////////////////////////
 #endif
 
 	while (i < (DataSize >> 2)) {			// 128bits == 4bytes x 4
