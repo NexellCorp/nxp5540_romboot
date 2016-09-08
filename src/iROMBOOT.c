@@ -87,10 +87,9 @@ void iROMBOOT(U32 OrgBootOption)
 #endif
 
 #ifdef NXP5540
-	U32 EC;
-	do {
-		EC = pECIDReg->EC[2];
-	} while (!(EC & 1 << 16));	// wait efuse ready
+	while( !(pECIDReg->EC[2] & 1 << 16) ) {
+		pECIDReg->EC[2];
+	}	// wait efuse ready
 
 	CBOOL IsSecure = !!(pECIDReg->SJTAG[0] | pECIDReg->SJTAG[1] |
 			pECIDReg->SJTAG[2] | pECIDReg->SJTAG[3]);
