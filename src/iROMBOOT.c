@@ -94,7 +94,7 @@ void iROMBOOT(U32 OrgBootOption)
 	CBOOL IsSecure = !!(pECIDReg->SJTAG[0] | pECIDReg->SJTAG[1] |
 			pECIDReg->SJTAG[2] | pECIDReg->SJTAG[3]);
 
-	if (IsSecure == CTRUE) {
+	if (IsSecure) {
 		option |= 1 << DECRYPT;
 
 		// copy secure jtag hash to aes secure key for secure boot decrypt.
@@ -218,8 +218,8 @@ lastboot:
 					sizeof(struct nx_bootheader));
 
 	printf("Launch to aarch%d secure %s mode 0x%X\r\n",
-			pbh->bi.sel_arch ? 32 : 64,
-			pbh->bi.sel_arch ? "svc" : "EL1",
+			(pbh->bi.sel_arch == 1) ? 32 : 64,
+			(pbh->bi.sel_arch == 1) ? "svc" : "EL1",
 			pbh->bi.StartAddr);
 
 	U32 scr_el3 = GetSCR_EL3();
@@ -239,5 +239,9 @@ lastboot:
 
 	SetSCR_EL3(scr_el3);
 
-	EnterLowLevel((U32*)pbh->bi.StartAddr, spsr_el3);
+	if (pbh->bi.sel_arch == 0xFF) {
+		void (*pLaunch)(void) = (void(*)(void))pbh->bi.StartAddr;
+		pLaunch();
+	} else
+		EnterLowLevel((U32*)pbh->bi.StartAddr, spsr_el3);
 }
