@@ -62,6 +62,7 @@ extern CBOOL iSPIBOOT(U32 option);
 extern CBOOL iSDXCBOOT(U32 option);
 extern CBOOL iNANDBOOTEC(U32 option);
 void enable_mmu_el3(U32);
+void disable_mmu_icache_el3(U32, U32);
 void EnterLowLevel(unsigned int *EL1Start, unsigned int rSPSR);
 void buildinfo(void);
 void Dcache_flush_range(U64 addr, U64 size);
@@ -158,7 +159,8 @@ void iROMBOOT(U32 OrgBootOption)
 	buildinfo();
 
 	// mmu is enabled when you have some problem, you must check table addr.
-	enable_mmu_el3((option & 1 << ICACHE)? 1 << 0 : 0);
+	if (option & 1 << ICACHE)
+		enable_mmu_el3(1 << 0);
 
 	printf("Boot Option: %02X(%X,%X)\r\n", option, OrgBootOption, eRSTCFG);
 
@@ -225,6 +227,10 @@ lastboot:
 
 	if (pbh->bi.sel_arch == 0xFF) {
 		void (*pLaunch)(void) = (void(*)(void))pbh->bi.StartAddr;
+		if (option & 1 << ICACHE) {
+			disable_mmu_icache_el3(0, 0);
+			__asm__ __volatile__("tlbi alle3");
+		}
 		pLaunch();
 	}
 
@@ -234,7 +240,8 @@ lastboot:
 			(pbh->bi.sel_arch == 0) ? "EL1" : "EL3",
 			pbh->bi.StartAddr);
 
-	Dcache_flush_range((U64)pbh, pbh->bi.LoadSize +
+	if (option & 1 << ICACHE)
+		Dcache_flush_range((U64)pbh, pbh->bi.LoadSize +
 					sizeof(struct nx_bootheader));
 
 	U32 scr_el3 = GetSCR_EL3();
@@ -242,8 +249,9 @@ lastboot:
 			SCR_ST_BIT | SCR_HCE_BIT);
 	U32 spsr_el3;
 	if (pbh->bi.sel_arch == 0) {
-		scr_el3 |= SCR_RW_BIT;	// low level is aarch64
-		spsr_el3 = SPSR_64(MODE_EL1, MODE_SP_ELX, DISABLE_ALL_EXCEPTIONS);
+		scr_el3 |= SCR_RW_BIT;  // low level is aarch64
+		spsr_el3 = SPSR_64(MODE_EL1, MODE_SP_ELX,
+				DISABLE_ALL_EXCEPTIONS);
 	} else {
 		spsr_el3 = SPSR_MODE32(MODE32_svc, SPSR_T_ARM,
 				SPSR_E_LITTLE,

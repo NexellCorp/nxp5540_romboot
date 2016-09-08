@@ -86,7 +86,7 @@ unexpected_sync_exception:
 	bl      plat_report_exception
 2:	wfi
 	b	2b
-
+.global disable_mmu_icache_el3
 disable_mmu_icache_el3:
 	mov     x1, #(SCTLR_M_BIT | SCTLR_C_BIT | SCTLR_I_BIT)
 	mrs     x0, sctlr_el3
