@@ -109,7 +109,7 @@ void GPIOSetDrvSt(const struct nxpadi *pad, NX_GPIO_DRVSTRENGTH str)
 void GPIOSetPullup(const struct nxpadi *pad, NX_GPIO_PULL pull)
 {
 	struct NX_GPIO_RegisterSet *pGPIOxReg = pGPIOReg[pad->grp];
-	U32 pullupdown = pull & 1, pullen = (pull >> 1) & 1;
+	U32 pullupdown = pull & 1, pullen = !((pull >> 1) & 1);
 
 	if (!pad->flag)
 		return;
