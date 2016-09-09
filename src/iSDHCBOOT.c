@@ -164,6 +164,10 @@ static CBOOL NX_SDMMC_SetClock(SDXCBOOTSTATUS *pSDXCBootStatus,
 
 #ifdef NXP5540
 	U32 regval;
+	// sdmmc bus clock disable
+	nx_cpuif_reg_write_one(cpuif[i][3], 0);
+	nx_cpuif_reg_write_one(cpuif[i][4], 0);
+
 	if (Identify == CTRUE)
 	// sdmmc core clock source select
 		nx_cpuif_reg_write_one(cpuif[i][0], SDXC_CLKSRC_ID);
@@ -868,7 +872,7 @@ CBOOL NX_SDMMC_Init(SDXCBOOTSTATUS *pSDXCBootStatus)
     // pll7 : 200 Mhz
 	U32 regval;
 	// sdmmc core clock source select
-	nx_cpuif_reg_write_one(cpuif[i][0], SDXC_CLKSRC);
+	nx_cpuif_reg_write_one(cpuif[i][0], SDXC_CLKSRC_REAL);
 	// sdmmc core clock divider value
 	nx_cpuif_reg_write_one(cpuif[i][1], (SDXC_CLKDIV_LOW - 1));
 	while (1 == nx_cpuif_reg_read_one(cpuif[i][2], &regval))
