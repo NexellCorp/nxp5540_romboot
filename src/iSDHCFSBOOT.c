@@ -196,7 +196,8 @@ static CBOOL SDMMCFSBOOT(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 			NX_DEBUG_MSG("FIFO Reset!!!\n");
 			pSDXCReg->CTRL = NX_SDXC_CTRL_FIFORST;	/* Reset the FIFO. */
 			/* Wait until the FIFO reset is completed. */
-			while ((pSDXCReg->CTRL & NX_SDXC_CTRL_FIFORST) && tempcount--);
+			while ((pSDXCReg->CTRL & NX_SDXC_CTRL_FIFORST) && tempcount--)
+				pSDXCReg->CTRL;
 		}
 
 		result = FSBoot(pSDXCBootStatus, option);

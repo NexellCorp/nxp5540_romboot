@@ -915,7 +915,7 @@ CBOOL NX_SDMMC_Init(SDXCBOOTSTATUS *pSDXCBootStatus)
 	while (pSDXCReg->CTRL & (NX_SDXC_CTRL_DMARST |
 				NX_SDXC_CTRL_FIFORST |
 				NX_SDXC_CTRL_CTRLRST))
-		;
+		pSDXCReg->CTRL;
 
 	pSDXCReg->PWREN = 0x1 << 0;	// Set Power Enable
 
@@ -964,7 +964,7 @@ CBOOL NX_SDMMC_Terminate(SDXCBOOTSTATUS *pSDXCBootStatus)
 	while (pSDXCReg->CTRL & (NX_SDXC_CTRL_DMARST |
 				NX_SDXC_CTRL_FIFORST |
 				NX_SDXC_CTRL_CTRLRST))
-		;
+		pSDXCReg->CTRL;
 
 #ifdef NXP5430
 	// Disable CLKGEN
@@ -1058,7 +1058,7 @@ static CBOOL NX_SDMMC_ReadSectorData(
 			U32 FSize, Timeout = NX_SDMMC_TIMEOUT;
 			while ((pSDXCReg->STATUS & NX_SDXC_STATUS_FIFOEMPTY) &&
 					Timeout--)
-				;
+				pSDXCReg->STATUS;
 			if (0 == Timeout)
 				break;
 			FSize = (pSDXCReg->STATUS &
@@ -1130,7 +1130,7 @@ CBOOL NX_SDMMC_ReadSectors(SDXCBOOTSTATUS *pSDXCBootStatus,
 	
 	// wait while data busy or data transfer busy
 	while (pSDXCReg->STATUS & (1 << 9 | 1 << 10))
-		;
+		pSDXCReg->STATUS;
 
 	//--------------------------------------------------------------------------
 	// wait until 'Ready for data' is set and card is in transfer state.
@@ -1194,7 +1194,7 @@ CBOOL NX_SDMMC_ReadSectors(SDXCBOOTSTATUS *pSDXCBootStatus,
 	if (numberOfSector > 1) {
 		// Wait until the Auto-stop command has been finished.
 		while (0 == (pSDXCReg->RINTSTS & NX_SDXC_RINTSTS_ACD))
-			;
+			pSDXCReg->RINTSTS;
 
 		NX_ASSERT(0 == (pSDXCReg->STATUS & NX_SDXC_STATUS_FSMBUSY));
 
@@ -1223,7 +1223,7 @@ End:
 		if (0 == (pSDXCReg->STATUS & NX_SDXC_STATUS_FIFOEMPTY)) {
 			pSDXCReg->CTRL = NX_SDXC_CTRL_FIFORST;
 			while (pSDXCReg->CTRL & NX_SDXC_CTRL_FIFORST)
-				;
+				pSDXCReg->CTRL;
 		}
 	}
 
@@ -1251,7 +1251,7 @@ static CBOOL NX_SDMMC_ReadBootSector(
 			U32 FSize, Timeout = NX_SDMMC_TIMEOUT;
 			while ((pSDXCReg->STATUS & NX_SDXC_STATUS_FIFOEMPTY) &&
 					Timeout--)
-				;
+				pSDXCReg->STATUS;
 //			if (0 == Timeout)
 //				break;
 			FSize = (pSDXCReg->STATUS &
@@ -1477,7 +1477,7 @@ error:
 	if (0 == (pSDXCReg->STATUS & NX_SDXC_STATUS_FIFOEMPTY)) {
 		pSDXCReg->CTRL = NX_SDXC_CTRL_FIFORST;
 		while (pSDXCReg->CTRL & NX_SDXC_CTRL_FIFORST)
-			;
+			pSDXCReg->CTRL;
 	}
 
 	return result;
@@ -1502,7 +1502,7 @@ static CBOOL SDMMCBOOT(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 		/* Wait until the FIFO reset is completed. */
 		while ((pSDXCReg->CTRL & NX_SDXC_CTRL_FIFORST) &&
 				tempcount--)
-			;
+			pSDXCReg->CTRL;
 	}
 #ifdef NXP5430
 	if (NX_SDMMC_ReadSectors(pSDXCBootStatus, 0x81, 2, (U32 *)pSBI) == CFALSE) {

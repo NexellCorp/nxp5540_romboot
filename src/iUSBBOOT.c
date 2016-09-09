@@ -731,7 +731,7 @@ static void nx_usb_transfer(USBBOOTSTATUS *pUSBBootStatus)
 
 			while ((pUOReg->GCSR.GNPTXSTS & 0xFFFF) <
 					pUSBBootStatus->ctrl_max_pktsize)
-				;
+				pUOReg->GCSR.GNPTXSTS;
 
 			nx_usb_transfer_ep0(pUSBBootStatus);
 		}
@@ -962,7 +962,7 @@ CBOOL iUSBBOOT(U32 option)
 	/* usb core soft reset */
 	pUOReg->GCSR.GRSTCTL = CORE_SOFT_RESET;
 	while (!(pUOReg->GCSR.GRSTCTL & AHB_MASTER_IDLE))
-		;
+		pUOReg->GCSR.GRSTCTL;
 
 	/* init_core */
 	pUOReg->GCSR.GAHBCFG = PTXFE_HALF | NPTXFE_HALF | MODE_SLAVE |
@@ -1015,7 +1015,7 @@ CBOOL iUSBBOOT(U32 option)
 	/* usb core soft reset */
 	pUOReg->GCSR.GRSTCTL = CORE_SOFT_RESET;
 	while (!(pUOReg->GCSR.GRSTCTL & AHB_MASTER_IDLE))
-		;
+		pUOReg->GCSR.GRSTCTL;
 
 #ifdef NXP5430
 	pTieoffreg->TIEOFFREG[13] &= ~(1 << 3);	// 8 : i_nUtmiResetSync
