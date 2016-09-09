@@ -101,7 +101,7 @@ struct NX_SDMMC_RegisterSet * const pgSDXCReg[3] =
 
 //------------------------------------------------------------------------------
 static CBOOL NX_SDMMC_SetClock(SDXCBOOTSTATUS *pSDXCBootStatus,
-				CBOOL enb, U32 divider)
+				CBOOL enb, U32 divider, CBOOL Identify)
 {
 	volatile U32 timeout;
 	U32 i = pSDXCBootStatus->SDPort;
@@ -164,8 +164,11 @@ static CBOOL NX_SDMMC_SetClock(SDXCBOOTSTATUS *pSDXCBootStatus,
 
 #ifdef NXP5540
 	U32 regval;
+	if (Identify == CTRUE)
 	// sdmmc core clock source select
-	nx_cpuif_reg_write_one(cpuif[i][0], SDXC_CLKSRC);
+		nx_cpuif_reg_write_one(cpuif[i][0], SDXC_CLKSRC_ID);
+	else
+		nx_cpuif_reg_write_one(cpuif[i][0], SDXC_CLKSRC_REAL);
 	// sdmmc core clock divider value
 	nx_cpuif_reg_write_one(cpuif[i][1], (divider - 1));
 	while (1 == nx_cpuif_reg_read_one(cpuif[i][2], &regval))
@@ -497,7 +500,7 @@ static CBOOL NX_SDMMC_IdentifyCard(SDXCBOOTSTATUS *pSDXCBootStatus)
 
 	if (CFALSE == NX_SDMMC_SetClock(pSDXCBootStatus,
 					CTRUE,
-					SDXC_DIVIDER_400KHZ))
+					SDXC_DIVIDER_400KHZ, CTRUE))
 		return CFALSE;
 
 	// Data Bus Width : 0(1-bit), 1(4-bit)
@@ -1001,7 +1004,7 @@ CBOOL NX_SDMMC_Open(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 
 	//--------------------------------------------------------------------------
 	// data transfer mode : Stand-by state
-	if (CFALSE == NX_SDMMC_SetClock(pSDXCBootStatus, CTRUE, SDSpeed)) {
+	if (CFALSE == NX_SDMMC_SetClock(pSDXCBootStatus, CTRUE, SDSpeed, CFALSE)) {
 		printf("Card Clk rst fail\r\n");
 		return CFALSE;
 	}
@@ -1033,7 +1036,7 @@ CBOOL NX_SDMMC_Open(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 //------------------------------------------------------------------------------
 CBOOL NX_SDMMC_Close(SDXCBOOTSTATUS *pSDXCBootStatus)
 {
-	NX_SDMMC_SetClock(pSDXCBootStatus, CFALSE, SDXC_DIVIDER_400KHZ);
+	NX_SDMMC_SetClock(pSDXCBootStatus, CFALSE, SDXC_DIVIDER_400KHZ, CTRUE);
 	return CTRUE;
 }
 
@@ -1342,7 +1345,7 @@ static CBOOL eMMCBoot_Normal(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 	pSDXCReg->CTYPE		= 1;	/* Data Bus Width : 0(1-bit), 1(4-bit) */
 	pSDXCReg->BYTCNT	= 128 * 1024;	/* for Alternative */
 
-	if (CFALSE == NX_SDMMC_SetClock(pSDXCBootStatus, CTRUE, SDSpeed)) {
+	if (CFALSE == NX_SDMMC_SetClock(pSDXCBootStatus, CTRUE, SDSpeed, CFALSE)) {
 		printf("clk init fail\r\n");
 		return CFALSE;
 	}
@@ -1424,7 +1427,7 @@ static CBOOL eMMCBoot_Alt(SDXCBOOTSTATUS *pSDXCBootStatus, U32 option)
 	pSDXCReg->CTYPE		= 1;	/* Data Bus Width : 0(1-bit), 1(4-bit) */
 	pSDXCReg->BYTCNT	= 128 * 1024;	/* for Alternative */
 
-	if (CFALSE == NX_SDMMC_SetClock(pSDXCBootStatus, CTRUE, SDSpeed)) {
+	if (CFALSE == NX_SDMMC_SetClock(pSDXCBootStatus, CTRUE, SDSpeed, CFALSE)) {
 		printf("clk init fail\r\n");
 		return CFALSE;
 	}
